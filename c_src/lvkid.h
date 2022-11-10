@@ -210,5 +210,10 @@ void lv_group_send_text(lv_group_t *group, const char *text);
 void lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr);
 lv_obj_t *lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent);
 
+void lv_ieq_push_mouse(lv_indev_drv_t *drv, lv_indev_state_t state,
+    lv_point_t point);
+void lv_ieq_push_kbd(lv_indev_drv_t *drv, lv_indev_state_t state,
+    uint32_t key);
+
 #endif /* _LVKID_H */
 

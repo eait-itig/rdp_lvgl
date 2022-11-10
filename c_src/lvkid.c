@@ -49,6 +49,11 @@ struct lv_event_udata {
 LIST_HEAD(lv_event_udata_list, lv_event_udata);
 static struct lv_event_udata_list leus;
 
+struct input_event {
+	TAILQ_ENTRY(input_event)	ie_entry;
+	lv_indev_data_t			ie_data;
+};
+TAILQ_HEAD(input_event_q, input_event);
 struct lvinst {
 	struct lvkid		*lvi_kid;
 	struct fbuf		*lvi_fbuf;
@@ -63,9 +68,15 @@ struct lvinst {
 	lv_indev_t		*lvi_mouse;
 	uint64_t		 lvi_udata;
 	uint			 lvi_in_wait;
+	struct input_event_q	 lvi_mouse_q;
+	struct input_event_q	 lvi_kbd_q;
+	lv_obj_t		*lvi_cursor;
 };
 
 ErlNifResourceType *lvkid_hdl_rsrc;
+
+static void lvkinst_teardown(struct lvkinst *inst);
+static void lvkevt_teardown(struct lvkevt *evt);
 
 static void
 lvkobj_release(struct lvkobj *obj)
@@ -81,11 +92,17 @@ lvkobj_release(struct lvkobj *obj)
 		return;
 
 	LIST_REMOVE(obj, lvko_entry);
+
+	obj->lvko_delevt->lvke_obj = NULL;
+	assert(obj->lvko_delevt->lvke_hdl == NULL);
+	lvkevt_teardown(obj->lvko_delevt);
+
 	LIST_FOREACH_SAFE(evt, &obj->lvko_events, lvke_obj_entry, nevt) {
 		LIST_REMOVE(evt, lvke_obj_entry);
 		evt->lvke_obj = NULL;
 		if (evt->lvke_hdl != NULL)
 			evt->lvke_hdl->lvkh_inst = NULL;
+		lvkevt_teardown(evt);
 		/*
 		 * Now it's orphaned: it'll get freed either in hdl release or
 		 * after the event ring entry marked ed_removed
@@ -93,9 +110,6 @@ lvkobj_release(struct lvkobj *obj)
 	}
 	free(obj);
 }
-
-static void lvkinst_teardown(struct lvkinst *inst);
-static void lvkevt_teardown(struct lvkevt *evt);
 
 static void
 lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
@@ -147,10 +161,8 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 		break;
 	}
 
+	bzero(hdl, sizeof (*hdl));
 	hdl->lvkh_type = LVK_NONE;
-	hdl->lvkh_ptr = NULL;
-	hdl->lvkh_inst = NULL;
-	hdl->lvkh_kid = NULL;
 
 	if (inst != NULL)
 		pthread_rwlock_unlock(&inst->lvki_lock);
@@ -383,6 +395,82 @@ lvkid_lv_flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	}
 }
 
+void
+lv_ieq_push_mouse(lv_indev_drv_t *drv, lv_indev_state_t state,
+    lv_point_t point)
+{
+	struct lvinst *inst = drv->user_data;
+	struct input_event *ev;
+
+	assert(drv == &inst->lvi_mouse_drv);
+
+	ev = calloc(1, sizeof (*ev));
+
+	ev->ie_data.state = state;
+	ev->ie_data.point = point;
+
+	TAILQ_INSERT_TAIL(&inst->lvi_mouse_q, ev, ie_entry);
+}
+
+void
+lv_ieq_push_kbd(lv_indev_drv_t *drv, lv_indev_state_t state,
+    uint32_t key)
+{
+	struct lvinst *inst = drv->user_data;
+	struct input_event *ev;
+
+	assert(drv == &inst->lvi_kbd_drv);
+
+	ev = calloc(1, sizeof (*ev));
+
+	ev->ie_data.state = state;
+	ev->ie_data.key = key;
+
+	TAILQ_INSERT_TAIL(&inst->lvi_kbd_q, ev, ie_entry);
+}
+
+static void
+lvkid_lv_read_mouse_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
+{
+	struct lvinst *inst = drv->user_data;
+	struct input_event *ev;
+
+	ev = TAILQ_FIRST(&inst->lvi_mouse_q);
+	if (ev == NULL) {
+		data->state = LV_INDEV_STATE_RELEASED;
+		return;
+	}
+	TAILQ_REMOVE(&inst->lvi_mouse_q, ev, ie_entry);
+
+	data->point = ev->ie_data.point;
+	data->state = ev->ie_data.state;
+	free(ev);
+
+	if (!TAILQ_EMPTY(&inst->lvi_mouse_q))
+		data->continue_reading = 1;
+}
+
+static void
+lvkid_lv_read_kbd_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
+{
+	struct lvinst *inst = drv->user_data;
+	struct input_event *ev;
+
+	ev = TAILQ_FIRST(&inst->lvi_kbd_q);
+	if (ev == NULL) {
+		data->state = LV_INDEV_STATE_RELEASED;
+		return;
+	}
+	TAILQ_REMOVE(&inst->lvi_kbd_q, ev, ie_entry);
+
+	data->key = ev->ie_data.key;
+	data->state = ev->ie_data.state;
+	free(ev);
+
+	if (!TAILQ_EMPTY(&inst->lvi_kbd_q))
+		data->continue_reading = 1;
+}
+
 static void
 lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 {
@@ -415,6 +503,8 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_udata = cds->cds_udata;
 	inst->lvi_kid = kid;
 	inst->lvi_shm = shm;
+	TAILQ_INIT(&inst->lvi_mouse_q);
+	TAILQ_INIT(&inst->lvi_kbd_q);
 
 	sz = cds->cds_w * cds->cds_h;
 	assert((sizeof (lv_color_t) * sz) <= fb->fb_sz);
@@ -428,23 +518,34 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_disp_drv.ver_res = cds->cds_h;
 	inst->lvi_disp_drv.direct_mode = 1;
 	inst->lvi_disp_drv.user_data = inst;
-	fprintf(stderr, "created disp_drv %p\r\n", &inst->lvi_disp_drv);
 
 	inst->lvi_disp = lv_disp_drv_register(&inst->lvi_disp_drv);
+	fprintf(stderr, "created disp_drv %p => %p\r\n", &inst->lvi_disp_drv,
+	    inst->lvi_disp);
 
 	lv_indev_drv_init(&inst->lvi_mouse_drv);
 	inst->lvi_mouse_drv.type = LV_INDEV_TYPE_POINTER;
 	inst->lvi_mouse_drv.read_cb = lvkid_lv_read_mouse_cb;
 	inst->lvi_mouse_drv.user_data = inst;
+	inst->lvi_mouse_drv.disp = inst->lvi_disp;
 
 	inst->lvi_mouse = lv_indev_drv_register(&inst->lvi_mouse_drv);
+	fprintf(stderr, "created mouse_drv %p => %p\r\n", &inst->lvi_mouse_drv,
+	    inst->lvi_mouse);
+
+	inst->lvi_cursor = lv_img_create(lv_disp_get_layer_sys(inst->lvi_disp));
+	lv_img_set_src(inst->lvi_cursor, LV_SYMBOL_GPS);
+	lv_indev_set_cursor(inst->lvi_mouse, inst->lvi_cursor);
 
 	lv_indev_drv_init(&inst->lvi_kbd_drv);
 	inst->lvi_kbd_drv.type = LV_INDEV_TYPE_KEYPAD;
 	inst->lvi_kbd_drv.read_cb = lvkid_lv_read_kbd_cb;
 	inst->lvi_kbd_drv.user_data = inst;
+	inst->lvi_kbd_drv.disp = inst->lvi_disp;
 
 	inst->lvi_kbd = lv_indev_drv_register(&inst->lvi_kbd_drv);
+	fprintf(stderr, "created kbd_drv %p => %p\r\n", &inst->lvi_kbd_drv,
+	    inst->lvi_kbd);
 
 	pthread_mutex_unlock(&lv_mtx);
 
@@ -491,6 +592,12 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 		lv_indev_delete(inst->lvi_kbd);
 	if (inst->lvi_mouse != NULL)
 		lv_indev_delete(inst->lvi_mouse);
+
+	/* lv_disp_remove doesn't free this memory :( */
+	disp_drv->draw_ctx_deinit(disp_drv, disp_drv->draw_ctx);
+	lv_mem_free(disp_drv->draw_ctx);
+	disp_drv->draw_ctx = NULL;
+
 	lv_disp_remove(inst->lvi_disp);
 
 	free(inst);
@@ -1325,6 +1432,8 @@ lvkid_erl_evt_ring(void *arg)
 			pthread_rwlock_rdlock(&kid->lvk_lock);
 		}
 
+		obj = evt->lvke_obj;
+
 		/* ed_removed indicates that this event is now dead */
 		if (ed->ed_removed) {
 			if (evt->lvke_hdl != NULL) {
@@ -1333,12 +1442,12 @@ lvkid_erl_evt_ring(void *arg)
 				evt->lvke_hdl->lvkh_ptr = NULL;
 				evt->lvke_hdl = NULL;
 			}
-			LIST_REMOVE(evt, lvke_kid_entry);
+			if (obj != NULL)
+				LIST_REMOVE(evt, lvke_kid_entry);
 			free(evt);
 			goto next;
 		}
 
-		obj = evt->lvke_obj;
 		if (obj == NULL)
 			goto next;
 
@@ -1354,7 +1463,6 @@ lvkid_erl_evt_ring(void *arg)
 		if (ed->ed_code == LV_EVENT_DELETE && evt == obj->lvko_delevt) {
 			obj->lvko_ptr = 0;
 			obj->lvko_class = NULL;
-			obj->lvko_delevt = NULL;
 			lvkobj_release(obj);
 			goto next;
 		}
@@ -1647,7 +1755,6 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	inst->lvki_fbuf->fb_priv = NULL;
 	inst->lvki_fbuf = NULL;
 	LIST_FOREACH_SAFE(obj, &inst->lvki_objs, lvko_entry, nobj) {
-		LIST_REMOVE(obj, lvko_entry);
 		if (obj->lvko_hdl) {
 			obj->lvko_hdl->lvkh_type = LVK_NONE;
 			obj->lvko_hdl->lvkh_ptr = NULL;
@@ -1655,6 +1762,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 			obj->lvko_hdl = NULL;
 		}
 		obj->lvko_inst = NULL;
+		lvkobj_release(obj);
 	}
 	enif_free_env(inst->lvki_env);
 	LIST_REMOVE(inst, lvki_entry);

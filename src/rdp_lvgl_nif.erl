@@ -35,7 +35,10 @@
     obj_create/2,
     scr_load/2,
     spinner_create/3,
-    obj_center/1
+    obj_center/1,
+    send_pointer_event/3,
+    send_key_event/3,
+    send_text_event/2
     ]).
 
 try_paths([Last], BaseName) ->

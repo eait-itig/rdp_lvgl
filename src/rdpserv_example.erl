@@ -127,18 +127,7 @@ init_ui(Srv, S = #?MODULE{}) ->
         Fsm ! {nif_inst, Inst},
         flush_loop(Srv, Inst, MsgRef, [])
     end),
-    receive
-        {nif_inst, Inst} ->
-            {ok, #?MODULE{renderer = Pid, inst = Inst}}
-    end.
-
-handle_event(#ts_inpevt_mouse{point = {X,Y}, action=move}, Srv, S = #?MODULE{}) ->
-    % handle a mouse movement event, react by redrawing part of your ui
-    % etc etc
-    {ok, S};
-
-handle_event(#ts_inpevt_mouse{action = down}, Srv, S = #?MODULE{}) ->
-    #?MODULE{inst = Inst} = S,
+    receive {nif_inst, Inst} -> ok end,
     {async, MsgRef0} = rdp_lvgl_nif:disp_set_bg_color(Inst, {16#FF, 16#30, 16#30}),
     {async, MsgRef1} = rdp_lvgl_nif:obj_create(Inst, none),
     receive {MsgRef0, ok} -> ok end,
@@ -149,12 +138,39 @@ handle_event(#ts_inpevt_mouse{action = down}, Srv, S = #?MODULE{}) ->
     {async, MsgRef4} = rdp_lvgl_nif:scr_load(Inst, Screen),
     receive {MsgRef3, ok} -> ok end,
     receive {MsgRef4, ok} -> ok end,
-    {ok, S#?MODULE{}};
+    {ok, #?MODULE{renderer = Pid, inst = Inst}}.
+
+handle_event(#ts_inpevt_mouse{point = Pt, action = move}, Srv, S = #?MODULE{}) ->
+    #?MODULE{inst = Inst} = S,
+    ok = rdp_lvgl_nif:send_pointer_event(Inst, Pt, released),
+    {ok, S};
+
+handle_event(#ts_inpevt_mouse{point = Pt, action = down}, Srv, S = #?MODULE{}) ->
+    #?MODULE{inst = Inst} = S,
+    ok = rdp_lvgl_nif:send_pointer_event(Inst, Pt, pressed),
+    {ok, S};
+
+handle_event(#ts_inpevt_mouse{point = Pt, action = up}, Srv, S = #?MODULE{}) ->
+    #?MODULE{inst = Inst} = S,
+    ok = rdp_lvgl_nif:send_pointer_event(Inst, Pt, released),
+    {ok, S};
 
 handle_event(#ts_inpevt_mouse{}, Srv, S = #?MODULE{}) ->
     {ok, S};
 
+handle_event(#ts_inpevt_key{code = Code, action = down}, Srv, S = #?MODULE{}) ->
+    {ok, S};
+
+handle_event(#ts_inpevt_key{code = Code, action = up}, Srv, S = #?MODULE{}) ->
+    {ok, S};
+
 handle_event(#ts_inpevt_key{}, Srv, S = #?MODULE{}) ->
+    {ok, S};
+
+handle_event(#ts_inpevt_unicode{}, Srv, S = #?MODULE{}) ->
+    {ok, S};
+
+handle_event(#ts_inpevt_wheel{}, Srv, S = #?MODULE{}) ->
     {ok, S};
 
 handle_event(#ts_inpevt_sync{}, Srv, S = #?MODULE{}) ->

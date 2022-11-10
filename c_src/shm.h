@@ -87,25 +87,28 @@ struct shmintf {
 	size_t		 si_nfbuf;
 	struct fbuf	*si_fbuf;
 
-	pthread_mutex_t	 si_mtx;	/* protects outgoing ring counters */
-
 	size_t		 si_ncmd;	/* general commands */
+	pthread_mutex_t	 si_cc_mtx;	/* protects si_cc outbound */
 	uint		 si_cc;
 	struct cdesc	*si_cmdr;
 
 	size_t		 si_nresp;	/* responses to commands on cmdr */
+	pthread_mutex_t	 si_rc_mtx;	/* protects si_rc outbound */
 	uint		 si_rc;
 	struct rdesc	*si_respr;
 
 	size_t		 si_nev;	/* async events (lv => erl) */
+	pthread_mutex_t	 si_ec_mtx;	/* protects si_ec outbound */
 	uint		 si_ec;
 	struct edesc	*si_evr;
 
 	size_t		 si_nfl;	/* flush areas (lv => erl) */
+	pthread_mutex_t	 si_fc_mtx;	/* protects si_fc outbound */
 	uint		 si_fc;
 	struct fdesc	*si_flr;
 
 	size_t		 si_nph;	/* flush done (erl => lv) */
+	pthread_mutex_t	 si_pc_mtx;	/* protects si_pc outbound */
 	uint		 si_pc;
 	struct pdesc	*si_phr;
 };
@@ -119,8 +122,8 @@ struct lockpg {
 };
 
 enum owner {
-	OWNER_ERL	= 0x01344224,
-	OWNER_LV	= 0x009a2112
+	OWNER_ERL	= 0x01344224,	/* 20202020 */
+	OWNER_LV	= 0x009a2112	/* 10101010 */
 };
 
 enum cmd_op {

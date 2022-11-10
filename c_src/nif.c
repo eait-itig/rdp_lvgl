@@ -628,6 +628,148 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_send_pointer_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	const ERL_NIF_TERM *ptup;
+	int ptuplen;
+	struct lvkinst *inst;
+	struct lvkhdl *hdl = NULL;
+	uint x, y;
+	lv_point_t pt;
+	lv_indev_state_t st;
+	char atm[9];
+	ERL_NIF_TERM rv;
+	int rc;
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_tuple(env, argv[1], &ptuplen, &ptup))
+		return (enif_make_badarg(env));
+	if (ptuplen != 2)
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, ptup[0], &x))
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, ptup[1], &y))
+		return (enif_make_badarg(env));
+	pt.x = x;
+	pt.y = y;
+
+	if (!enif_get_atom(env, argv[2], atm, sizeof (atm), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	if (strcmp(atm, "pressed") == 0) {
+		st = LV_INDEV_STATE_PRESSED;
+	} else if (strcmp(atm, "released") == 0) {
+		st = LV_INDEV_STATE_RELEASED;
+	} else {
+		return (enif_make_badarg(env));
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &hdl, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icast(inst,
+	    ARG_NONE, lv_ieq_push_mouse,
+	    ARG_PTR, inst->lvki_mouse_drv,
+	    ARG_UINT32, st,
+	    ARG_POINT, &pt,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rv = enif_make_atom(env, "ok");
+out:
+	leave_hdl(hdl);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_send_key_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkhdl *hdl = NULL;
+	uint key;
+	lv_indev_state_t st;
+	char atm[9];
+	ERL_NIF_TERM rv;
+	int rc;
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	if (enif_get_atom(env, argv[1], atm, sizeof (atm), ERL_NIF_LATIN1)) {
+		if (strcmp(atm, "up") == 0)
+			key = LV_KEY_UP;
+		else if (strcmp(atm, "down") == 0)
+			key = LV_KEY_DOWN;
+		else if (strcmp(atm, "right") == 0)
+			key = LV_KEY_RIGHT;
+		else if (strcmp(atm, "left") == 0)
+			key = LV_KEY_LEFT;
+		else if (strcmp(atm, "esc") == 0)
+			key = LV_KEY_ESC;
+		else if (strcmp(atm, "del") == 0)
+			key = LV_KEY_DEL;
+		else if (strcmp(atm, "backspace") == 0)
+			key = LV_KEY_BACKSPACE;
+		else if (strcmp(atm, "enter") == 0)
+			key = LV_KEY_ENTER;
+		else if (strcmp(atm, "next") == 0)
+			key = LV_KEY_NEXT;
+		else if (strcmp(atm, "prev") == 0)
+			key = LV_KEY_PREV;
+		else if (strcmp(atm, "home") == 0)
+			key = LV_KEY_HOME;
+		else if (strcmp(atm, "end") == 0)
+			key = LV_KEY_END;
+		else
+			return (enif_make_badarg(env));
+	} else if (!enif_get_uint(env, argv[1], &key)) {
+		return (enif_make_badarg(env));
+	}
+
+	if (!enif_get_atom(env, argv[2], atm, sizeof (atm), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	if (strcmp(atm, "pressed") == 0) {
+		st = LV_INDEV_STATE_PRESSED;
+	} else if (strcmp(atm, "released") == 0) {
+		st = LV_INDEV_STATE_RELEASED;
+	} else {
+		return (enif_make_badarg(env));
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &hdl, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icast(inst,
+	    ARG_NONE, lv_ieq_push_kbd,
+	    ARG_PTR, inst->lvki_mouse_drv,
+	    ARG_UINT32, st,
+	    ARG_UINT32, key,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rv = enif_make_atom(env, "ok");
+
+out:
+	leave_hdl(hdl);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_flush_done(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct lvkinst *inst;
@@ -700,6 +842,8 @@ static ErlNifFunc nif_funcs[] = {
 	{ "scr_load", 2, rlvgl_scr_load },
 	{ "spinner_create", 3, rlvgl_spinner_create },
 	{ "obj_center", 1, rlvgl_obj_center },
+	{ "send_pointer_event", 3, rlvgl_send_pointer_event },
+	{ "send_key_event", 3, rlvgl_send_key_event },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

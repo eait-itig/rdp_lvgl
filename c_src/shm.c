@@ -52,7 +52,19 @@ alloc_shmintf(void)
 	if (shm == NULL)
 		goto err;
 
-	rc = pthread_mutex_init(&shm->si_mtx, NULL);
+	rc = pthread_mutex_init(&shm->si_cc_mtx, NULL);
+	if (rc)
+		goto err;
+	rc = pthread_mutex_init(&shm->si_rc_mtx, NULL);
+	if (rc)
+		goto err;
+	rc = pthread_mutex_init(&shm->si_ec_mtx, NULL);
+	if (rc)
+		goto err;
+	rc = pthread_mutex_init(&shm->si_fc_mtx, NULL);
+	if (rc)
+		goto err;
+	rc = pthread_mutex_init(&shm->si_pc_mtx, NULL);
 	if (rc)
 		goto err;
 
@@ -157,7 +169,11 @@ free_shmintf(struct shmintf *shm)
 	uint i;
 	if (shm == NULL)
 		return;
-	pthread_mutex_destroy(&shm->si_mtx);
+	pthread_mutex_destroy(&shm->si_cc_mtx);
+	pthread_mutex_destroy(&shm->si_rc_mtx);
+	pthread_mutex_destroy(&shm->si_ec_mtx);
+	pthread_mutex_destroy(&shm->si_fc_mtx);
+	pthread_mutex_destroy(&shm->si_pc_mtx);
 	if (shm->si_cmdr != MAP_FAILED)
 		munmap(shm->si_cmdr, RING_SIZE);
 	if (shm->si_respr != MAP_FAILED)
@@ -225,11 +241,13 @@ shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, uint n)
 	uint owner;
 	uint i = 0;
 	assert(shm->si_role == ROLE_LV);
-	pthread_mutex_lock(&shm->si_mtx);
+	pthread_mutex_lock(&shm->si_rc_mtx);
 	while (i < n) {
 		do {
 			owner = atomic_load(
 			    &shm->si_respr[shm->si_rc].rd_owner);
+			if (owner != OWNER_ERL)
+				shm_ring_doorbell(shm);
 		} while (owner != OWNER_LV);
 		bcopy(&rsp[i].rd_chain, &shm->si_respr[shm->si_rc].rd_chain,
 		    sizeof(struct rdesc) - offsetof(struct rdesc, rd_chain));
@@ -239,7 +257,7 @@ shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, uint n)
 			shm->si_rc = 0;
 		i++;
 	}
-	pthread_mutex_unlock(&shm->si_mtx);
+	pthread_mutex_unlock(&shm->si_rc_mtx);
 }
 
 void
@@ -248,11 +266,13 @@ shm_produce_cmd(struct shmintf *shm, const struct cdesc *rsp, uint n)
 	uint owner;
 	uint i = 0;
 	assert(shm->si_role == ROLE_ERL);
-	pthread_mutex_lock(&shm->si_mtx);
+	pthread_mutex_lock(&shm->si_cc_mtx);
 	while (i < n) {
 		do {
 			owner = atomic_load(
 			    &shm->si_cmdr[shm->si_cc].cd_owner);
+			if (owner != OWNER_ERL)
+				shm_ring_doorbell(shm);
 		} while (owner != OWNER_ERL);
 		bcopy(&rsp[i].cd_op, &shm->si_cmdr[shm->si_cc].cd_op,
 		    sizeof(struct cdesc) - offsetof(struct cdesc, cd_op));
@@ -262,7 +282,7 @@ shm_produce_cmd(struct shmintf *shm, const struct cdesc *rsp, uint n)
 			shm->si_cc = 0;
 		i++;
 	}
-	pthread_mutex_unlock(&shm->si_mtx);
+	pthread_mutex_unlock(&shm->si_cc_mtx);
 }
 
 void
@@ -270,10 +290,12 @@ shm_produce_evt(struct shmintf *shm, const struct edesc *esp)
 {
 	uint owner;
 	assert(shm->si_role == ROLE_LV);
-	pthread_mutex_lock(&shm->si_mtx);
+	pthread_mutex_lock(&shm->si_ec_mtx);
 	do {
 		owner = atomic_load(
 		    &shm->si_evr[shm->si_ec].ed_owner);
+		if (owner != OWNER_LV)
+			shm_ring_doorbell(shm);
 	} while (owner != OWNER_LV);
 	bcopy(&esp->ed_code, &shm->si_evr[shm->si_ec].ed_code,
 	    sizeof(struct edesc) - offsetof(struct edesc, ed_code));
@@ -281,7 +303,7 @@ shm_produce_evt(struct shmintf *shm, const struct edesc *esp)
 	shm->si_ec++;
 	if (shm->si_ec >= shm->si_nev)
 		shm->si_ec = 0;
-	pthread_mutex_unlock(&shm->si_mtx);
+	pthread_mutex_unlock(&shm->si_ec_mtx);
 }
 
 void
@@ -289,10 +311,12 @@ shm_produce_flush(struct shmintf *shm, const struct fdesc *fsp)
 {
 	uint owner;
 	assert(shm->si_role == ROLE_LV);
-	pthread_mutex_lock(&shm->si_mtx);
+	pthread_mutex_lock(&shm->si_fc_mtx);
 	do {
 		owner = atomic_load(
 		    &shm->si_flr[shm->si_fc].fd_owner);
+		if (owner != OWNER_LV)
+			shm_ring_doorbell(shm);
 	} while (owner != OWNER_LV);
 	bcopy(&fsp->fd_fbidx_flag, &shm->si_flr[shm->si_fc].fd_fbidx_flag,
 	    sizeof(struct fdesc) - offsetof(struct fdesc, fd_fbidx_flag));
@@ -300,7 +324,7 @@ shm_produce_flush(struct shmintf *shm, const struct fdesc *fsp)
 	shm->si_fc++;
 	if (shm->si_fc >= shm->si_nfl)
 		shm->si_fc = 0;
-	pthread_mutex_unlock(&shm->si_mtx);
+	pthread_mutex_unlock(&shm->si_fc_mtx);
 }
 
 void
@@ -308,10 +332,12 @@ shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 {
 	uint owner;
 	assert(shm->si_role == ROLE_ERL);
-	pthread_mutex_lock(&shm->si_mtx);
+	pthread_mutex_lock(&shm->si_pc_mtx);
 	do {
 		owner = atomic_load(
 		    &shm->si_phr[shm->si_pc].pd_owner);
+		if (owner != OWNER_ERL)
+			shm_ring_doorbell(shm);
 	} while (owner != OWNER_ERL);
 	bcopy(&psp->pd_pad, &shm->si_phr[shm->si_pc].pd_pad,
 	    sizeof(struct pdesc) - offsetof(struct pdesc, pd_pad));
@@ -319,7 +345,7 @@ shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 	shm->si_pc++;
 	if (shm->si_pc >= shm->si_nph)
 		shm->si_pc = 0;
-	pthread_mutex_unlock(&shm->si_mtx);
+	pthread_mutex_unlock(&shm->si_pc_mtx);
 }
 
 uint
@@ -600,11 +626,11 @@ shm_fork(struct shmintf *shm)
 	int rc;
 	int fd;
 
-	pthread_mutex_lock(&shm->si_mtx);
+	pthread_mutex_lock(&shm->si_cc_mtx);
 	assert(shm->si_role == ROLE_NONE);
 
 	if (pipe(shm->si_pipe)) {
-		pthread_mutex_unlock(&shm->si_mtx);
+		pthread_mutex_unlock(&shm->si_cc_mtx);
 		return (-1);
 	}
 
@@ -629,6 +655,6 @@ shm_fork(struct shmintf *shm)
 		close(shm->si_pipe[0]);
 		break;
 	}
-	pthread_mutex_unlock(&shm->si_mtx);
+	pthread_mutex_unlock(&shm->si_cc_mtx);
 	return (kid);
 }
