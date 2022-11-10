@@ -33,4 +33,7 @@
 
 void lv_do_call(struct shmintf *, struct cdesc *);
 
+/* auto-generated dispatch */
+uint64_t lv_do_real_call(const struct cdesc_call *cdc);
+
 #endif /* !_LVCALL_H */

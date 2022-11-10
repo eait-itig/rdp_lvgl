@@ -148,7 +148,7 @@ lv_theme_t * lv_disp_get_theme(lv_disp_t * disp)
     if(disp == NULL) disp = lv_disp_get_default();
     return disp->theme;
 }
-
+#include <stdio.h>
 /**
  * Set the background color of a display
  * @param disp pointer to a display

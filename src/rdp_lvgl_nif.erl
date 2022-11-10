@@ -31,7 +31,11 @@
 -export([
     setup_instance/1,
     disp_set_bg_color/2,
-    flush_done/1
+    flush_done/1,
+    obj_create/2,
+    scr_load/2,
+    spinner_create/3,
+    obj_center/1
     ]).
 
 try_paths([Last], BaseName) ->
@@ -124,8 +128,12 @@ send_key_event(_Inst, _Key, _Btn) -> error(no_nif).
 -spec send_text_event(instance(), buffer()) -> ok.
 send_text_event(_Inst, _Buf) -> error(no_nif).
 
+-type async_msg() ::
+    {msgref(), error, integer(), string()} |
+    {msgref(), ok, term()}.
+
 -spec obj_create(instance(), Parent :: object() | none) ->
-    {ok, object()} | {error, term()}.
+    {async, msgref()} | {error, term()}.
 obj_create(_Inst, _Parent) -> error(no_nif).
 
 -spec scr_load(instance(), object()) -> ok | {error, term()}.

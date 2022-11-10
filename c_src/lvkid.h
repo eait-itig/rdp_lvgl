@@ -68,6 +68,8 @@ struct lvkhdl {
 	enum lvkh_type		 lvkh_type;
 	void			*lvkh_ptr;
 	uint			 lvkh_given;
+	void			*lvkh_fbuf;
+	ErlNifMonitor		 lvkh_mon;
 };
 
 struct lvkid {
@@ -112,6 +114,7 @@ struct lvkinst {
 
 	struct lvkhdl		*lvki_hdl;
 	struct lvkhdl		*lvki_fbhdl;
+	uint			 lvki_flushing;
 
 	enum lvkinst_state	 lvki_state;
 
@@ -165,6 +168,7 @@ struct lvkevt {
 	struct lvkhdl		*lvke_hdl;
 
 	lv_event_code_t		 lvke_evt;
+	uint64_t		 lvke_eudata;
 
 	ErlNifEnv		*lvke_env;
 	ERL_NIF_TERM		 lvke_msgref;
@@ -186,23 +190,25 @@ struct lvkevt *lvk_add_event(struct lvkobj *, lv_event_code_t, ErlNifPid owner,
     ERL_NIF_TERM msgref);
 void lvk_remove_event(struct lvkevt *);
 
-typedef void (*lvk_call_func_t)();
+typedef void *lvk_call_func_t;
 typedef void (*lvk_call_cb_t)(struct lvkid *, uint32_t err, enum arg_type,
     void *arg, void *priv);
 
 void lvk_cmd(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
     void *priv);
 
-void lvk_cast(struct lvkid *kid, enum arg_type rt, lvk_call_func_t f, ...);
-void lvk_icast(struct lvkinst *inst, enum arg_type rt, lvk_call_func_t f, ...);
-void lvk_call_buf(struct lvkid *kid, lvk_call_cb_t cb, void *priv,
+int lvk_cast(struct lvkid *kid, enum arg_type rt, lvk_call_func_t f, ...);
+int lvk_icast(struct lvkinst *inst, enum arg_type rt, lvk_call_func_t f, ...);
+int lvk_call_buf(struct lvkid *kid, lvk_call_cb_t cb, void *priv,
     size_t rtblen, lvk_call_func_t f, ...);
-void lvk_call(struct lvkid *kid, lvk_call_cb_t cb, void *priv,
+int lvk_call(struct lvkid *kid, lvk_call_cb_t cb, void *priv,
     enum arg_type rt, lvk_call_func_t f, ...);
-void lvk_icall(struct lvkinst *inst, lvk_call_cb_t cb, void *priv,
+int lvk_icall(struct lvkinst *inst, lvk_call_cb_t cb, void *priv,
     enum arg_type rt, lvk_call_func_t f, ...);
 
 void lv_group_send_text(lv_group_t *group, const char *text);
+void lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr);
+lv_obj_t *lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent);
 
 #endif /* _LVKID_H */
 

@@ -43,6 +43,7 @@ enum fbuf_state {
 };
 
 struct fbuf {
+	uint		 fb_idx;
 	enum fbuf_state	 fb_state;
 	void		*fb_priv;
 	size_t		 fb_w;
@@ -77,6 +78,10 @@ enum shmrole {
 
 struct shmintf {
 	enum shmrole	 si_role;
+
+	int		 si_pipe[2];
+	pthread_t	 si_pipewatch;
+
 	struct lockpg	*si_lockpg;
 
 	size_t		 si_nfbuf;
@@ -84,34 +89,38 @@ struct shmintf {
 
 	pthread_mutex_t	 si_mtx;	/* protects outgoing ring counters */
 
-	size_t		 si_ncmd;
+	size_t		 si_ncmd;	/* general commands */
 	uint		 si_cc;
 	struct cdesc	*si_cmdr;
 
-	size_t		 si_nresp;
+	size_t		 si_nresp;	/* responses to commands on cmdr */
 	uint		 si_rc;
 	struct rdesc	*si_respr;
 
-	size_t		 si_nev;
+	size_t		 si_nev;	/* async events (lv => erl) */
 	uint		 si_ec;
 	struct edesc	*si_evr;
 
-	size_t		 si_nfl;
+	size_t		 si_nfl;	/* flush areas (lv => erl) */
 	uint		 si_fc;
-	struct fdesc	*si_flushr;
+	struct fdesc	*si_flr;
+
+	size_t		 si_nph;	/* flush done (erl => lv) */
+	uint		 si_pc;
+	struct pdesc	*si_phr;
 };
 
 struct lockpg {
 	pthread_mutex_t	lp_mtx;
-	pthread_cond_t	lp_cmd_db;
-	pthread_cond_t	lp_resp_db;
-	pthread_cond_t	lp_evt_db;
-	pthread_cond_t	lp_flush_db;
+	uint		lp_erl_db;
+	pthread_cond_t	lp_erl_db_cond;
+	uint		lp_lv_db;
+	pthread_cond_t	lp_lv_db_cond;
 };
 
 enum owner {
-	OWNER_ERL	= 0xffe4ff1a,
-	OWNER_LV	= 0x17ff61ff
+	OWNER_ERL	= 0x01344224,
+	OWNER_LV	= 0x009a2112
 };
 
 enum cmd_op {
@@ -123,7 +132,6 @@ enum cmd_op {
 	CMD_FREE_BUF,
 	CMD_SETUP_EVENT,
 	CMD_TEARDOWN_EVENT,
-	CMD_FLUSH_DONE,
 	CMD_EXIT_CHILD
 };
 
@@ -146,13 +154,16 @@ enum arg_type {
 	ARG_UINT64,
 	ARG_UINT32,
 	ARG_UINT16,
-	ARG_UINT8
+	ARG_UINT8,
+	ARG_COLOR,
+	ARG_POINT,
+	ARG_STYLEVAL
 };
 
 struct cdesc_call {
 	uint64_t		cdc_func;
-	uint64_t		cdc_arg[4];
-	uint8_t			cdc_argtype[4];
+	uint64_t		cdc_arg[8];
+	uint8_t			cdc_argtype[8];
 	uint8_t			cdc_rettype;
 	uint16_t		cdc_rbuflen;
 };
@@ -181,10 +192,7 @@ struct cdesc_setupev {
 struct cdesc_teardownev {
 	uint64_t		cdte_obj;
 	uint64_t		cdte_udata;
-};
-
-struct cdesc_flushdone {
-	uint64_t		cdfd_disp_drv;
+	uint64_t		cdte_eudata;
 };
 
 struct cdesc {
@@ -202,9 +210,8 @@ struct cdesc {
 		struct cdesc_freebuf	cd_free_buf;
 		struct cdesc_setupev	cd_setup_event;
 		struct cdesc_teardownev	cd_teardown_event;
-		struct cdesc_flushdone	cd_flush_done;
-		uint64_t		cd_dword[6];
-		uint8_t			cd_data[48];
+		uint64_t		cd_dword[14];
+		uint8_t			cd_data[112];
 	};
 };
 
@@ -213,13 +220,19 @@ struct edesc {
 	uint32_t	ed_code;
 	uint32_t	ed_removed;
 	uint32_t	ed_pad;
-	uint64_t	ed_cookie;
+	uint64_t	ed_udata;
 	uint64_t	ed_target;
 	uint64_t	ed_target_udata;
 	uint64_t	ed_ctarget;
 	uint64_t	ed_ctarget_udata;
 	uint64_t	ed_param;
 	uint64_t	ed_param_data;
+};
+
+struct pdesc {
+	atomic_uint		pd_owner;
+	uint32_t		pd_pad;
+	uint64_t		pd_disp_drv;
 };
 
 enum fbidx_flags {
@@ -259,6 +272,10 @@ struct rdesc_retbuf {
 	char		rdrb_data[44];
 };
 
+struct rdesc_setupev {
+	uint64_t	rdse_eudata;
+};
+
 struct rdesc {
 	atomic_uint		rd_owner;
 	uint8_t			rd_chain;
@@ -267,6 +284,7 @@ struct rdesc {
 	uint64_t		rd_cookie;
 	union {
 		struct rdesc_setup	rd_setup;
+		struct rdesc_setupev	rd_setup_event;
 		struct rdesc_return	rd_return;
 		struct rdesc_retbuf	rd_return_buf;
 		uint8_t			rd_data[48];
@@ -275,7 +293,7 @@ struct rdesc {
 
 #define	FRAMEBUFS_PER_CHILD	32
 #define	FRAMEBUFFER_MAX_SIZE	(64*1024*1024)
-#define	RING_SIZE		8192
+#define	RING_SIZE		16384
 
 #define	RING_BUSYWAIT_ITERS	16384
 
@@ -299,5 +317,14 @@ void shm_finish_evt(struct edesc *);
 void shm_produce_flush(struct shmintf *, const struct fdesc *);
 void shm_consume_flush(struct shmintf *, struct fdesc **);
 void shm_finish_flush(struct fdesc *);
+
+void shm_produce_phlush(struct shmintf *, const struct pdesc *);
+void shm_consume_phlush(struct shmintf *, struct pdesc **);
+void shm_finish_phlush(struct pdesc *);
+
+void shm_await_doorbell(struct shmintf *shm);
+void shm_ring_doorbell(struct shmintf *shm);
+uint shm_read_doorbell(struct shmintf *shm);
+void shm_await_doorbell_v(struct shmintf *shm, uint orig);
 
 #endif /* _SHM_H */
