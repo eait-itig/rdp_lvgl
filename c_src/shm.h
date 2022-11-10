@@ -160,7 +160,9 @@ enum arg_type {
 	ARG_UINT8,
 	ARG_COLOR,
 	ARG_POINT,
-	ARG_STYLEVAL
+	ARG_STYLEVAL,
+	ARG_INLINE_BUF,
+	ARG_INLINE_STR
 };
 
 struct cdesc_call {
@@ -169,6 +171,9 @@ struct cdesc_call {
 	uint8_t			cdc_argtype[8];
 	uint8_t			cdc_rettype;
 	uint16_t		cdc_rbuflen;
+	uint8_t			cdc_ibuf_len;
+	uint8_t			cdc_ibuf_idx;
+	uint8_t			cdc_ibuf[27];
 };
 
 struct cdesc_setudata {
@@ -178,7 +183,7 @@ struct cdesc_setudata {
 
 struct cdesc_copybuf {
 	uint32_t		cdcs_len;
-	char			cdcs_data[44];
+	char			cdcs_data[108];
 };
 
 struct cdesc_freebuf {

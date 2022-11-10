@@ -44,10 +44,15 @@
     choose_format/3
     ]).
 
+-export([start/0]).
+
 -record(?MODULE, {
     renderer :: pid(),
     inst :: reference()
     }).
+
+start() ->
+    rdp_server_sup:start_link(3389, ?MODULE).
 
 %% @arg Peer  the peer address (IPv4 or IPv6) connecting
 init(_Peer) ->
@@ -118,6 +123,16 @@ flush_loop(Srv, Inst, MsgRef, Bitmaps0) ->
             flush_done(Srv, Inst, MsgRef)
     end.
 
+setup_cursor(Inst) ->
+    {async, MsgRef0} = rdp_lvgl_nif:disp_get_layer_sys(Inst),
+    receive {MsgRef0, ok, SysLayer} -> ok end,
+    {async, MsgRef1} = rdp_lvgl_nif:img_create(SysLayer),
+    receive {MsgRef1, ok, Img} -> ok end,
+    {async, MsgRef2} = rdp_lvgl_nif:img_set_src(Img, "A:priv/mouse_cursor.png"),
+    receive {MsgRef2, ok} -> ok end,
+    {async, MsgRef3} = rdp_lvgl_nif:set_mouse_cursor(Inst, Img),
+    receive {MsgRef3, ok} -> ok end.
+
 init_ui(Srv, S = #?MODULE{}) ->
     {W, H, 16} = rdp_server:get_canvas(Srv),
     Fsm = self(),
@@ -128,6 +143,7 @@ init_ui(Srv, S = #?MODULE{}) ->
         flush_loop(Srv, Inst, MsgRef, [])
     end),
     receive {nif_inst, Inst} -> ok end,
+    setup_cursor(Inst),
     {async, MsgRef0} = rdp_lvgl_nif:disp_set_bg_color(Inst, {16#FF, 16#30, 16#30}),
     {async, MsgRef1} = rdp_lvgl_nif:obj_create(Inst, none),
     receive {MsgRef0, ok} -> ok end,

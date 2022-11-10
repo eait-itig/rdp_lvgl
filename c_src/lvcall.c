@@ -28,13 +28,49 @@
 #include "lvcall.h"
 
 void
-lv_do_call(struct shmintf *shm, struct cdesc *cd)
+lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 {
-	struct cdesc_call *cdc = &cd->cd_call;
-	struct rdesc rd;
+	struct cdesc_call *cdc = &cd[0]->cd_call;
+	struct rdesc rd[8];
 	uint64_t rv;
 	lv_obj_t *obj;
-	/*uint i;*/
+	char ibuf[256];
+	uint i;
+	size_t rem, off, take;
+	uint8_t *data;
+	enum arg_type rt = cdc->cdc_rettype;
+
+	if (cdc->cdc_ibuf_len > 0) {
+		bzero(ibuf, sizeof (ibuf));
+		rem = cdc->cdc_ibuf_len;
+		off = 0;
+
+		take = sizeof (cdc->cdc_ibuf);
+		if (take > rem)
+			take = rem;
+
+		bcopy(cdc->cdc_ibuf, ibuf, take);
+		off += take;
+		rem -= take;
+
+		for (i = 1; i < ncd; ++i) {
+			take = sizeof (cd[i]->cd_data);
+			if (take > rem)
+				take = rem;
+			bcopy(cd[i]->cd_data, &ibuf[off], take);
+			off += take;
+			rem -= take;
+		}
+		assert(rem == 0);
+
+		assert(cdc->cdc_argtype[cdc->cdc_ibuf_idx] == ARG_INLINE_BUF ||
+		    cdc->cdc_argtype[cdc->cdc_ibuf_idx] == ARG_INLINE_STR);
+		cdc->cdc_argtype[cdc->cdc_ibuf_idx] = ARG_PTR;
+		cdc->cdc_arg[cdc->cdc_ibuf_idx] = (uint64_t)ibuf;
+	}
+
+	if (rt == ARG_INLINE_BUF || rt == ARG_INLINE_STR)
+		cdc->cdc_rettype = ARG_BUFPTR;
 
 	/*fprintf(stderr, "call to %p\r\n", (void *)cdc->cdc_func);
 	fprintf(stderr, "rtype = %u\r\n", cdc->cdc_rettype);
@@ -44,31 +80,79 @@ lv_do_call(struct shmintf *shm, struct cdesc *cd)
 		if (cdc->cdc_argtype[i] == ARG_NONE)
 			break;
 	}*/
+
 	rv = lv_do_real_call(cdc);
+
 	/*fprintf(stderr, "rv = %lx\r\n", rv);*/
 
-	switch (cdc->cdc_rettype) {
+	switch (rt) {
+	case ARG_INLINE_STR:
+		rem = strlen((const char *)rv);
+		assert(rem < UINT8_MAX);
+		cdc->cdc_rbuflen = rem;
+		/* FALL THROUGH */
+	case ARG_INLINE_BUF:
+		assert(cdc->cdc_rbuflen > 0);
+
+		data = (uint8_t *)rv;
+
+		rem = cdc->cdc_rbuflen;
+		off = 0;
+
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return_buf = (struct rdesc_retbuf){
+				.rdrb_len = rem,
+			}
+		};
+
+		take = sizeof (rd[0].rd_return_buf.rdrb_data);
+		if (take > rem)
+			take = rem;
+		bcopy(data, rd[0].rd_return_buf.rdrb_data, take);
+		rem -= take;
+		off += take;
+
+		i = 1;
+		while (i < 8 && rem > 0) {
+			rd[i - 1].rd_chain = 1;
+			rd[i] = (struct rdesc){
+				.rd_chain = 0,
+				.rd_cookie = cd[0]->cd_cookie,
+			};
+			take = sizeof (rd[i].rd_data);
+			if (take > rem)
+				take = rem;
+			bcopy(&data[off], rd[i].rd_data, take);
+			rem -= take;
+			off += take;
+			++i;
+		}
+
+		shm_produce_rsp(shm, rd, i);
+		break;
 	case ARG_OBJPTR:
 		obj = (lv_obj_t *)rv;
-		rd = (struct rdesc){
+		rd[0] = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd->cd_cookie,
+			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_class = (uint64_t)lv_obj_get_class(obj),
 				.rdr_udata = (uint64_t)lv_obj_get_user_data(obj),
 			}
 		};
-		shm_produce_rsp(shm, &rd, 1);
+		shm_produce_rsp(shm, rd, 1);
 		break;
 	default:
-		rd = (struct rdesc){
+		rd[0] = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd->cd_cookie,
+			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 			}
 		};
-		shm_produce_rsp(shm, &rd, 1);
+		shm_produce_rsp(shm, rd, 1);
 	}
 }

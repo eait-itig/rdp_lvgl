@@ -533,10 +533,6 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	fprintf(stderr, "created mouse_drv %p => %p\r\n", &inst->lvi_mouse_drv,
 	    inst->lvi_mouse);
 
-	inst->lvi_cursor = lv_img_create(lv_disp_get_layer_sys(inst->lvi_disp));
-	lv_img_set_src(inst->lvi_cursor, LV_SYMBOL_GPS);
-	lv_indev_set_cursor(inst->lvi_mouse, inst->lvi_cursor);
-
 	lv_indev_drv_init(&inst->lvi_kbd_drv);
 	inst->lvi_kbd_drv.type = LV_INDEV_TYPE_KEYPAD;
 	inst->lvi_kbd_drv.read_cb = lvkid_lv_read_kbd_cb;
@@ -806,9 +802,8 @@ lvkid_lv_cmd_ring(void *arg)
 			lvkid_lv_cmd_set_udata(kid, shm, cd[0]);
 			break;
 		case CMD_CALL:
-			assert(ncd == 1);
 			pthread_mutex_lock(&lv_mtx);
-			lv_do_call(shm, cd[0]);
+			lv_do_call(shm, cd, ncd);
 			pthread_mutex_unlock(&lv_mtx);
 			break;
 		case CMD_COPY_BUF:
@@ -973,6 +968,8 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	lv_point_t pt;
 	lv_style_value_t stv;
 	uint i;
+	ErlNifBinary bin;
+	size_t take, pos, rem;
 
 	if (call->lvkc_cb == NULL) {
 		free(call);
@@ -987,9 +984,8 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		return;
 	}
 
-	if (call->lvkc_rt == ARG_BUFPTR) {
-		ErlNifBinary bin;
-		size_t take, pos, rem;
+	if (call->lvkc_rt == ARG_INLINE_BUF ||
+	    call->lvkc_rt == ARG_INLINE_STR) {
 		rdrb = &rd[0]->rd_return_buf;
 
 		enif_alloc_binary(rdrb->rdrb_len, &bin);
@@ -1014,7 +1010,7 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		}
 		assert(rem == 0);
 
-		(*call->lvkc_cb)(kid, 0, ARG_BUFPTR, &bin, call->lvkc_priv);
+		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &bin, call->lvkc_priv);
 
 		free(call);
 		return;
@@ -1041,10 +1037,12 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, NULL, call->lvkc_priv);
 		break;
 	case ARG_OBJPTR:
-	case ARG_BUFPTR:
+	case ARG_INLINE_STR:
+	case ARG_INLINE_BUF:
 		/* handled above */
 		break;
 	case ARG_PTR:
+	case ARG_BUFPTR:
 	case ARG_UINT64:
 		u64 = rdr->rdr_val;
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &u64, call->lvkc_priv);
@@ -1087,13 +1085,18 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	struct lvkcall *call;
 	struct lvkobj *obj;
 	struct lvkbuf *buf;
-	struct cdesc cd;
+	struct cdesc cd[8];
+	uint ncd;
 	uint8_t argtype[8] = { ARG_NONE };
 	uint64_t arg[8] = { 0 };
 	lv_color_t *col;
 	lv_point_t *pt;
 	lv_style_value_t *stv;
 	uint i;
+	uint8_t *ibuf = NULL;
+	size_t ibuflen = 0;
+	uint ibufidx = UINT8_MAX;
+	size_t rem, off, take;
 
 	if (inst == NULL)
 		assert(rt != ARG_OBJPTR);
@@ -1144,6 +1147,16 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			assert(sizeof (*stv) <= sizeof (uint64_t));
 			bcopy(stv, &arg[i], sizeof (*stv));
 			break;
+		case ARG_INLINE_BUF:
+			ibuf = va_arg(ap, uint8_t *);
+			ibuflen = va_arg(ap, size_t);
+			ibufidx = i;
+			break;
+		case ARG_INLINE_STR:
+			ibuf = va_arg(ap, uint8_t *);
+			ibuflen = strlen((const char *)ibuf) + 1;
+			ibufidx = i;
+			break;
 		}
 	}
 
@@ -1154,19 +1167,51 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	call->lvkc_rt = rt;
 	call->lvkc_inst = inst;
 
-	cd = (struct cdesc){
+	cd[0] = (struct cdesc){
 		.cd_op = CMD_CALL,
+		.cd_chain = 0,
 		.cd_call = (struct cdesc_call){
 			.cdc_func = (uint64_t)f,
 			.cdc_rettype = rt,
 			.cdc_rbuflen = rtblen,
+			.cdc_ibuf_len = ibuflen,
+			.cdc_ibuf_idx = ibufidx,
 		},
 	};
 	for (i = 0; i < 8; ++i) {
-		cd.cd_call.cdc_argtype[i] = argtype[i];
-		cd.cd_call.cdc_arg[i] = arg[i];
+		cd[0].cd_call.cdc_argtype[i] = argtype[i];
+		cd[0].cd_call.cdc_arg[i] = arg[i];
 	}
-	lvk_cmd(kid, &cd, 1, lvk_call_cb, call);
+
+	rem = ibuflen;
+	off = 0;
+
+	if (rem > 0) {
+		take = sizeof (cd[0].cd_call.cdc_ibuf);
+		if (take > rem)
+			take = rem;
+		bcopy(&ibuf[off], cd[0].cd_call.cdc_ibuf, take);
+		rem -= take;
+		off += take;
+	}
+
+	ncd = 1;
+	while (ncd < 8 && rem > 0) {
+		cd[ncd - 1].cd_chain = 1;
+		cd[ncd] = (struct cdesc){
+			.cd_op = CMD_CALL,
+			.cd_chain = 0,
+		};
+		take = sizeof (cd[ncd].cd_data);
+		if (take > rem)
+			take = rem;
+		bcopy(&ibuf[off], cd[ncd].cd_data, take);
+		rem -= take;
+		off += take;
+		++ncd;
+	}
+
+	lvk_cmd(kid, cd, ncd, lvk_call_cb, call);
 }
 
 int

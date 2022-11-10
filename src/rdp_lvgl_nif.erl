@@ -38,7 +38,11 @@
     obj_center/1,
     send_pointer_event/3,
     send_key_event/3,
-    send_text_event/2
+    send_text_event/2,
+    img_create/1,
+    disp_get_layer_sys/1,
+    img_set_src/2,
+    set_mouse_cursor/2
     ]).
 
 try_paths([Last], BaseName) ->
@@ -97,6 +101,9 @@ init() ->
     scroll_end | scroll | gesture | key | focused | defocused | leave |
     value_changed | insert | refresh | ready | cancel.
 
+-type errno() :: {error, integer(), string()}.
+-type async_return(_MsgType) :: {async, msgref()} | errno() | {error, term()}.
+
 -spec setup_instance(size()) ->
     {ok, instance(), msgref()} | {error, term()}.
 setup_instance(_Size) -> error(no_nif).
@@ -113,7 +120,7 @@ setup_event(_Obj, _Type) -> error(no_nif).
     {msgref(), flush, rect(), pixeldata()} |
     {msgref(), flush_sync}.
 
--spec flush_done(instance()) -> ok.
+-spec flush_done(instance()) -> ok | {error, term()}.
 flush_done(_Inst) -> error(no_nif).
 
 -spec make_buffer(binary()) -> {ok, buffer()}.
@@ -122,13 +129,13 @@ make_buffer(_Data) -> error(no_nif).
 -spec read_framebuffer(instance(), rect()) -> {ok, pixeldata()}.
 read_framebuffer(_Inst, _Rect) -> error(no_nif).
 
--spec send_pointer_event(instance(), point(), btn_state()) -> ok.
+-spec send_pointer_event(instance(), point(), btn_state()) -> ok | {error, term()}.
 send_pointer_event(_Inst, _Pt, _Btn) -> error(no_nif).
 
--spec send_key_event(instance(), key(), btn_state()) -> ok.
+-spec send_key_event(instance(), key(), btn_state()) -> ok | {error, term()}.
 send_key_event(_Inst, _Key, _Btn) -> error(no_nif).
 
--spec send_text_event(instance(), buffer()) -> ok.
+-spec send_text_event(instance(), buffer()) -> ok | {error, term()}.
 send_text_event(_Inst, _Buf) -> error(no_nif).
 
 -type async_msg() ::
@@ -136,21 +143,37 @@ send_text_event(_Inst, _Buf) -> error(no_nif).
     {msgref(), ok, term()}.
 
 -spec obj_create(instance(), Parent :: object() | none) ->
-    {async, msgref()} | {error, term()}.
+    async_return({msgref(), ok, object()}).
 obj_create(_Inst, _Parent) -> error(no_nif).
 
--spec scr_load(instance(), object()) -> ok | {error, term()}.
+-spec scr_load(instance(), object()) -> async_return({msgref(), ok}).
 scr_load(_Inst, _Screen) -> error(no_nif).
 
--spec disp_set_bg_color(instance(), color()) -> ok | {error, term()}.
+-spec disp_set_bg_color(instance(), color()) -> async_return({msgref(), ok}).
 disp_set_bg_color(_Inst, _Color) -> error(no_nif).
 
 -spec spinner_create(object(), Time :: msec(), ArcLen :: degrees()) ->
-    {ok, object()} | {error, term()}.
+    async_return({msgref(), ok, object()}).
 spinner_create(_Obj, _Time, _ArcLen) -> error(no_nif).
 
--spec obj_set_size(object(), size()) -> ok | {error, term()}.
+-spec obj_set_size(object(), size()) -> async_return({msgref(), ok}).
 obj_set_size(_Obj, _Size) -> error(no_nif).
 
--spec obj_center(object()) -> ok | {error, term()}.
+-spec obj_center(object()) -> async_return({msgref(), ok}).
 obj_center(_Obj) -> error(no_nif).
+
+-spec img_create(object()) -> async_return({msgref(), ok, object()}).
+img_create(_Parent) -> error(no_nif).
+
+-type file_path() :: string().
+-type symbol() :: gps.
+-type img_src() :: file_path() | symbol().
+
+-spec img_set_src(object(), img_src()) -> async_return({msgref(), ok}).
+img_set_src(_Img, _Src) -> error(no_nif).
+
+-spec disp_get_layer_sys(instance()) -> async_return({msgref(), ok, object()}).
+disp_get_layer_sys(_Inst) -> error(no_nif).
+
+-spec set_mouse_cursor(instance(), object()) -> async_return({msgref(), ok}).
+set_mouse_cursor(_Inst, _Img) -> error(no_nif).
