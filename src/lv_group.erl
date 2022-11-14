@@ -23,29 +23,41 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(lv).
+-module(lv_group).
 
--export_type([
-    object/0, instance/0, event/0, style/0, error/0, rect/0, point/0, size/0,
-    btn/0, label/0, scr/0, img/0, spinner/0, textarea/0
-	]).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--opaque object() :: rdp_lvgl_nif:object().
--opaque instance() :: rdp_lvgl_nif:instance().
--opaque event() :: rdp_lvgl_nif:event().
--opaque style() :: rdp_lvgl_nif:style().
--opaque group() :: rdp_lvgl_nif:group().
+-include("async_wrappers.hrl").
 
--type error() :: {error, integer(), string()} | {error, term()}.
+-spec create(lv:instance()) -> {ok, lv:group()} | lv:error().
+create(Inst) ->
+    ?async_wrapper(group_create, Inst).
 
--type px() :: integer().
--type rect() :: {X1 :: px(), Y1 :: px(), X2 :: px(), Y2 :: px()}.
--type point() :: {X :: px(), Y :: px()}.
--type size() :: {Width :: px(), Height :: px()}.
+-spec add_obj(lv:group(), lv:object()) -> ok | lv:error().
+add_obj(Group, Obj) ->
+    ?async_void_wrapper(group_add_obj, Group, Obj).
 
--type btn() :: object().
--type label() :: object().
--type scr() :: object().
--type img() :: object().
--type spinner() :: object().
--type textarea() :: object().
+-spec remove_obj(lv:group(), lv:object()) -> ok | lv:error().
+remove_obj(Group, Obj) ->
+    ?async_void_wrapper(group_remove_obj, Group, Obj).
+
+-spec remove_all_objs(lv:group()) -> ok | lv:error().
+remove_all_objs(Group) ->
+    ?async_void_wrapper(group_remove_all_objs, Group).
+
+-spec set_wrap(lv:group(), boolean()) -> ok | lv:error().
+set_wrap(Group, State) ->
+    ?async_void_wrapper(group_set_wrap, Group, State).
+
+-spec focus_freeze(lv:group(), boolean()) -> ok | lv:error().
+focus_freeze(Group, State) ->
+    ?async_void_wrapper(group_focus_freeze, Group, State).
+
+-spec get_focused(lv:group()) -> {ok, lv:object()} | lv:error().
+get_focused(Group) ->
+    ?async_wrapper(group_get_focused, Group).
+
+-spec focus_obj(lv:object()) -> ok | lv:error().
+focus_obj(Obj) ->
+    ?async_wrapper(group_focus_obj, Obj).

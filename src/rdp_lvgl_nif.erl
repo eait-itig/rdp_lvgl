@@ -26,44 +26,10 @@
 %% @private
 -module(rdp_lvgl_nif).
 
--on_load(init/0).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([
-    btn_create/1,
-    disp_get_layer_sys/1,
-    disp_set_bg_color/2,
-    flush_done/1,
-    img_create/1,
-    img_set_offset/2,
-    img_set_src/2,
-    label_create/1,
-    label_set_text/2,
-    obj_add_flags/2,
-    obj_add_style/2,
-    obj_align/2,
-    obj_align/3,
-    obj_align_to/3,
-    obj_align_to/4,
-    obj_center/1,
-    obj_clear_flags/2,
-    obj_create/2,
-    obj_has_all_flags/2,
-    obj_has_any_flags/2,
-    obj_set_size/2,
-    scr_load/2,
-    send_key_event/3,
-    send_pointer_event/3,
-    send_text_event/2,
-    set_mouse_cursor/2,
-    setup_event/2,
-    setup_instance/1,
-    spinner_create/3,
-    style_create/1,
-    style_set_flex_align/4,
-    style_set_flex_flow/2,
-    style_set_layout/2,
-    style_set_bg_opa/2
-    ]).
+-on_load(init/0).
 
 -export_type([
     instance/0, buffer/0, object/0, event/0, msgref/0, group/0,
@@ -101,10 +67,9 @@ init() ->
 -type object() :: reference().
 -type event() :: reference().
 -type style() :: reference().
+-type group() :: reference().
 
 -type msgref() :: reference().
-
--type group() :: object().
 
 -type pixeldata() :: iolist().
 
@@ -133,10 +98,16 @@ setup_instance(_Size) -> error(no_nif).
 -spec setup_event(object(), lv_event:type()) -> {async, event(), msgref()} | lv:error().
 setup_event(_Obj, _Type) -> error(no_nif).
 
+-spec set_kbd_group(instance(), group()) -> async_return().
+set_kbd_group(_Inst, _Group) -> error(no_nif).
+
 -type instance_msg() ::
     {msgref(), setup_done} |
     {msgref(), flush, lv:rect(), pixeldata()} |
     {msgref(), flush_sync}.
+
+-spec prefork(integer()) -> ok.
+prefork(_N) -> error(no_nif).
 
 -spec flush_done(instance()) -> ok | {error, term()}.
 flush_done(_Inst) -> error(no_nif).
@@ -245,3 +216,69 @@ obj_has_any_flags(_Obj, _Flags) -> error(no_nif).
 
 -spec style_set_bg_opa(style(), integer()) -> async_return().
 style_set_bg_opa(_Style, _Opacity) -> error(no_nif).
+
+-spec textarea_create(object()) -> async_return(object()).
+textarea_create(_Parent) -> error(no_nif).
+
+-spec textarea_set_text(object(), string()) -> async_return().
+textarea_set_text(_Obj, _Text) -> error(no_nif).
+
+-spec textarea_set_password_mode(object(), boolean()) -> async_return().
+textarea_set_password_mode(_Obj, _State) -> error(no_nif).
+
+-spec textarea_set_one_line(object(), boolean()) -> async_return().
+textarea_set_one_line(_Obj, _State) -> error(no_nif).
+
+-spec textarea_set_cursor_hidden(object(), boolean()) -> async_return().
+textarea_set_cursor_hidden(_Obj, _State) -> error(no_nif).
+
+-spec textarea_set_placeholder_text(object(), string()) -> async_return().
+textarea_set_placeholder_text(_Obj, _Text) -> error(no_nif).
+
+-spec textarea_add_text(object(), string()) -> async_return().
+textarea_add_text(_Obj, _Text) -> error(no_nif).
+
+-spec textarea_set_accepted_chars(object(), string()) -> async_return().
+textarea_set_accepted_chars(_Obj, _Chars) -> error(no_nif).
+
+-spec textarea_set_max_length(object(), integer()) -> async_return().
+textarea_set_max_length(_Obj, _MaxLength) -> error(no_nif).
+
+-spec textarea_set_text_sel(object(), boolean()) -> async_return().
+textarea_set_text_sel(_Obj, _State) -> error(no_nif).
+
+-spec textarea_get_text(object()) -> async_return(binary()).
+textarea_get_text(_Obj) -> error(no_nif).
+
+-spec textarea_clear_selection(object()) -> async_return().
+textarea_clear_selection(_Obj) -> error(no_nif).
+
+-spec textarea_set_cursor_click_pos(object(), boolean()) -> async_return().
+textarea_set_cursor_click_pos(_Obj, _State) -> error(no_nif).
+
+-spec textarea_set_cursor_pos(object(), integer()) -> async_return().
+textarea_set_cursor_pos(_Obj, _MaxLength) -> error(no_nif).
+
+-spec group_create(instance()) -> async_return(group()).
+group_create(_Inst) -> error(no_nif).
+
+-spec group_add_obj(group(), object()) -> async_return().
+group_add_obj(_Group, _Obj) -> error(no_nif).
+
+-spec group_remove_obj(group(), object()) -> async_return().
+group_remove_obj(_Group, _Obj) -> error(no_nif).
+
+-spec group_remove_all_objs(group()) -> async_return().
+group_remove_all_objs(_Group) -> error(no_nif).
+
+-spec group_get_focused(group()) -> async_return(object()).
+group_get_focused(_Group) -> error(no_nif).
+
+-spec group_set_wrap(group(), boolean()) -> async_return().
+group_set_wrap(_Group, _State) -> error(no_nif).
+
+-spec group_focus_obj(object()) -> async_return().
+group_focus_obj(_Obj) -> error(no_nif).
+
+-spec group_focus_freeze(group(), boolean()) -> async_return().
+group_focus_freeze(_Group, _State) -> error(no_nif).

@@ -623,7 +623,6 @@ pid_t
 shm_fork(struct shmintf *shm)
 {
 	pid_t kid;
-	int rc;
 	int fd;
 
 	pthread_mutex_lock(&shm->si_cc_mtx);

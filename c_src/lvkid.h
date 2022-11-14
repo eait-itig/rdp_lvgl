@@ -46,7 +46,8 @@ struct lvkcall;
 struct lvkbuf;
 struct lvkobj;
 struct lvkstyle;
-LIST_HEAD(lvkid_list, lvkid);
+struct lvkgroup;
+TAILQ_HEAD(lvkid_list, lvkid);
 LIST_HEAD(lvkcmd_list, lvkcmd);
 LIST_HEAD(lvkinst_list, lvkinst);
 LIST_HEAD(lvkcall_list, lvkcall);
@@ -54,6 +55,7 @@ LIST_HEAD(lvkbuf_list, lvkbuf);
 LIST_HEAD(lvkobj_list, lvkobj);
 LIST_HEAD(lvkevt_list, lvkevt);
 LIST_HEAD(lvkstyle_list, lvkstyle);
+LIST_HEAD(lvkgroup_list, lvkgroup);
 
 enum lvkh_type {
 	LVK_NONE	= 0,
@@ -62,7 +64,8 @@ enum lvkh_type {
 	LVK_OBJ,
 	LVK_BUF,
 	LVK_EVT,
-	LVK_STY
+	LVK_STY,
+	LVK_GRP
 };
 
 struct lvkhdl {
@@ -80,7 +83,7 @@ struct lvkid {
 	pthread_rwlock_t	 lvk_lock;
 	pid_t			 lvk_pid;
 	size_t			 lvk_busy;
-	LIST_ENTRY(lvkid)	 lvk_entry;
+	TAILQ_ENTRY(lvkid)	 lvk_entry;
 
 	struct lvkinst_list	 lvk_insts;
 	struct lvkcmd_list	 lvk_cmds;
@@ -131,6 +134,7 @@ struct lvkinst {
 
 	struct lvkobj_list	 lvki_objs;
 	struct lvkstyle_list	 lvki_styles;
+	struct lvkgroup_list	 lvki_groups;
 
 	ErlNifEnv		*lvki_env;
 	ERL_NIF_TERM		 lvki_msgref;
@@ -145,6 +149,16 @@ struct lvkstyle {
 	struct lvkhdl		*lvks_hdl;
 
 	lvaddr_t		 lvks_ptr;
+};
+
+struct lvkgroup {
+	struct lvkid		*lvkg_kid;
+	LIST_ENTRY(lvkgroup)	 lvkg_entry;
+	struct lvkinst		*lvkg_inst;
+
+	struct lvkhdl		*lvkg_hdl;
+
+	lvaddr_t		 lvkg_ptr;
 };
 
 struct lvkbuf {
@@ -190,8 +204,11 @@ struct lvkevt {
 };
 
 extern ErlNifResourceType *lvkid_hdl_rsrc;
+extern ErlNifResourceType *lvkid_fbhdl_rsrc;
 
 void lvk_open_resource_types(ErlNifEnv *env);
+
+void lvkid_prefork(uint n);
 
 struct lvkinst *lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref,
     uint width, uint height);

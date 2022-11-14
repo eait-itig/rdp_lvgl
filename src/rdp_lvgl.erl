@@ -30,7 +30,7 @@
 -export([start/2, stop/1]).
 
 start(_StartType, _StartArgs) ->
-    
+    rdp_lvgl_nif:prefork(2),
     rdp_lvgl_sup:start_link().
 
 stop(_State) ->

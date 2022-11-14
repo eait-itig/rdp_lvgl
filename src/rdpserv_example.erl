@@ -46,10 +46,15 @@
 
 -export([start/0]).
 
+-type modkey() :: alt | ctrl | shift | capslock | numlock.
+
 -record(?MODULE, {
     renderer :: pid(),
     inst :: rdp_lvgl_nif:instance(),
-    ev :: rdp_lvgl_nif:event()
+    ev :: rdp_lvgl_nif:event(),
+    keydown = none :: none | term(),
+    modkeys = #{alt => false, ctrl => false, shift => false,
+        capslock => false, numlock => false} :: #{modkey() => boolean()}
     }).
 
 start() ->
@@ -145,6 +150,7 @@ init_ui(Srv, S = #?MODULE{}) ->
     receive {nif_inst, Inst} -> ok end,
 
     {ok, Screen} = lv_scr:create(Inst),
+    {ok, Group} = lv_group:create(Inst),
 
     {ok, Flex} = lv_obj:create(Inst, Screen),
 
@@ -160,16 +166,27 @@ init_ui(Srv, S = #?MODULE{}) ->
     {ok, Lbl} = lv_label:create(Flex),
     ok = lv_label:set_text(Lbl, "Welcome!"),
 
+    {ok, Text} = lv_textarea:create(Flex),
+    ok = lv_textarea:set_one_line(Text, true),
+    ok = lv_textarea:set_placeholder_text(Text, "Username"),
+    ok = lv_group:add_obj(Group, Text),
+
+    {ok, PwText} = lv_textarea:create(Flex),
+    ok = lv_textarea:set_one_line(PwText, true),
+    ok = lv_textarea:set_password_mode(PwText, true),
+    ok = lv_textarea:set_placeholder_text(PwText, "Password"),
+    ok = lv_group:add_obj(Group, PwText),
+
     {ok, Btn} = lv_btn:create(Flex),
     {ok, BtnLbl} = lv_label:create(Btn),
     ok = lv_label:set_text(BtnLbl, "Login"),
     {ok, Event, MsgRef} = lv_event:setup(Btn, pressed),
 
-    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
-
     ok = lv_scr:load(Inst, Screen),
 
+    ok = lv_indev:set_group(Inst, keyboard, Group),
     setup_cursor(Inst),
+    ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
 
     {ok, #?MODULE{renderer = Pid, inst = Inst, ev = Event}}.
 
@@ -192,11 +209,53 @@ handle_event(#ts_inpevt_mouse{point = Pt, action = up}, Srv, S = #?MODULE{}) ->
 handle_event(#ts_inpevt_mouse{}, Srv, S = #?MODULE{}) ->
     {ok, S};
 
-handle_event(#ts_inpevt_key{code = Code, action = down}, Srv, S = #?MODULE{}) ->
-    {ok, S};
-
-handle_event(#ts_inpevt_key{code = Code, action = up}, Srv, S = #?MODULE{}) ->
-    {ok, S};
+handle_event(#ts_inpevt_key{code = C, action = A}, Srv, S0 = #?MODULE{})
+                        when (C =:= alt) or (C =:= shift) or (C =:= ctrl) ->
+    #?MODULE{modkeys = MK0} = S0,
+    MK1 = case A of
+        down -> MK0#{C => true};
+        up -> MK0#{C => false}
+    end,
+    {ok, S0#?MODULE{modkeys = MK1}};
+handle_event(#ts_inpevt_key{code = caps, action = down}, Srv, S0 = #?MODULE{}) ->
+    #?MODULE{modkeys = MK0} = S0,
+    MK1 = MK0#{capslock => not (maps:get(capslock, MK0, false))},
+    {ok, S0#?MODULE{modkeys = MK1}};
+handle_event(#ts_inpevt_key{code = num, action = down}, Srv, S0 = #?MODULE{}) ->
+    #?MODULE{modkeys = MK0} = S0,
+    MK1 = MK0#{numlock => not (maps:get(numlock, MK0, false))},
+    {ok, S0#?MODULE{modkeys = MK1}};
+handle_event(#ts_inpevt_key{code = Code, flags = F, action = down}, Srv, S0 = #?MODULE{keydown = none}) ->
+    #?MODULE{inst = Inst, modkeys = MK} = S0,
+    Ext = lists:member(extended, F),
+    S1 = S0#?MODULE{keydown = {Ext, Code}},
+    lager:debug("ts code = ~p, ext = ~p, mk = ~p", [Code, Ext, MK]),
+    case ts_key_to_lv(Code, Ext, MK) of
+        null -> {ok, S1};
+        paste -> {ok, S1};
+        copy -> {ok, S1};
+        select_all -> {ok, S1};
+        LvKey ->
+            ok = lv_indev:send_key_event(Inst, LvKey, pressed),
+            {ok, S1}
+    end;
+handle_event(#ts_inpevt_key{code = Code, flags = F, action = up}, Srv, S0 = #?MODULE{keydown = {Ext, Code}}) ->
+    #?MODULE{inst = Inst, modkeys = MK} = S0,
+    S1 = S0#?MODULE{keydown = none},
+    Ext = lists:member(extended, F),
+    case ts_key_to_lv(Code, Ext, MK) of
+        null -> {ok, S1};
+        paste -> {ok, S1};
+        copy -> {ok, S1};
+        select_all -> {ok, S1};
+        LvKey ->
+            ok = lv_indev:send_key_event(Inst, LvKey, released),
+            {ok, S1}
+    end;
+handle_event(Ev = #ts_inpevt_key{code = Code, action = down}, Srv, S0 = #?MODULE{keydown = {OldExt, OldCode}}) ->
+    F = case OldExt of true -> [extended]; false -> [] end,
+    {ok, S1} = handle_event(#ts_inpevt_key{code = OldCode, flags = F, action = up}, Srv, S0),
+    handle_event(Ev, Srv, S1);
 
 handle_event(#ts_inpevt_key{}, Srv, S = #?MODULE{}) ->
     {ok, S};
@@ -207,10 +266,55 @@ handle_event(#ts_inpevt_unicode{}, Srv, S = #?MODULE{}) ->
 handle_event(#ts_inpevt_wheel{}, Srv, S = #?MODULE{}) ->
     {ok, S};
 
-handle_event(#ts_inpevt_sync{}, Srv, S = #?MODULE{}) ->
-    {ok, S}.
+handle_event(#ts_inpevt_sync{flags = Flags}, Srv, S0 = #?MODULE{}) ->
+    #?MODULE{modkeys = MK0} = S0,
+    MK1 = MK0#{capslock => lists:member(capslock, Flags)},
+    MK2 = MK1#{numlock => lists:member(numlock, Flags)},
+    {ok, S0#?MODULE{modkeys = MK2}}.
 
 terminate(_Reason, #?MODULE{renderer = Pid}) ->
     exit(Pid, kill),
     % any cleanup you need to do at exit
     ok.
+
+ts_key_to_lv({$v, $V}, _, #{ctrl := true}) -> paste;
+ts_key_to_lv({$a, $A}, _, #{ctrl := true}) -> select_all;
+ts_key_to_lv({$c, $C}, _, #{ctrl := true}) -> copy;
+ts_key_to_lv(_, _, #{ctrl := true}) -> null;
+ts_key_to_lv(_, _, #{alt := true}) -> null;
+ts_key_to_lv(esc, _, _) -> esc;
+ts_key_to_lv(bksp, _, _) -> backspace;
+ts_key_to_lv(enter, _, _) -> enter;
+ts_key_to_lv(tab, _, #{shift := false}) -> next;
+ts_key_to_lv(tab, _, #{shift := true}) -> prev;
+ts_key_to_lv(home, true, _) -> home;
+ts_key_to_lv('end', true, _) -> 'end';
+ts_key_to_lv(up, true, _) -> up;
+ts_key_to_lv(down, true, _) -> down;
+ts_key_to_lv(left, true, _) -> left;
+ts_key_to_lv(right, true, _) -> right;
+ts_key_to_lv(del, true, _) -> del;
+ts_key_to_lv(space, _, _) -> $ ;
+ts_key_to_lv(ins, false, #{numlock := true}) -> $0;
+ts_key_to_lv('end', false, #{numlock := true}) -> $1;
+ts_key_to_lv(down, false, #{numlock := true}) -> $2;
+ts_key_to_lv(pgdown, false, #{numlock := true}) -> $3;
+ts_key_to_lv(left, false, #{numlock := true}) -> $4;
+ts_key_to_lv(center, false, #{numlock := true}) -> $5;
+ts_key_to_lv(right, false, #{numlock := true}) -> $6;
+ts_key_to_lv(home, false, #{numlock := true}) -> $7;
+ts_key_to_lv(up, false, #{numlock := true}) -> $8;
+ts_key_to_lv(pgup, false, #{numlock := true}) -> $9;
+ts_key_to_lv(del, false, #{numlock := true}) -> $.;
+ts_key_to_lv('gray+', _, _) -> $+;
+ts_key_to_lv('gray-', _, _) -> $-;
+ts_key_to_lv(prisc, _, _) -> $*;
+ts_key_to_lv({Plain, Shifted}, true, MK) -> Plain;
+ts_key_to_lv({Plain, Shifted}, false, MK) ->
+    case {maps:get(capslock, MK, false), maps:get(shift, MK, false)} of
+        {true, true} when (Plain >= $a) and (Plain =< $z) -> Plain;
+        {true, false} when (Plain >= $a) and (Plain =< $z) -> Shifted;
+        {_, false} -> Plain;
+        {_, true} -> Shifted
+    end;
+ts_key_to_lv(_, _, _) -> null.

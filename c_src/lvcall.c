@@ -34,6 +34,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	struct rdesc rd[8];
 	uint64_t rv;
 	lv_obj_t *obj;
+	lv_group_t *grp;
 	char ibuf[256];
 	uint i;
 	size_t rem, off, take;
@@ -141,6 +142,18 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 				.rdr_val = rv,
 				.rdr_class = (uint64_t)lv_obj_get_class(obj),
 				.rdr_udata = (uint64_t)lv_obj_get_user_data(obj),
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_GRPPTR:
+		grp = (lv_group_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (uint64_t)grp->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);

@@ -154,6 +154,7 @@ enum arg_type {
 	ARG_BUFPTR,
 	ARG_OBJPTR,
 	ARG_STYPTR,
+	ARG_GRPPTR,
 	ARG_PTR,
 	ARG_UINT64,
 	ARG_UINT32,
@@ -179,6 +180,7 @@ struct cdesc_call {
 
 struct cdesc_setudata {
 	uint64_t		cdsu_obj;
+	uint64_t		cdsu_group;
 	uint64_t		cdsu_udata;
 };
 

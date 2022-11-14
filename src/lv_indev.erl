@@ -38,6 +38,7 @@
 -type charcode() :: integer().
 -type key() :: up | down | right | left | esc | del | backspace | enter |
     next | prev | home | 'end' | charcode().
+-type indev() :: keyboard | mouse.
 
 -spec set_mouse_cursor(lv:instance(), lv:object()) -> {ok, lv:object()} | lv:error().
 set_mouse_cursor(Inst, Cursor) ->
@@ -46,3 +47,11 @@ set_mouse_cursor(Inst, Cursor) ->
 -spec send_pointer_event(lv:instance(), lv:point(), state()) -> ok | lv:error().
 send_pointer_event(Inst, Point, State) ->
     rdp_lvgl_nif:send_pointer_event(Inst, Point, State).
+
+-spec send_key_event(lv:instance(), key(), state()) -> ok | lv:error().
+send_key_event(Inst, Key, State) ->
+    rdp_lvgl_nif:send_key_event(Inst, Key, State).
+
+-spec set_group(lv:instance(), indev(), lv:group()) -> ok | lv:error().
+set_group(Inst, keyboard, Group) ->
+    ?async_void_wrapper(set_kbd_group, Inst, Group).

@@ -71,6 +71,7 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 	struct nif_call_data *ncd = priv;
 	struct lvkobj *obj;
 	struct lvkstyle *sty;
+	struct lvkgroup *grp;
 	struct lvkhdl *hdl;
 	uint64_t *u64;
 	uint32_t *u32;
@@ -113,6 +114,15 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		pthread_rwlock_wrlock(&sty->lvks_inst->lvki_lock);
 		hdl = lvkid_make_hdl(LVK_STY, sty, &do_release);
 		pthread_rwlock_unlock(&sty->lvks_inst->lvki_lock);
+		rterm = enif_make_resource(env, hdl);
+		if (do_release)
+			enif_release_resource(hdl);
+		break;
+	case ARG_GRPPTR:
+		grp = rv;
+		pthread_rwlock_wrlock(&grp->lvkg_inst->lvki_lock);
+		hdl = lvkid_make_hdl(LVK_GRP, grp, &do_release);
+		pthread_rwlock_unlock(&grp->lvkg_inst->lvki_lock);
 		rterm = enif_make_resource(env, hdl);
 		if (do_release)
 			enif_release_resource(hdl);
@@ -410,6 +420,46 @@ enter_sty_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct lvkhdl **phdl,
 }
 
 
+static int
+enter_grp_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct lvkhdl **phdl,
+    struct lvkgroup **pgrp, uint wrlock)
+{
+	struct lvkhdl *hdl;
+	struct lvkgroup *grp;
+	struct lvkinst *inst;
+	struct lvkid *kid;
+
+	if (!enif_get_resource(env, term, lvkid_hdl_rsrc, (void **)&hdl)) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "bad_lvgl_handle"), term));
+		return (EINVAL);
+	}
+
+	kid = hdl->lvkh_kid;
+	if (wrlock)
+		pthread_rwlock_wrlock(&kid->lvk_lock);
+	else
+		pthread_rwlock_rdlock(&kid->lvk_lock);
+	if (hdl->lvkh_type != LVK_GRP) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "not_lv_group"), term));
+		pthread_rwlock_unlock(&kid->lvk_lock);
+		return (EBADF);
+	}
+
+	inst = hdl->lvkh_inst;
+	grp = hdl->lvkh_ptr;
+	if (wrlock)
+		pthread_rwlock_wrlock(&inst->lvki_lock);
+	else
+		pthread_rwlock_rdlock(&inst->lvki_lock);
+
+	*phdl = hdl;
+	*pgrp = grp;
+
+	return (0);
+}
+
 static void
 leave_hdl(struct lvkhdl *hdl)
 {
@@ -620,6 +670,156 @@ rlvgl_btn_create(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(parent->lvko_inst, rlvgl_call_cb, ncd,
 	    ARG_OBJPTR, lv_btn_create,
+	    ARG_OBJPTR, parent,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(phdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_group_create(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &hdl, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(inst, rlvgl_call_cb, ncd,
+	    ARG_GRPPTR, lv_group_create,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_group_add_obj(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkgroup *grp;
+	struct lvkobj *obj;
+	struct lvkhdl *ghdl = NULL, *ohdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_grp_hdl(env, argv[0], &ghdl, &grp, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!enif_get_resource(env, argv[1], lvkid_hdl_rsrc, (void **)&ohdl)) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	if (ohdl->lvkh_kid != ghdl->lvkh_kid) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	if (ohdl->lvkh_type != LVK_OBJ) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	if (ohdl->lvkh_inst != grp->lvkg_inst) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	obj = ohdl->lvkh_ptr;
+	assert(obj->lvko_inst == grp->lvkg_inst);
+	assert(obj->lvko_kid == grp->lvkg_kid);
+
+	rc = lvk_icall(grp->lvkg_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_group_add_obj,
+	    ARG_GRPPTR, grp,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(ghdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_create(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *parent;
+	struct lvkhdl *phdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &phdl, &parent, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(parent->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_textarea_create,
 	    ARG_OBJPTR, parent,
 	    ARG_NONE);
 
@@ -855,6 +1055,72 @@ rlvgl_disp_get_layer_sys(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 out:
 	leave_hdl(ihdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_set_kbd_group(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkgroup *grp;
+	struct lvkhdl *ihdl = NULL, *ghdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &ihdl, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!enif_get_resource(env, argv[1], lvkid_hdl_rsrc, (void **)&ghdl)) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	if (ghdl->lvkh_kid != ihdl->lvkh_kid) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	if (ghdl->lvkh_type != LVK_GRP) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	if (ghdl->lvkh_inst != inst) {
+		rv = enif_make_badarg(env);
+		goto out;
+	}
+	grp = ghdl->lvkh_ptr;
+	assert(grp->lvkg_inst == inst);
+	assert(grp->lvkg_kid == inst->lvki_kid);
+
+	rc = lvk_icall(inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_indev_set_group,
+	    ARG_PTR, inst->lvki_kbd,
+	    ARG_GRPPTR, grp,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(ihdl);
+	/* leaving ihdl will drop all the locks */
 	free_ncd(ncd);
 	return (rv);
 }
@@ -1481,6 +1747,282 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_textarea_get_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_INLINE_BUF, lv_textarea_get_text,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	ErlNifBinary bin;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_text,
+	    ARG_OBJPTR, obj,
+	    ARG_INLINE_BUF, bin.data, bin.size,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_placeholder(ErlNifEnv *env, int argc,
+    const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	ErlNifBinary bin;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_placeholder_text,
+	    ARG_OBJPTR, obj,
+	    ARG_INLINE_BUF, bin.data, bin.size,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_one_line(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	uint8_t val;
+	char atom[8];
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	if (strcmp(atom, "true") == 0)
+		val = 1;
+	else if (strcmp(atom, "false") == 0)
+		val = 0;
+	else
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_one_line,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT8, val,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_password_mode(ErlNifEnv *env, int argc,
+    const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	uint8_t val;
+	char atom[8];
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	if (strcmp(atom, "true") == 0)
+		val = 1;
+	else if (strcmp(atom, "false") == 0)
+		val = 0;
+	else
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_password_mode,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT8, val,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_img_set_offset(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct lvkobj *obj;
@@ -2033,7 +2575,7 @@ rlvgl_send_key_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	struct lvkhdl *hdl = NULL;
 	uint key;
 	lv_indev_state_t st;
-	char atm[9];
+	char atm[16];
 	ERL_NIF_TERM rv;
 	int rc;
 
@@ -2089,7 +2631,7 @@ rlvgl_send_key_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icast(inst,
 	    ARG_NONE, lv_ieq_push_kbd,
-	    ARG_PTR, inst->lvki_mouse_drv,
+	    ARG_PTR, inst->lvki_kbd_drv,
 	    ARG_UINT32, st,
 	    ARG_UINT32, key,
 	    ARG_NONE);
@@ -2127,20 +2669,16 @@ rlvgl_flush_done(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	/* Check for an old framebuffer handle. */
 	if (inst->lvki_fbhdl != NULL) {
-		/*
-		 * XXX: should we just delete it like this? this will leave
-		 *      all the binaries dangling...
-		 */
-		inst->lvki_fbhdl->lvkh_type = LVK_NONE;
-		inst->lvki_fbhdl->lvkh_ptr = NULL;
-		inst->lvki_fbhdl->lvkh_inst = NULL;
-		inst->lvki_fbhdl = NULL;
+		rv = enif_make_tuple2(env,
+		    enif_make_atom(env, "error"),
+		    enif_make_atom(env, "busy"));
+		goto out;
 	}
 
 	if (inst->lvki_state != LVKINST_ALIVE || !inst->lvki_flushing) {
 		rv = enif_make_tuple2(env,
 		    enif_make_atom(env, "error"),
-		    enif_make_atom(env, "bad_state"));
+		    enif_make_atom(env, "teardown"));
 		goto out;
 	}
 
@@ -2159,6 +2697,22 @@ out:
 	return (rv);
 }
 
+static ERL_NIF_TERM
+rlvgl_prefork(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	uint n;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_uint(env, argv[0], &n))
+		return (enif_make_badarg(env));
+
+	lvkid_prefork(n);
+
+	return (enif_make_atom(env, "ok"));
+}
+
 static int
 rlvgl_nif_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM info)
 {
@@ -2175,14 +2729,22 @@ static ErlNifFunc nif_funcs[] = {
 	/* control commands */
 	{ "setup_instance", 	1, rlvgl_setup_instance },
 	{ "setup_event",	2, rlvgl_setup_event },
+	{ "set_kbd_group",	2, rlvgl_set_kbd_group },
 	{ "send_pointer_event", 3, rlvgl_send_pointer_event },
 	{ "send_key_event", 	3, rlvgl_send_key_event },
 	{ "flush_done", 	1, rlvgl_flush_done },
+	{ "prefork",		1, rlvgl_prefork },
 
 	/* lvgl APIs */
+	//{ "obj_clear_flags",		2, rlvgl_obj_clear_flags },
+	//{ "obj_has_all_flags",		2, rlvgl_obj_has_all_flags },
+	//{ "obj_has_any_flags",		2, rlvgl_obj_has_any_flags },
+	//{ "style_set_layout",		2, rlvgl_style_set_layout },
 	{ "btn_create",			1, rlvgl_btn_create },
 	{ "disp_get_layer_sys", 	1, rlvgl_disp_get_layer_sys },
 	{ "disp_set_bg_color", 		2, rlvgl_disp_set_bg_color },
+	{ "group_add_obj",		2, rlvgl_group_add_obj },
+	{ "group_create",		1, rlvgl_group_create },
 	{ "img_create", 		1, rlvgl_img_create },
 	{ "img_set_offset", 		2, rlvgl_img_set_offset },
 	{ "img_set_src", 		2, rlvgl_img_set_src },
@@ -2195,19 +2757,21 @@ static ErlNifFunc nif_funcs[] = {
 	{ "obj_align_to", 		3, rlvgl_obj_align_to },
 	{ "obj_align_to", 		4, rlvgl_obj_align_to },
 	{ "obj_center", 		1, rlvgl_obj_center },
-	//{ "obj_clear_flags",		2, rlvgl_obj_clear_flags },
 	{ "obj_create", 		2, rlvgl_obj_create },
-	//{ "obj_has_all_flags",		2, rlvgl_obj_has_all_flags },
-	//{ "obj_has_any_flags",		2, rlvgl_obj_has_any_flags },
 	{ "obj_set_size",		2, rlvgl_obj_set_size },
 	{ "scr_load", 			2, rlvgl_scr_load },
 	{ "set_mouse_cursor", 		2, rlvgl_set_mouse_cursor },
 	{ "spinner_create", 		3, rlvgl_spinner_create },
 	{ "style_create",		1, rlvgl_style_create },
-	{ "style_set_flex_flow",	2, rlvgl_style_set_flex_flow },
-	{ "style_set_flex_align",	4, rlvgl_style_set_flex_align },
-	//{ "style_set_layout",		2, rlvgl_style_set_layout },
 	{ "style_set_bg_opa",		2, rlvgl_style_set_bg_opa },
+	{ "style_set_flex_align",	4, rlvgl_style_set_flex_align },
+	{ "style_set_flex_flow",	2, rlvgl_style_set_flex_flow },
+	{ "textarea_create",		1, rlvgl_textarea_create },
+	{ "textarea_get_text",		1, rlvgl_textarea_get_text },
+	{ "textarea_set_one_line",	2, rlvgl_textarea_set_one_line },
+	{ "textarea_set_password_mode",	2, rlvgl_textarea_set_password_mode },
+	{ "textarea_set_placeholder_text", 2, rlvgl_textarea_set_placeholder },
+	{ "textarea_set_text",		2, rlvgl_textarea_set_text },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,
