@@ -48,7 +48,8 @@
 
 -record(?MODULE, {
     renderer :: pid(),
-    inst :: reference()
+    inst :: rdp_lvgl_nif:instance(),
+    ev :: rdp_lvgl_nif:event()
     }).
 
 start() ->
@@ -124,14 +125,13 @@ flush_loop(Srv, Inst, MsgRef, Bitmaps0) ->
     end.
 
 setup_cursor(Inst) ->
-    {async, MsgRef0} = rdp_lvgl_nif:disp_get_layer_sys(Inst),
-    receive {MsgRef0, ok, SysLayer} -> ok end,
-    {async, MsgRef1} = rdp_lvgl_nif:img_create(SysLayer),
-    receive {MsgRef1, ok, Img} -> ok end,
-    {async, MsgRef2} = rdp_lvgl_nif:img_set_src(Img, "A:priv/mouse_cursor.png"),
-    receive {MsgRef2, ok} -> ok end,
-    {async, MsgRef3} = rdp_lvgl_nif:set_mouse_cursor(Inst, Img),
-    receive {MsgRef3, ok} -> ok end.
+    {ok, SysLayer} = lv_disp:get_layer_sys(Inst),
+    {ok, Parent} = lv_img:create(SysLayer),
+    ok = lv_obj:add_flags(Parent, [overflow_visible, ignore_layout]),
+    {ok, Img} = lv_img:create(Parent),
+    ok = lv_img:set_src(Img, "A:priv/mouse_cursor.png"),
+    ok = lv_obj:align(Img, top_left, {-4, -4}),
+    ok = lv_indev:set_mouse_cursor(Inst, Parent).
 
 init_ui(Srv, S = #?MODULE{}) ->
     {W, H, 16} = rdp_server:get_canvas(Srv),
@@ -143,32 +143,50 @@ init_ui(Srv, S = #?MODULE{}) ->
         flush_loop(Srv, Inst, MsgRef, [])
     end),
     receive {nif_inst, Inst} -> ok end,
+
+    {ok, Screen} = lv_scr:create(Inst),
+
+    {ok, Flex} = lv_obj:create(Inst, Screen),
+
+    FlowDir = if (W > H) -> row; true -> column end,
+    {ok, FlowStyle} = lv_style:create(Inst),
+    ok = lv_style:set_flex_flow(FlowStyle, FlowDir),
+    ok = lv_style:set_flex_align(FlowStyle, center, center, center),
+    ok = lv_style:set_bg_opacity(FlowStyle, 0),
+    ok = lv_obj:add_style(Flex, FlowStyle),
+    ok = lv_obj:set_size(Flex, {W, H}),
+    ok = lv_obj:center(Flex),
+
+    {ok, Lbl} = lv_label:create(Flex),
+    ok = lv_label:set_text(Lbl, "Welcome!"),
+
+    {ok, Btn} = lv_btn:create(Flex),
+    {ok, BtnLbl} = lv_label:create(Btn),
+    ok = lv_label:set_text(BtnLbl, "Login"),
+    {ok, Event, MsgRef} = lv_event:setup(Btn, pressed),
+
+    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
+
+    ok = lv_scr:load(Inst, Screen),
+
     setup_cursor(Inst),
-    {async, MsgRef0} = rdp_lvgl_nif:disp_set_bg_color(Inst, {16#FF, 16#30, 16#30}),
-    {async, MsgRef1} = rdp_lvgl_nif:obj_create(Inst, none),
-    receive {MsgRef0, ok} -> ok end,
-    receive {MsgRef1, ok, Screen} -> ok end,
-    {async, MsgRef2} = rdp_lvgl_nif:spinner_create(Screen, 1000, 60),
-    receive {MsgRef2, ok, Spinner} -> ok end,
-    {async, MsgRef3} = rdp_lvgl_nif:obj_center(Spinner),
-    {async, MsgRef4} = rdp_lvgl_nif:scr_load(Inst, Screen),
-    receive {MsgRef3, ok} -> ok end,
-    receive {MsgRef4, ok} -> ok end,
-    {ok, #?MODULE{renderer = Pid, inst = Inst}}.
+
+    {ok, #?MODULE{renderer = Pid, inst = Inst, ev = Event}}.
+
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
-    ok = rdp_lvgl_nif:send_pointer_event(Inst, Pt, released),
+    ok = lv_indev:send_pointer_event(Inst, Pt, released),
     {ok, S};
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = down}, Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
-    ok = rdp_lvgl_nif:send_pointer_event(Inst, Pt, pressed),
+    ok = lv_indev:send_pointer_event(Inst, Pt, pressed),
     {ok, S};
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = up}, Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
-    ok = rdp_lvgl_nif:send_pointer_event(Inst, Pt, released),
+    ok = lv_indev:send_pointer_event(Inst, Pt, released),
     {ok, S};
 
 handle_event(#ts_inpevt_mouse{}, Srv, S = #?MODULE{}) ->

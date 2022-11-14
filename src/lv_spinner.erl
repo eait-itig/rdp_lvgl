@@ -23,16 +23,16 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_spinner).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-include("async_wrappers.hrl").
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-type msec() :: integer().
+-type degrees() :: integer().
 
-stop(_State) ->
-    ok.
-
+-spec create(lv:object(), msec(), degrees()) -> {ok, lv:spinner()} | lv:error().
+create(Parent, Time, ArcLen) ->
+    ?async_wrapper(spinner_create, Parent, Time, ArcLen).

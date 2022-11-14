@@ -45,6 +45,7 @@ struct lvkinst;
 struct lvkcall;
 struct lvkbuf;
 struct lvkobj;
+struct lvkstyle;
 LIST_HEAD(lvkid_list, lvkid);
 LIST_HEAD(lvkcmd_list, lvkcmd);
 LIST_HEAD(lvkinst_list, lvkinst);
@@ -52,6 +53,7 @@ LIST_HEAD(lvkcall_list, lvkcall);
 LIST_HEAD(lvkbuf_list, lvkbuf);
 LIST_HEAD(lvkobj_list, lvkobj);
 LIST_HEAD(lvkevt_list, lvkevt);
+LIST_HEAD(lvkstyle_list, lvkstyle);
 
 enum lvkh_type {
 	LVK_NONE	= 0,
@@ -59,7 +61,8 @@ enum lvkh_type {
 	LVK_INST,
 	LVK_OBJ,
 	LVK_BUF,
-	LVK_EVT
+	LVK_EVT,
+	LVK_STY
 };
 
 struct lvkhdl {
@@ -127,10 +130,21 @@ struct lvkinst {
 	lvaddr_t		 lvki_mouse_drv;
 
 	struct lvkobj_list	 lvki_objs;
+	struct lvkstyle_list	 lvki_styles;
 
 	ErlNifEnv		*lvki_env;
 	ERL_NIF_TERM		 lvki_msgref;
 	ErlNifPid		 lvki_owner;
+};
+
+struct lvkstyle {
+	struct lvkid		*lvks_kid;
+	LIST_ENTRY(lvkstyle)	 lvks_entry;
+	struct lvkinst		*lvks_inst;
+
+	struct lvkhdl		*lvks_hdl;
+
+	lvaddr_t		 lvks_ptr;
 };
 
 struct lvkbuf {
@@ -209,6 +223,10 @@ int lvk_icall(struct lvkinst *inst, lvk_call_cb_t cb, void *priv,
 void lv_group_send_text(lv_group_t *group, const char *text);
 void lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr);
 lv_obj_t *lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent);
+void lv_img_set_offset(lv_obj_t *obj, lv_point_t pt);
+lv_style_t *lv_style_alloc(void);
+void lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
+    lv_flex_align_t cross_place, lv_flex_align_t track_cross_place);
 
 void lv_ieq_push_mouse(lv_indev_drv_t *drv, lv_indev_state_t state,
     lv_point_t point);

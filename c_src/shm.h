@@ -153,6 +153,7 @@ enum arg_type {
 	ARG_NONE		= 0,
 	ARG_BUFPTR,
 	ARG_OBJPTR,
+	ARG_STYPTR,
 	ARG_PTR,
 	ARG_UINT64,
 	ARG_UINT32,

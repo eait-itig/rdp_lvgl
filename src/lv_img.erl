@@ -23,16 +23,29 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_img).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-export_type([
+    src/0
+    ]).
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-include("async_wrappers.hrl").
 
-stop(_State) ->
-    ok.
+-type file_path() :: string().
+-type symbol() :: gps.
+-type src() :: file_path() | symbol().
 
+-spec create(lv:object()) -> {ok, lv:img()} | lv:error().
+create(Parent) ->
+    ?async_wrapper(img_create, Parent).
+
+-spec set_offset(lv:img(), lv:point()) -> ok | lv:error().
+set_offset(Img, Offset) ->
+    ?async_void_wrapper(img_set_offset, Img, Offset).
+
+-spec set_src(lv:img(), src()) -> ok | lv:error().
+set_src(Img, Src) ->
+    ?async_void_wrapper(img_set_src, Img, Src).

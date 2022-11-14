@@ -23,16 +23,26 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_indev).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-export_type([
+    state/0, key/0
+    ]).
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-include("async_wrappers.hrl").
 
-stop(_State) ->
-    ok.
+-type state() :: pressed | released.
+-type charcode() :: integer().
+-type key() :: up | down | right | left | esc | del | backspace | enter |
+    next | prev | home | 'end' | charcode().
 
+-spec set_mouse_cursor(lv:instance(), lv:object()) -> {ok, lv:object()} | lv:error().
+set_mouse_cursor(Inst, Cursor) ->
+    ?async_void_wrapper(set_mouse_cursor, Inst, Cursor).
+
+-spec send_pointer_event(lv:instance(), lv:point(), state()) -> ok | lv:error().
+send_pointer_event(Inst, Point, State) ->
+    rdp_lvgl_nif:send_pointer_event(Inst, Point, State).

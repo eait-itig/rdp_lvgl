@@ -23,16 +23,27 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv).
 
--behaviour(application).
+-export_type([
+    object/0, instance/0, event/0, style/0, error/0, rect/0, point/0, size/0,
+    btn/0, label/0, scr/0, img/0, spinner/0
+	]).
 
--export([start/2, stop/1]).
+-opaque object() :: rdp_lvgl_nif:object().
+-opaque instance() :: rdp_lvgl_nif:instance().
+-opaque event() :: rdp_lvgl_nif:event().
+-opaque style() :: rdp_lvgl_nif:style().
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-type error() :: {error, integer(), string()} | {error, term()}.
 
-stop(_State) ->
-    ok.
+-type px() :: integer().
+-type rect() :: {X1 :: px(), Y1 :: px(), X2 :: px(), Y2 :: px()}.
+-type point() :: {X :: px(), Y :: px()}.
+-type size() :: {Width :: px(), Height :: px()}.
 
+-type btn() :: object().
+-type label() :: object().
+-type scr() :: object().
+-type img() :: object().
+-type spinner() :: object().

@@ -23,16 +23,28 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_event).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-export_type([
+    type/0
+    ]).
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-type type() :: all | pressed | pressing | press_lost | short_clicked |
+    long_pressed | long_pressed_repeat | clicked | released | scroll_begin |
+    scroll_end | scroll | gesture | key | focused | defocused | leave |
+    value_changed | insert | refresh | ready | cancel.
 
-stop(_State) ->
-    ok.
-
+-spec setup(lv:object(), type()) -> {ok, lv:event()} | lv:error().
+setup(Obj, Filter) ->
+    case rdp_lvgl_nif:setup_event(Obj, Filter) of
+        {async, Event, MsgRef} ->
+            receive
+                {MsgRef, ok} -> {ok, Event, MsgRef};
+                {MsgRef, error, Why} -> {error, Why};
+                {MsgRef, error, Num, Str} -> {error, Num, Str}
+            end;
+        Err -> Err
+    end.

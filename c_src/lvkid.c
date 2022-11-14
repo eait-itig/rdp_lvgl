@@ -120,6 +120,7 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 	struct lvkobj *obj;
 	struct lvkbuf *buf;
 	struct lvkevt *evt;
+	struct lvkstyle *sty;
 	struct fbuf *fb;
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
@@ -158,6 +159,11 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 		assert(evt->lvke_hdl == hdl);
 		evt->lvke_hdl = NULL;
 		lvkevt_teardown(evt);
+		break;
+	case LVK_STY:
+		sty = hdl->lvkh_ptr;
+		assert(sty->lvks_hdl == hdl);
+		sty->lvks_hdl = NULL;
 		break;
 	}
 
@@ -209,15 +215,18 @@ struct lvkhdl *
 lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 {
 	struct lvkid *kid;
-	struct lvkinst *inst;
+	struct lvkinst *inst = NULL;
 	struct lvkobj *obj;
 	struct lvkbuf *buf;
 	struct lvkevt *evt;
+	struct lvkstyle *sty;
 	struct fbuf *fb;
 	struct lvkhdl **phdl = NULL;
 
 	switch (type) {
 	case LVK_NONE:
+		if (do_release != NULL)
+			*do_release = 0;
 		return (NULL);
 	case LVK_FBUF:
 		fb = ptr;
@@ -234,6 +243,7 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 		obj = ptr;
 		kid = obj->lvko_kid;
 		phdl = &obj->lvko_hdl;
+		inst = obj->lvko_inst;
 		break;
 	case LVK_BUF:
 		buf = ptr;
@@ -244,6 +254,12 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 		evt = ptr;
 		kid = evt->lvke_kid;
 		phdl = &evt->lvke_hdl;
+		break;
+	case LVK_STY:
+		sty = ptr;
+		kid = sty->lvks_kid;
+		phdl = &sty->lvks_hdl;
+		inst = sty->lvks_inst;
 		break;
 	}
 	assert(phdl != NULL);
@@ -261,18 +277,7 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 	(*phdl)->lvkh_kid = kid;
 	(*phdl)->lvkh_type = type;
 	(*phdl)->lvkh_ptr = ptr;
-
-	switch (type) {
-	case LVK_INST:
-	case LVK_FBUF:
-		(*phdl)->lvkh_inst = inst;
-		break;
-	case LVK_OBJ:
-		(*phdl)->lvkh_inst = obj->lvko_inst;
-		break;
-	default:
-		break;
-	}
+	(*phdl)->lvkh_inst = inst;
 
 	if (do_release != NULL) {
 		*do_release = 1;
@@ -294,6 +299,13 @@ lv_group_send_text(lv_group_t *group, const char *text)
 	if (!lv_obj_has_class(act, &lv_textarea_class))
 		return;
 	lv_textarea_add_text(act, text);
+}
+
+void
+lv_img_set_offset(lv_obj_t *obj, lv_point_t pt)
+{
+	lv_img_set_offset_x(obj, pt.x);
+	lv_img_set_offset_y(obj, pt.y);
 }
 
 void
@@ -522,6 +534,11 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_disp = lv_disp_drv_register(&inst->lvi_disp_drv);
 	fprintf(stderr, "created disp_drv %p => %p\r\n", &inst->lvi_disp_drv,
 	    inst->lvi_disp);
+
+	inst->lvi_disp->theme = lv_theme_default_init(inst->lvi_disp,
+	    lv_color_hex(0x0D6DCD),
+	    lv_color_hex(0x781A96),
+	    true, LV_FONT_DEFAULT);
 
 	lv_indev_drv_init(&inst->lvi_mouse_drv);
 	inst->lvi_mouse_drv.type = LV_INDEV_TYPE_POINTER;
@@ -875,6 +892,27 @@ lvkevt_setup_cb(struct rdesc **rd, uint nrd, void *priv)
 	pthread_rwlock_unlock(&kid->lvk_lock);
 }
 
+static struct lvkstyle *
+lvk_make_style(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
+{
+	struct lvkstyle *sty;
+
+	LIST_FOREACH(sty, &inst->lvki_styles, lvks_entry) {
+		if (ptr == sty->lvks_ptr) {
+			return (sty);
+		}
+	}
+
+	sty = calloc(1, sizeof (*sty));
+	sty->lvks_kid = kid;
+	sty->lvks_inst = inst;
+	LIST_INSERT_HEAD(&inst->lvki_styles, sty, lvks_entry);
+
+	sty->lvks_ptr = ptr;
+
+	return (sty);
+}
+
 static struct lvkobj *
 lvk_make_obj(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr,
     const lv_obj_class_t *class)
@@ -967,6 +1005,7 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	lv_color_t col;
 	lv_point_t pt;
 	lv_style_value_t stv;
+	struct lvkstyle *sty;
 	uint i;
 	ErlNifBinary bin;
 	size_t take, pos, rem;
@@ -1032,11 +1071,27 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		return;
 	}
 
+	if (call->lvkc_rt == ARG_STYPTR) {
+		assert(inst != NULL);
+		sty = (struct lvkstyle *)rdr->rdr_udata;
+		if (sty == NULL) {
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+			sty = lvk_make_style(kid, inst, rdr->rdr_val);
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		}
+
+		(*call->lvkc_cb)(kid, 0, ARG_STYPTR, sty, call->lvkc_priv);
+
+		free(call);
+		return;
+	}
+
 	switch (call->lvkc_rt) {
 	case ARG_NONE:
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, NULL, call->lvkc_priv);
 		break;
 	case ARG_OBJPTR:
+	case ARG_STYPTR:
 	case ARG_INLINE_STR:
 	case ARG_INLINE_BUF:
 		/* handled above */
@@ -1084,6 +1139,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 {
 	struct lvkcall *call;
 	struct lvkobj *obj;
+	struct lvkstyle *sty;
 	struct lvkbuf *buf;
 	struct cdesc cd[8];
 	uint ncd;
@@ -1115,6 +1171,11 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			obj = va_arg(ap, struct lvkobj *);
 			if (obj != NULL)
 				arg[i] = obj->lvko_ptr;
+			break;
+		case ARG_STYPTR:
+			sty = va_arg(ap, struct lvkstyle *);
+			if (sty != NULL)
+				arg[i] = sty->lvks_ptr;
 			break;
 		case ARG_PTR:
 			arg[i] = va_arg(ap, uintptr_t);
@@ -1154,7 +1215,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			break;
 		case ARG_INLINE_STR:
 			ibuf = va_arg(ap, uint8_t *);
-			ibuflen = strlen((const char *)ibuf) + 1;
+			ibuflen = strlen((const char *)ibuf);
 			ibufidx = i;
 			break;
 		}
@@ -1337,7 +1398,7 @@ lvkid_erl_flush_ring(void *arg)
 	struct shmintf *shm = kid->lvk_shm;
 	struct lvkinst *inst;
 	struct fbuf *fb;
-	struct lvkhdl *hdl;
+	struct lvkhdl *hdl = NULL;
 	lv_area_t tile;
 	lv_area_t rect;
 	lv_color_t *buf;
@@ -1348,6 +1409,8 @@ lvkid_erl_flush_ring(void *arg)
 	uint do_release;
 
 	while (1) {
+		do_release = 0;
+
 		shm_consume_flush(shm, &fd);
 		fbidx = fd->fd_fbidx_flag & FBIDX_IDX_MASK;
 		assert(fbidx < shm->si_nfbuf);
@@ -1379,7 +1442,6 @@ lvkid_erl_flush_ring(void *arg)
 			fprintf(stderr, "dropping due to wrong buf\r\n");
 			goto next;
 		}
-		pthread_rwlock_unlock(&inst->lvki_lock);
 
 		rect.x1 = fd->fd_x1;
 		rect.x2 = fd->fd_x2;
@@ -1387,13 +1449,11 @@ lvkid_erl_flush_ring(void *arg)
 		rect.y2 = fd->fd_y2;
 		bzero(&tile, sizeof (tile));
 		while (lvk_next_tile(&rect, &tile)) {
-			pthread_rwlock_wrlock(&inst->lvki_lock);
 			env = inst->lvki_env;
 			ref = inst->lvki_msgref;
 			inst->lvki_env = enif_alloc_env();
 			inst->lvki_msgref = enif_make_copy(inst->lvki_env, ref);
 			owner = inst->lvki_owner;
-			pthread_rwlock_unlock(&inst->lvki_lock);
 
 			pixdata = lvk_tile_to_iolist(env, fb, buf, hdl, &tile);
 			msg = enif_make_tuple4(env,
@@ -1410,13 +1470,11 @@ lvkid_erl_flush_ring(void *arg)
 		}
 
 		if (fd->fd_fbidx_flag & FBIDX_SYNC) {
-			pthread_rwlock_wrlock(&inst->lvki_lock);
 			env = inst->lvki_env;
 			ref = inst->lvki_msgref;
 			inst->lvki_env = enif_alloc_env();
 			inst->lvki_msgref = enif_make_copy(inst->lvki_env, ref);
 			owner = inst->lvki_owner;
-			pthread_rwlock_unlock(&inst->lvki_lock);
 
 			msg = enif_make_tuple2(env,
 			    ref,
@@ -1424,12 +1482,11 @@ lvkid_erl_flush_ring(void *arg)
 			enif_send(NULL, &owner, env, msg);
 			enif_free_env(env);
 		}
-
-		if (do_release)
-			enif_release_resource(hdl);
-
+		pthread_rwlock_unlock(&inst->lvki_lock);
 next:
 		pthread_rwlock_unlock(&kid->lvk_lock);
+		if (do_release)
+			enif_release_resource(hdl);
 		shm_finish_flush(fd);
 	}
 
@@ -1736,6 +1793,7 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	pthread_rwlock_unlock(&nkid->lvk_lock);
 
 	LIST_INIT(&inst->lvki_objs);
+	LIST_INIT(&inst->lvki_styles);
 
 	inst->lvki_env = enif_alloc_env();
 	inst->lvki_owner = owner;
@@ -1788,6 +1846,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkinst *inst = priv;
 	struct lvkid *kid = inst->lvki_kid;
 	struct lvkobj *obj, *nobj;
+	struct lvkstyle *sty, *nsty;
 
 	assert(nrd == 1);
 	fprintf(stderr, "inst %p teardown cb\r\n", inst);
@@ -1808,6 +1867,17 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 		}
 		obj->lvko_inst = NULL;
 		lvkobj_release(obj);
+	}
+	LIST_FOREACH_SAFE(sty, &inst->lvki_styles, lvks_entry, nsty) {
+		if (sty->lvks_hdl) {
+			sty->lvks_hdl->lvkh_type = LVK_NONE;
+			sty->lvks_hdl->lvkh_ptr = NULL;
+			sty->lvks_hdl->lvkh_inst = NULL;
+			sty->lvks_hdl = NULL;
+		}
+		LIST_REMOVE(sty, lvks_entry);
+		lvk_cast(kid, ARG_NONE, free, ARG_PTR, sty->lvks_ptr, ARG_NONE);
+		free(sty);
 	}
 	enif_free_env(inst->lvki_env);
 	LIST_REMOVE(inst, lvki_entry);
@@ -1855,4 +1925,23 @@ lvkinst_teardown(struct lvkinst *inst)
 		inst->lvki_flushing = 0;
 	}
 	lvk_cmd(kid, &cd, 1, lvk_inst_teardown_cb, inst);
+}
+
+lv_style_t *
+lv_style_alloc(void)
+{
+	lv_style_t *sty = calloc(1, sizeof (*sty));
+	assert(sty != NULL);
+	lv_style_init(sty);
+	return (sty);
+}
+
+void
+lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
+    lv_flex_align_t cross_place, lv_flex_align_t track_cross_place)
+{
+	lv_style_set_flex_main_place(style, main_place);
+	lv_style_set_flex_cross_place(style, cross_place);
+	lv_style_set_flex_track_place(style, track_cross_place);
+	lv_style_set_layout(style, LV_LAYOUT_FLEX);
 }

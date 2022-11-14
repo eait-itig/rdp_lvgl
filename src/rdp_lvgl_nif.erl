@@ -29,20 +29,45 @@
 -on_load(init/0).
 
 -export([
-    setup_instance/1,
+    btn_create/1,
+    disp_get_layer_sys/1,
     disp_set_bg_color/2,
     flush_done/1,
-    obj_create/2,
-    scr_load/2,
-    spinner_create/3,
-    obj_center/1,
-    send_pointer_event/3,
-    send_key_event/3,
-    send_text_event/2,
     img_create/1,
-    disp_get_layer_sys/1,
+    img_set_offset/2,
     img_set_src/2,
-    set_mouse_cursor/2
+    label_create/1,
+    label_set_text/2,
+    obj_add_flags/2,
+    obj_add_style/2,
+    obj_align/2,
+    obj_align/3,
+    obj_align_to/3,
+    obj_align_to/4,
+    obj_center/1,
+    obj_clear_flags/2,
+    obj_create/2,
+    obj_has_all_flags/2,
+    obj_has_any_flags/2,
+    obj_set_size/2,
+    scr_load/2,
+    send_key_event/3,
+    send_pointer_event/3,
+    send_text_event/2,
+    set_mouse_cursor/2,
+    setup_event/2,
+    setup_instance/1,
+    spinner_create/3,
+    style_create/1,
+    style_set_flex_align/4,
+    style_set_flex_flow/2,
+    style_set_layout/2,
+    style_set_bg_opa/2
+    ]).
+
+-export_type([
+    instance/0, buffer/0, object/0, event/0, msgref/0, group/0,
+    instance_msg/0, event_msg/0, style/0
     ]).
 
 try_paths([Last], BaseName) ->
@@ -75,49 +100,42 @@ init() ->
 -type buffer() :: reference().
 -type object() :: reference().
 -type event() :: reference().
+-type style() :: reference().
 
 -type msgref() :: reference().
 
 -type group() :: object().
 
--type px() :: integer().
--type rect() :: {X1 :: px(), Y1 :: px(), X2 :: px(), Y2 :: px()}.
--type point() :: {X :: px(), Y :: px()}.
--type size() :: {Width :: px(), Height :: px()}.
 -type pixeldata() :: iolist().
--type btn_state() :: pressed | released.
 
 -type msec() :: integer().
 -type degrees() :: integer().
 
 -type color() :: {R :: integer(), G :: integer(), B :: integer()}.
 
--type chr() :: integer().
--type key() :: up | down | right | left | esc | del | backspace | enter |
-    next | prev | home | 'end' | chr().
-
--type evtype() :: all | pressed | pressing | press_lost | short_clicked |
-    long_pressed | long_pressed_repeat | clicked | released | scroll_begin |
-    scroll_end | scroll | gesture | key | focused | defocused | leave |
-    value_changed | insert | refresh | ready | cancel.
-
--type errno() :: {error, integer(), string()}.
--type async_return(_MsgType) :: {async, msgref()} | errno() | {error, term()}.
-
--spec setup_instance(size()) ->
-    {ok, instance(), msgref()} | {error, term()}.
+-spec setup_instance(lv:size()) ->
+    {ok, instance(), msgref()} | lv:error().
 setup_instance(_Size) -> error(no_nif).
 
--type event_msg() ::
-    {msgref(), event, evtype(), Target :: object(), CurTarget :: object()}.
+-type async_return_of(_MsgType) :: {async, msgref()} | lv:error().
 
--spec setup_event(object(), evtype()) ->
-    {ok, event(), msgref()} | {error, term()}.
+-type async_return() :: async_return_of(
+    {msgref(), error, integer(), string()} |
+    {msgref(), ok}).
+
+-type async_return(T) :: async_return_of(
+    {msgref(), error, integer(), string()} |
+    {msgref(), ok, T}).
+
+-type event_msg() ::
+    {msgref(), event, lv_event:type(), Target :: lv:object(), CurTarget :: lv:object()}.
+
+-spec setup_event(object(), lv_event:type()) -> {async, event(), msgref()} | lv:error().
 setup_event(_Obj, _Type) -> error(no_nif).
 
 -type instance_msg() ::
     {msgref(), setup_done} |
-    {msgref(), flush, rect(), pixeldata()} |
+    {msgref(), flush, lv:rect(), pixeldata()} |
     {msgref(), flush_sync}.
 
 -spec flush_done(instance()) -> ok | {error, term()}.
@@ -126,54 +144,104 @@ flush_done(_Inst) -> error(no_nif).
 -spec make_buffer(binary()) -> {ok, buffer()}.
 make_buffer(_Data) -> error(no_nif).
 
--spec read_framebuffer(instance(), rect()) -> {ok, pixeldata()}.
+-spec read_framebuffer(instance(), lv:rect()) -> {ok, pixeldata()}.
 read_framebuffer(_Inst, _Rect) -> error(no_nif).
 
--spec send_pointer_event(instance(), point(), btn_state()) -> ok | {error, term()}.
+-spec send_pointer_event(instance(), lv:point(), lv_indev:state()) -> ok | {error, term()}.
 send_pointer_event(_Inst, _Pt, _Btn) -> error(no_nif).
 
--spec send_key_event(instance(), key(), btn_state()) -> ok | {error, term()}.
+-spec send_key_event(instance(), lv_indev:key(), lv_indev:state()) -> ok | {error, term()}.
 send_key_event(_Inst, _Key, _Btn) -> error(no_nif).
 
 -spec send_text_event(instance(), buffer()) -> ok | {error, term()}.
 send_text_event(_Inst, _Buf) -> error(no_nif).
 
--type async_msg() ::
-    {msgref(), error, integer(), string()} |
-    {msgref(), ok, term()}.
-
 -spec obj_create(instance(), Parent :: object() | none) ->
-    async_return({msgref(), ok, object()}).
+    async_return(object()).
 obj_create(_Inst, _Parent) -> error(no_nif).
 
--spec scr_load(instance(), object()) -> async_return({msgref(), ok}).
+-spec obj_align(object(), lv_obj:align_spec(), lv:point()) ->
+    async_return().
+obj_align(_Obj, _AlignSpec, _Offset) -> error(no_nif).
+
+-spec obj_align(object(), lv_obj:align_spec()) -> async_return().
+obj_align(_Obj, _AlignSpec) -> error(no_nif).
+
+-spec obj_align_to(object(), object(), lv_obj:align_spec(), lv:point()) ->
+    async_return().
+obj_align_to(_Obj, _RefObj, _AlignSpec, _Offset) -> error(no_nif).
+
+-spec obj_align_to(object(), object(), lv_obj:align_spec()) ->
+    async_return().
+obj_align_to(_Obj, _RefObj, _AlignSpec) -> error(no_nif).
+
+-spec scr_load(instance(), object()) -> async_return().
 scr_load(_Inst, _Screen) -> error(no_nif).
 
--spec disp_set_bg_color(instance(), color()) -> async_return({msgref(), ok}).
+-spec disp_set_bg_color(instance(), color()) -> async_return().
 disp_set_bg_color(_Inst, _Color) -> error(no_nif).
 
 -spec spinner_create(object(), Time :: msec(), ArcLen :: degrees()) ->
-    async_return({msgref(), ok, object()}).
+    async_return(object()).
 spinner_create(_Obj, _Time, _ArcLen) -> error(no_nif).
 
--spec obj_set_size(object(), size()) -> async_return({msgref(), ok}).
+-spec obj_set_size(object(), lv:size()) -> async_return().
 obj_set_size(_Obj, _Size) -> error(no_nif).
 
--spec obj_center(object()) -> async_return({msgref(), ok}).
+-spec obj_center(object()) -> async_return().
 obj_center(_Obj) -> error(no_nif).
 
--spec img_create(object()) -> async_return({msgref(), ok, object()}).
+-spec img_create(object()) -> async_return(object()).
 img_create(_Parent) -> error(no_nif).
 
--type file_path() :: string().
--type symbol() :: gps.
--type img_src() :: file_path() | symbol().
-
--spec img_set_src(object(), img_src()) -> async_return({msgref(), ok}).
+-spec img_set_src(object(), lv_img:src()) -> async_return().
 img_set_src(_Img, _Src) -> error(no_nif).
 
--spec disp_get_layer_sys(instance()) -> async_return({msgref(), ok, object()}).
+-spec img_set_offset(object(), lv:point()) -> async_return().
+img_set_offset(_Img, _Offset) -> error(no_nif).
+
+-spec disp_get_layer_sys(instance()) -> async_return(object()).
 disp_get_layer_sys(_Inst) -> error(no_nif).
 
--spec set_mouse_cursor(instance(), object()) -> async_return({msgref(), ok}).
+-spec set_mouse_cursor(instance(), object()) -> async_return().
 set_mouse_cursor(_Inst, _Img) -> error(no_nif).
+
+-spec btn_create(object()) -> async_return(object()).
+btn_create(_Parent) -> error(no_nif).
+
+-spec label_create(object()) -> async_return(object()).
+label_create(_Parent) -> error(no_nif).
+
+-spec label_set_text(object(), string()) -> async_return().
+label_set_text(_Label, _Text) -> error(no_nif).
+
+-spec style_create(instance()) -> async_return(style()).
+style_create(_Inst) -> error(no_nif).
+
+-spec style_set_flex_flow(style(), lv_style:flex_flow()) -> async_return().
+style_set_flex_flow(_Style, _Flow) -> error(no_nif).
+
+-spec style_set_flex_align(style(), lv_style:flex_align(), lv_style:flex_align(), lv_style:flex_align()) -> async_return().
+style_set_flex_align(_Style, _Main, _Cross, _Tracks) -> error(no_nif).
+
+-type layout() :: flex | grid.
+-spec style_set_layout(style(), lv_style:layout()) -> async_return().
+style_set_layout(_Style, _Layout) -> error(no_nif).
+
+-spec obj_add_style(object(), style()) -> async_return().
+obj_add_style(_Obj, _Style) -> error(no_nif).
+
+-spec obj_add_flags(object(), [lv_obj:flag()]) -> async_return().
+obj_add_flags(_Obj, _Flags) -> error(no_nif).
+
+-spec obj_clear_flags(object(), [lv_obj:flag()]) -> async_return().
+obj_clear_flags(_Obj, _Flags) -> error(no_nif).
+
+-spec obj_has_all_flags(object(), [lv_obj:flag()]) -> async_return(boolean()).
+obj_has_all_flags(_Obj, _Flags) -> error(no_nif).
+
+-spec obj_has_any_flags(object(), [lv_obj:flag()]) -> async_return(boolean()).
+obj_has_any_flags(_Obj, _Flags) -> error(no_nif).
+
+-spec style_set_bg_opa(style(), integer()) -> async_return().
+style_set_bg_opa(_Style, _Opacity) -> error(no_nif).

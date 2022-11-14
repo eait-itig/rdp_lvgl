@@ -23,16 +23,13 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_btn).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-include("async_wrappers.hrl").
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
-
-stop(_State) ->
-    ok.
-
+-spec create(lv:object()) -> {ok, lv:btn()} | lv:error().
+create(Parent) ->
+    ?async_wrapper(btn_create, Parent).

@@ -23,16 +23,17 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_color).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-export_type([
+    opacity/0, color/0
+    ]).
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-include("async_wrappers.hrl").
 
-stop(_State) ->
-    ok.
-
+-type uint8() :: integer().
+-type opacity() :: uint8().
+-type color() :: {Red :: uint8(), Green :: uint8(), Blue :: uint8()}.

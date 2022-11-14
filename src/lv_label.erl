@@ -23,16 +23,17 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
--module(rdp_lvgl).
+-module(lv_label).
 
--behaviour(application).
+-compile(export_all).
+-compile(nowarn_export_all).
 
--export([start/2, stop/1]).
+-include("async_wrappers.hrl").
 
-start(_StartType, _StartArgs) ->
-    
-    rdp_lvgl_sup:start_link().
+-spec create(lv:object()) -> {ok, lv:label()} | lv:error().
+create(Parent) ->
+    ?async_wrapper(label_create, Parent).
 
-stop(_State) ->
-    ok.
-
+-spec set_text(lv:label(), string()) -> ok | lv:error().
+set_text(Lbl, Text) ->
+    ?async_void_wrapper(label_set_text, Lbl, Text).
