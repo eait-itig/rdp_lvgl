@@ -54,7 +54,7 @@ lvk_next_tile(const lv_area_t *area, lv_area_t *tile)
 		if (tile->y2 > area->y2)
 			tile->y2 = area->y2;
 	} else {
-		tile->x1 += TILE_XSIZE - 1;
+		tile->x1 += TILE_XSIZE;
 	}
 	tile->x2 = tile->x1 + TILE_XSIZE - 1;
 	if (tile->x2 > area->x2)
