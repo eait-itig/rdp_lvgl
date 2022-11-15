@@ -84,8 +84,8 @@ flush_done(Srv, Inst, MsgRef, FrameId) ->
 flush_loop(Srv, Inst, MsgRef, FrameId, SentSOF) ->
     receive
         {MsgRef, flush, {X1, Y1, X2, Y2}, PixData} ->
-            W = (X2 - X1),
-            H = (Y2 - Y1),
+            W = (X2 - X1) + 1,
+            H = (Y2 - Y1) + 1,
             Surf = #ts_surface_set_bits{dest = {X1, Y1},
                                         size = {W, H},
                                         bpp = 16,
@@ -119,7 +119,7 @@ init_ui(Srv, S = #?MODULE{}) ->
     {W, H, 16} = rdp_server:get_canvas(Srv),
     Fsm = self(),
     Pid = spawn_link(fun () ->
-        {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W+1, H+1}),
+        {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W, H}),
         receive {MsgRef, setup_done} -> ok end,
         Fsm ! {nif_inst, Inst},
         flush_loop(Srv, Inst, MsgRef, 0, false)

@@ -346,6 +346,18 @@ lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent)
 }
 
 static void
+lvkid_lv_rounder_cb(lv_disp_drv_t *disp_drv, lv_area_t *area)
+{
+	area->x1 &= ~0x03;
+	area->x2 &= ~0x03;
+	area->x2 += 3;
+
+	area->y1 &= ~0x03;
+	area->y2 &= ~0x03;
+	area->y2 += 3;
+}
+
+static void
 lvkid_lv_wait_cb(lv_disp_drv_t *disp_drv)
 {
 	struct lvinst *inst = disp_drv->user_data;
@@ -550,6 +562,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_disp_drv.draw_buf = &inst->lvi_draw_buf;
 	inst->lvi_disp_drv.flush_cb = lvkid_lv_flush_cb;
 	inst->lvi_disp_drv.wait_cb = lvkid_lv_wait_cb;
+	inst->lvi_disp_drv.rounder_cb = lvkid_lv_rounder_cb;
 	inst->lvi_disp_drv.hor_res = cds->cds_w;
 	inst->lvi_disp_drv.ver_res = cds->cds_h;
 	inst->lvi_disp_drv.direct_mode = 1;

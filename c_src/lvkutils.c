@@ -36,8 +36,8 @@ lvk_next_tile(const lv_area_t *area, lv_area_t *tile)
 	if (tile->x1 == 0 && tile->y1 == 0 && tile->x2 == 0 && tile->y2 == 0) {
 		tile->x1 = area->x1;
 		tile->y1 = area->y1;
-		tile->x2 = area->x1 + TILE_XSIZE;
-		tile->y2 = area->y1 + TILE_YSIZE;
+		tile->x2 = area->x1 + TILE_XSIZE - 1;
+		tile->y2 = area->y1 + TILE_YSIZE - 1;
 		if (tile->y2 > area->y2)
 			tile->y2 = area->y2;
 		if (tile->x2 > area->x2)
@@ -50,13 +50,13 @@ lvk_next_tile(const lv_area_t *area, lv_area_t *tile)
 		}
 		tile->x1 = area->x1;
 		tile->y1 += TILE_YSIZE;
-		tile->y2 = tile->y1 + TILE_YSIZE;
+		tile->y2 = tile->y1 + TILE_YSIZE - 1;
 		if (tile->y2 > area->y2)
 			tile->y2 = area->y2;
 	} else {
-		tile->x1 += TILE_XSIZE;
+		tile->x1 += TILE_XSIZE - 1;
 	}
-	tile->x2 = tile->x1 + TILE_XSIZE;
+	tile->x2 = tile->x1 + TILE_XSIZE - 1;
 	if (tile->x2 > area->x2)
 		tile->x2 = area->x2;
 	return (1);
@@ -69,8 +69,8 @@ lvk_tile_to_iolist(ErlNifEnv *env, struct fbuf *fb, lv_color_t *buf,
 	ERL_NIF_TERM list, *row;
 	lv_color_t *p;
 	uint nrow, ncol, i, y;
-	nrow = tile->y2 - tile->y1;
-	ncol = tile->x2 - tile->x1;
+	nrow = tile->y2 - tile->y1 + 1;
+	ncol = tile->x2 - tile->x1 + 1;
 	row = alloca(nrow * sizeof (ERL_NIF_TERM));
 	for (i = 0, y = tile->y1; i < nrow; ++i, ++y) {
 		p = &buf[fb->fb_w * y + tile->x1];
