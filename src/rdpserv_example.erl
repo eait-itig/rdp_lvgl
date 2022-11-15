@@ -72,49 +72,31 @@ choose_format(_Preferred, Supported, S = #?MODULE{}) ->
     lager:debug("using color format 16bpp out of ~p", [Supported]),
     {'16bpp', S}.
 
-bitmaps_to_orders(Bms) ->
-    lists:reverse(bitmaps_to_orders(0, [], Bms)).
-
-bitmaps_to_orders(_, [], []) -> [];
-bitmaps_to_orders(_, R, []) ->
-    [#ts_update_bitmaps{bitmaps = lists:reverse(R)}];
-bitmaps_to_orders(Size, R, [Next | Rest]) ->
-    #ts_bitmap{data = D} = Next,
-    NewSize = Size + byte_size(D),
-    if
-        (NewSize > 16000) or (length(R) > 16) ->
-            [#ts_update_bitmaps{bitmaps = lists:reverse(R)} |
-                bitmaps_to_orders(0, [Next], Rest)];
-        true ->
-            bitmaps_to_orders(NewSize, [Next | R], Rest)
-    end.
-
-flush_done(Srv, Inst, MsgRef) ->
+flush_done(Srv, Inst, MsgRef, FrameId) ->
     erlang:garbage_collect(),
     case rdp_lvgl_nif:flush_done(Inst) of
         ok ->
-            flush_loop(Srv, Inst, MsgRef, []);
+            flush_loop(Srv, Inst, MsgRef, FrameId + 1, []);
         {error, busy} ->
-            flush_done(Srv, Inst, MsgRef)
+            flush_done(Srv, Inst, MsgRef, FrameId)
     end.
 
-flush_loop(Srv, Inst, MsgRef, Bitmaps0) ->
+flush_loop(Srv, Inst, MsgRef, FrameId, Bitmaps0) ->
     receive
         {MsgRef, flush, {X1, Y1, X2, Y2}, PixData} ->
             W = (X2 - X1),
             H = (Y2 - Y1),
-            {ok, Compr} = rle_nif:compress(PixData, W, H, 16),
-            CompInfo = #ts_bitmap_comp_info{
-                flags = [compressed]},
-                % full_size = byte_size(D),
-                % scan_width = W},
-            true = (byte_size(Compr) < 1 bsl 16),
-            Dest = {X1, Y1},
-            Bitmap = #ts_bitmap{dest=Dest, size={W,H}, bpp=16, data = Compr,
-                comp_info = CompInfo},
-            flush_loop(Srv, Inst, MsgRef, [Bitmap | Bitmaps0]);
+            Surf = #ts_surface_set_bits{dest = {X1, Y1},
+                                        size = {W, H},
+                                        bpp = 16,
+                                        codec = 0,
+                                        data = lists:reverse(PixData)},
+            flush_loop(Srv, Inst, MsgRef, FrameId, [Surf | Bitmaps0]);
         {MsgRef, flush_sync} ->
-            Updates = bitmaps_to_orders(Bitmaps0),
+            SOF = #ts_surface_frame_marker{frame = FrameId, action = start},
+            EOF = #ts_surface_frame_marker{frame = FrameId, action = finish},
+            Bitmaps1 = [SOF | Bitmaps0 ++ [EOF]],
+            Updates = [#ts_update_surfaces{surfaces = [B]} || B <- Bitmaps1],
             Me = self(),
             Sender = spawn(fun () ->
                 lists:foreach(fun(U) ->
@@ -126,7 +108,7 @@ flush_loop(Srv, Inst, MsgRef, Bitmaps0) ->
                 updates_sent -> ok
                 after 500 -> ok
             end,
-            flush_done(Srv, Inst, MsgRef)
+            flush_done(Srv, Inst, MsgRef, FrameId)
     end.
 
 setup_cursor(Inst) ->
@@ -145,7 +127,7 @@ init_ui(Srv, S = #?MODULE{}) ->
         {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W+1, H+1}),
         receive {MsgRef, setup_done} -> ok end,
         Fsm ! {nif_inst, Inst},
-        flush_loop(Srv, Inst, MsgRef, [])
+        flush_loop(Srv, Inst, MsgRef, 1, [])
     end),
     receive {nif_inst, Inst} -> ok end,
 
@@ -182,11 +164,14 @@ init_ui(Srv, S = #?MODULE{}) ->
     ok = lv_label:set_text(BtnLbl, "Login"),
     {ok, Event, MsgRef} = lv_event:setup(Btn, pressed),
 
+    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
+    ok = lv_obj:set_size(Spinner, {50,50}),
+
     ok = lv_scr:load(Inst, Screen),
 
     ok = lv_indev:set_group(Inst, keyboard, Group),
-    setup_cursor(Inst),
-    ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
+    %setup_cursor(Inst),
+    %ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
 
     {ok, #?MODULE{renderer = Pid, inst = Inst, ev = Event}}.
 

@@ -27,8 +27,8 @@
 
 #include "lvkutils.h"
 
-#define TILE_YSIZE	64
-#define	TILE_XSIZE	144
+#define	TILE_XSIZE	228
+#define TILE_YSIZE	128
 
 uint
 lvk_next_tile(const lv_area_t *area, lv_area_t *tile)

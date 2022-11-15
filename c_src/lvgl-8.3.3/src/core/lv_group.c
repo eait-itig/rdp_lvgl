@@ -69,6 +69,8 @@ lv_group_t * lv_group_create(void)
     return group;
 }
 
+#include <stdio.h>
+
 void lv_group_del(lv_group_t * group)
 {
     /*Defocus the currently focused object*/

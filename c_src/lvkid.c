@@ -1984,8 +1984,6 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 			grp->lvkg_hdl = NULL;
 		}
 		LIST_REMOVE(grp, lvkg_entry);
-		lvk_cast(kid, ARG_NONE, lv_group_del,
-		    ARG_PTR, grp->lvkg_ptr, ARG_NONE);
 		free(grp);
 	}
 	enif_free_env(inst->lvki_env);
