@@ -76,12 +76,12 @@ flush_done(Srv, Inst, MsgRef, FrameId) ->
     erlang:garbage_collect(),
     case rdp_lvgl_nif:flush_done(Inst) of
         ok ->
-            flush_loop(Srv, Inst, MsgRef, FrameId + 1, []);
+            flush_loop(Srv, Inst, MsgRef, FrameId + 1, false);
         {error, busy} ->
             flush_done(Srv, Inst, MsgRef, FrameId)
     end.
 
-flush_loop(Srv, Inst, MsgRef, FrameId, Bitmaps0) ->
+flush_loop(Srv, Inst, MsgRef, FrameId, SentSOF) ->
     receive
         {MsgRef, flush, {X1, Y1, X2, Y2}, PixData} ->
             W = (X2 - X1),
@@ -91,23 +91,18 @@ flush_loop(Srv, Inst, MsgRef, FrameId, Bitmaps0) ->
                                         bpp = 16,
                                         codec = 0,
                                         data = lists:reverse(PixData)},
-            flush_loop(Srv, Inst, MsgRef, FrameId, [Surf | Bitmaps0]);
-        {MsgRef, flush_sync} ->
             SOF = #ts_surface_frame_marker{frame = FrameId, action = start},
-            EOF = #ts_surface_frame_marker{frame = FrameId, action = finish},
-            Bitmaps1 = [SOF | Bitmaps0 ++ [EOF]],
-            Updates = [#ts_update_surfaces{surfaces = [B]} || B <- Bitmaps1],
-            Me = self(),
-            Sender = spawn(fun () ->
-                lists:foreach(fun(U) ->
-                    rdp_server:send_update(Srv, U)
-                end, Updates),
-                Me ! updates_sent
-            end),
-            receive
-                updates_sent -> ok
-                after 500 -> ok
+            Surfs = case SentSOF of
+                true -> [Surf];
+                false -> [SOF, Surf]
             end,
+            Update = #ts_update_surfaces{surfaces = Surfs},
+            rdp_server:send_update(Srv, Update),
+            flush_loop(Srv, Inst, MsgRef, FrameId, true);
+        {MsgRef, flush_sync} ->
+            EOF = #ts_surface_frame_marker{frame = FrameId, action = finish},
+            Update = #ts_update_surfaces{surfaces = [EOF]},
+            rdp_server:send_update(Srv, Update),
             flush_done(Srv, Inst, MsgRef, FrameId)
     end.
 
@@ -127,7 +122,7 @@ init_ui(Srv, S = #?MODULE{}) ->
         {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W+1, H+1}),
         receive {MsgRef, setup_done} -> ok end,
         Fsm ! {nif_inst, Inst},
-        flush_loop(Srv, Inst, MsgRef, 1, [])
+        flush_loop(Srv, Inst, MsgRef, 0, false)
     end),
     receive {nif_inst, Inst} -> ok end,
 
