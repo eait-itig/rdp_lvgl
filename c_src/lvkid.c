@@ -1530,7 +1530,7 @@ lvkid_erl_flush_ring(void *arg)
 
 		pthread_rwlock_wrlock(&inst->lvki_lock);
 		inst->lvki_flushing = 1;
-		hdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
+		hdl = lvkid_make_hdl(LVK_FBUF, fb, NULL);
 		if (hdl->lvkh_fbuf == NULL)
 			hdl->lvkh_fbuf = buf;
 		if (hdl->lvkh_fbuf != buf) {
@@ -1577,6 +1577,8 @@ lvkid_erl_flush_ring(void *arg)
 			    enif_make_atom(env, "flush_sync"));
 			enif_send(NULL, &owner, env, msg);
 			enif_free_env(env);
+
+			hdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
 		}
 		pthread_rwlock_unlock(&inst->lvki_lock);
 next:

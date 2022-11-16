@@ -51,11 +51,11 @@ try_paths([Path | Next], BaseName) ->
 
 init() ->
     Paths0 = [
-        filename:join(["..", lib, pcsc, priv]),
+        filename:join(["..", lib, rdp_lvgl, priv]),
         filename:join(["..", priv]),
         filename:join([priv])
     ],
-    Paths1 = case code:priv_dir(pcsc) of
+    Paths1 = case code:priv_dir(rdp_lvgl) of
         {error, bad_name} -> Paths0;
         Dir -> [Dir | Paths0]
     end,
