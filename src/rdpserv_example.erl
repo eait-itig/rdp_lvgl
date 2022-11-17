@@ -41,7 +41,8 @@
     init_ui/2,
     handle_event/3,
     terminate/2,
-    choose_format/3
+    choose_format/3,
+    handle_info/3
     ]).
 
 -export([start/0]).
@@ -49,9 +50,12 @@
 -type modkey() :: alt | ctrl | shift | capslock | numlock.
 
 -record(?MODULE, {
-    renderer :: pid(),
     inst :: rdp_lvgl_nif:instance(),
+    flushref :: undefined | reference(),
+    frame = 1 :: integer(),
+    sent_sof = false :: boolean(),
     ev :: rdp_lvgl_nif:event(),
+    evref :: reference(),
     keydown = none :: none | term(),
     modkeys = #{alt => false, ctrl => false, shift => false,
         capslock => false, numlock => false} :: #{modkey() => boolean()}
@@ -72,38 +76,41 @@ choose_format(_Preferred, Supported, S = #?MODULE{}) ->
     lager:debug("using color format 16bpp out of ~p", [Supported]),
     {'16bpp', S}.
 
-flush_done(Srv, Inst, MsgRef, FrameId) ->
+handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = R}) ->
+    W = (X2 - X1) + 1,
+    H = (Y2 - Y1) + 1,
+    Surf = #ts_surface_set_bits{dest = {X1, Y1},
+                                size = {W, H},
+                                bpp = 16,
+                                codec = 0,
+                                data = lists:reverse(PixData)},
+    #?MODULE{frame = FrameId, sent_sof = SentSOF} = S,
+    SOF = #ts_surface_frame_marker{frame = FrameId, action = start},
+    Surfs = case SentSOF of
+        true -> [Surf];
+        false -> [SOF, Surf]
+    end,
+    Update = #ts_update_surfaces{surfaces = Surfs},
+    rdp_server:send_update(Srv, Update),
+    {ok, S};
+
+handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R}) ->
+    #?MODULE{inst = Inst, frame = FrameId} = S0,
+    EOF = #ts_surface_frame_marker{frame = FrameId, action = finish},
+    Update = #ts_update_surfaces{surfaces = [EOF]},
+    rdp_server:send_update(Srv, Update),
+    flush_done(Inst),
+    {ok, S0#?MODULE{frame = FrameId + 1, sent_sof = false}};
+
+handle_info(Msg, Srv, S = #?MODULE{}) ->
+    lager:debug("message? ~p", [Msg]),
+    {ok, S}.
+
+flush_done(Inst) ->
     erlang:garbage_collect(),
     case rdp_lvgl_nif:flush_done(Inst) of
-        ok ->
-            flush_loop(Srv, Inst, MsgRef, FrameId + 1, false);
-        {error, busy} ->
-            flush_done(Srv, Inst, MsgRef, FrameId)
-    end.
-
-flush_loop(Srv, Inst, MsgRef, FrameId, SentSOF) ->
-    receive
-        {MsgRef, flush, {X1, Y1, X2, Y2}, PixData} ->
-            W = (X2 - X1) + 1,
-            H = (Y2 - Y1) + 1,
-            Surf = #ts_surface_set_bits{dest = {X1, Y1},
-                                        size = {W, H},
-                                        bpp = 16,
-                                        codec = 0,
-                                        data = lists:reverse(PixData)},
-            SOF = #ts_surface_frame_marker{frame = FrameId, action = start},
-            Surfs = case SentSOF of
-                true -> [Surf];
-                false -> [SOF, Surf]
-            end,
-            Update = #ts_update_surfaces{surfaces = Surfs},
-            rdp_server:send_update(Srv, Update),
-            flush_loop(Srv, Inst, MsgRef, FrameId, true);
-        {MsgRef, flush_sync} ->
-            EOF = #ts_surface_frame_marker{frame = FrameId, action = finish},
-            Update = #ts_update_surfaces{surfaces = [EOF]},
-            rdp_server:send_update(Srv, Update),
-            flush_done(Srv, Inst, MsgRef, FrameId)
+        ok -> ok;
+        {error, busy} -> flush_done(Inst)
     end.
 
 setup_cursor(Inst) ->
@@ -118,13 +125,8 @@ setup_cursor(Inst) ->
 init_ui(Srv, S = #?MODULE{}) ->
     {W, H, 16} = rdp_server:get_canvas(Srv),
     Fsm = self(),
-    Pid = spawn_link(fun () ->
-        {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W, H}),
-        receive {MsgRef, setup_done} -> ok end,
-        Fsm ! {nif_inst, Inst},
-        flush_loop(Srv, Inst, MsgRef, 0, false)
-    end),
-    receive {nif_inst, Inst} -> ok end,
+    {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W, H}),
+    receive {MsgRef, setup_done} -> ok end,
 
     {ok, Screen} = lv_scr:create(Inst),
     {ok, Group} = lv_group:create(Inst),
@@ -157,7 +159,7 @@ init_ui(Srv, S = #?MODULE{}) ->
     {ok, Btn} = lv_btn:create(Flex),
     {ok, BtnLbl} = lv_label:create(Btn),
     ok = lv_label:set_text(BtnLbl, "Login"),
-    {ok, Event, MsgRef} = lv_event:setup(Btn, pressed),
+    {ok, Event, EvMsgRef} = lv_event:setup(Btn, pressed),
 
     {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_obj:set_size(Spinner, {50,50}),
@@ -168,7 +170,7 @@ init_ui(Srv, S = #?MODULE{}) ->
     %setup_cursor(Inst),
     %ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
 
-    {ok, #?MODULE{renderer = Pid, inst = Inst, ev = Event}}.
+    {ok, #?MODULE{inst = Inst, flushref = MsgRef, ev = Event, evref = EvMsgRef}}.
 
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, Srv, S = #?MODULE{}) ->
@@ -252,8 +254,7 @@ handle_event(#ts_inpevt_sync{flags = Flags}, Srv, S0 = #?MODULE{}) ->
     MK2 = MK1#{numlock => lists:member(numlock, Flags)},
     {ok, S0#?MODULE{modkeys = MK2}}.
 
-terminate(_Reason, #?MODULE{renderer = Pid}) ->
-    exit(Pid, kill),
+terminate(_Reason, #?MODULE{}) ->
     % any cleanup you need to do at exit
     ok.
 

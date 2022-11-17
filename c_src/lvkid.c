@@ -1513,7 +1513,8 @@ lvkid_erl_flush_ring(void *arg)
 		fb = &shm->si_fbuf[fbidx];
 
 		pthread_rwlock_rdlock(&kid->lvk_lock);
-		if (fb->fb_state == FBUF_FREE)
+		if (fb->fb_state == FBUF_FREE ||
+		    fb->fb_state == FBUF_TEARDOWN)
 			goto next;
 
 		inst = fb->fb_priv;
@@ -1668,6 +1669,9 @@ lvkid_erl_evt_ring(void *arg)
 		}
 
 		if (inst == NULL)
+			goto next;
+
+		if (inst->lvki_state != LVKINST_ALIVE)
 			goto next;
 
 		env = evt->lvke_env;
