@@ -120,7 +120,7 @@ struct lvkinst {
 
 	struct lvkhdl		*lvki_hdl;
 	struct lvkhdl		*lvki_fbhdl;
-	uint			 lvki_flushing;
+	unsigned long		 lvki_flushing;
 
 	enum lvkinst_state	 lvki_state;
 

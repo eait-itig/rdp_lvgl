@@ -2478,6 +2478,7 @@ rlvgl_setup_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	LIST_INSERT_HEAD(&obj->lvko_events, evt, lvke_obj_entry);
 
 	ehdl = lvkid_make_hdl(LVK_EVT, evt, &do_release);
+	enif_monitor_process(env, ehdl, &evt->lvke_owner, &ehdl->lvkh_mon);
 
 	cd = (struct cdesc){
 		.cd_op = CMD_SETUP_EVENT,

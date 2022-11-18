@@ -31,6 +31,7 @@
 #include "lvkid.h"
 #include "lvkutils.h"
 #include "lvcall.h"
+#include "tick_time.h"
 
 static pthread_rwlock_t lvkids_lock = PTHREAD_RWLOCK_INITIALIZER;
 static struct lvkid_list lvkids = TAILQ_HEAD_INITIALIZER(lvkids);
@@ -188,6 +189,7 @@ lvkid_hdl_mon_down(ErlNifEnv *env, void *arg, ErlNifPid *pid,
 {
 	struct lvkhdl *hdl = arg;
 	struct lvkid *kid = hdl->lvkh_kid;
+	struct lvkevt *evt;
 	struct lvkinst *inst;
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
@@ -195,9 +197,15 @@ lvkid_hdl_mon_down(ErlNifEnv *env, void *arg, ErlNifPid *pid,
 	if (inst != NULL)
 		pthread_rwlock_wrlock(&inst->lvki_lock);
 
-	if (hdl->lvkh_type == LVK_INST) {
+	switch (hdl->lvkh_type) {
+	case LVK_INST:
 		assert(hdl->lvkh_ptr == inst);
 		lvkinst_teardown(inst);
+		break;
+	case LVK_EVT:
+		evt = hdl->lvkh_ptr;
+		lvkevt_teardown(evt);
+		break;
 	}
 
 	if (inst != NULL)
@@ -1530,7 +1538,7 @@ lvkid_erl_flush_ring(void *arg)
 		assert(buf != NULL);
 
 		pthread_rwlock_wrlock(&inst->lvki_lock);
-		inst->lvki_flushing = 1;
+		inst->lvki_flushing = tick_millis();
 		hdl = lvkid_make_hdl(LVK_FBUF, fb, NULL);
 		if (hdl->lvkh_fbuf == NULL)
 			hdl->lvkh_fbuf = buf;

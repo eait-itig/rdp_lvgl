@@ -167,7 +167,7 @@ init_ui(Srv, S = #?MODULE{}) ->
     ok = lv_scr:load(Inst, Screen),
 
     ok = lv_indev:set_group(Inst, keyboard, Group),
-    %setup_cursor(Inst),
+    setup_cursor(Inst),
     %ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
 
     {ok, #?MODULE{inst = Inst, flushref = MsgRef, ev = Event, evref = EvMsgRef}}.
@@ -242,8 +242,8 @@ handle_event(Ev = #ts_inpevt_key{code = Code, action = down}, Srv, S0 = #?MODULE
 handle_event(#ts_inpevt_key{}, Srv, S = #?MODULE{}) ->
     {ok, S};
 
-handle_event(#ts_inpevt_unicode{}, Srv, S = #?MODULE{}) ->
-    {ok, S};
+handle_event(#ts_inpevt_unicode{code = Code, action = A}, Srv, S = #?MODULE{}) ->
+    handle_event(#ts_inpevt_key{code = {Code,Code}, flags = [], action = A}, Srv, S);
 
 handle_event(#ts_inpevt_wheel{}, Srv, S = #?MODULE{}) ->
     {ok, S};
