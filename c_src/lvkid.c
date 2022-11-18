@@ -68,7 +68,8 @@ struct lvinst {
 	lv_indev_drv_t		 lvi_mouse_drv;
 	lv_indev_t		*lvi_mouse;
 	uint64_t		 lvi_udata;
-	uint			 lvi_in_wait;
+	uint64_t		 lvi_in_wait;
+	uint			 lvi_stalled;
 	struct input_event_q	 lvi_mouse_q;
 	struct input_event_q	 lvi_kbd_q;
 	lv_obj_t		*lvi_cursor;
@@ -318,41 +319,6 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 	return (*phdl);
 }
 
-void
-lv_group_send_text(lv_group_t *group, const char *text)
-{
-	lv_obj_t *act;
-	act = lv_group_get_focused(group);
-	if (act == NULL)
-		return;
-	if (lv_obj_has_state(act, LV_STATE_DISABLED))
-		return;
-	if (!lv_obj_has_class(act, &lv_textarea_class))
-		return;
-	lv_textarea_add_text(act, text);
-}
-
-void
-lv_img_set_offset(lv_obj_t *obj, lv_point_t pt)
-{
-	lv_img_set_offset_x(obj, pt.x);
-	lv_img_set_offset_y(obj, pt.y);
-}
-
-void
-lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr)
-{
-	lv_disp_set_default(disp);
-	lv_scr_load(scr);
-}
-
-lv_obj_t *
-lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent)
-{
-	lv_disp_set_default(disp);
-	return (lv_obj_create(parent));
-}
-
 static void
 lvkid_lv_rounder_cb(lv_disp_drv_t *disp_drv, lv_area_t *area)
 {
@@ -369,10 +335,21 @@ static void
 lvkid_lv_wait_cb(lv_disp_drv_t *disp_drv)
 {
 	struct lvinst *inst = disp_drv->user_data;
+	struct timespec ts;
+	int rc;
+
+	assert(clock_gettime(CLOCK_REALTIME, &ts) == 0);
+	ts.tv_sec += 1;
+
 	pthread_mutex_lock(&lv_flush_mtx);
-	inst->lvi_in_wait = 1;
+	inst->lvi_in_wait = tick_millis();
 	while (disp_drv->draw_buf->flushing) {
-		pthread_cond_wait(&lv_flush_cond, &lv_flush_mtx);
+		rc = pthread_cond_timedwait(&lv_flush_cond, &lv_flush_mtx, &ts);
+		if (rc) {
+			inst->lvi_stalled = 1;
+			lv_disp_flush_ready(disp_drv);
+			break;
+		}
 	}
 	inst->lvi_in_wait = 0;
 	pthread_mutex_unlock(&lv_flush_mtx);
@@ -394,6 +371,11 @@ lvkid_lv_flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	struct shmintf *shm = inst->lvi_shm;
 
 	assert(disp == inst->lvi_disp);
+
+	if (inst->lvi_stalled) {
+		lv_disp_flush_ready(disp_drv);
+		return;
+	}
 
 	fbidx_flag = inst->lvi_fbidx;
 	if (buf == fb->fb_a) {
@@ -832,9 +814,12 @@ lvkid_lv_phlush_ring(void *arg)
 		assert(drv == &inst->lvi_disp_drv);
 		assert(inst->lvi_disp != NULL);
 
-		lv_disp_flush_ready(drv);
-
-		pthread_cond_broadcast(&lv_flush_cond);
+		if (inst->lvi_stalled) {
+			inst->lvi_stalled = 0;
+		} else {
+			lv_disp_flush_ready(drv);
+			pthread_cond_broadcast(&lv_flush_cond);
+		}
 
 		pthread_mutex_unlock(&lv_flush_mtx);
 
@@ -1538,7 +1523,8 @@ lvkid_erl_flush_ring(void *arg)
 		assert(buf != NULL);
 
 		pthread_rwlock_wrlock(&inst->lvki_lock);
-		inst->lvki_flushing = tick_millis();
+		inst->lvki_cfb = buf;
+		inst->lvki_flushing = 1;
 		hdl = lvkid_make_hdl(LVK_FBUF, fb, NULL);
 		if (hdl->lvkh_fbuf == NULL)
 			hdl->lvkh_fbuf = buf;
@@ -2081,23 +2067,4 @@ lvkinst_teardown(struct lvkinst *inst)
 		}
 	};
 	lvk_cmd(kid, &cd, 1, lvk_inst_teardown_cb, inst);
-}
-
-lv_style_t *
-lv_style_alloc(void)
-{
-	lv_style_t *sty = calloc(1, sizeof (*sty));
-	assert(sty != NULL);
-	lv_style_init(sty);
-	return (sty);
-}
-
-void
-lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
-    lv_flex_align_t cross_place, lv_flex_align_t track_cross_place)
-{
-	lv_style_set_flex_main_place(style, main_place);
-	lv_style_set_flex_cross_place(style, cross_place);
-	lv_style_set_flex_track_place(style, track_cross_place);
-	lv_style_set_layout(style, LV_LAYOUT_FLEX);
 }

@@ -75,6 +75,7 @@ typedef uint8_t (*lv_call_func2_cpC_t)(void *, lv_color_t);
 typedef void (*lv_call_func1_vc_t)(uint8_t);
 typedef uint16_t (*lv_call_func2_wpw_t)(void *, uint16_t);
 typedef void (*lv_call_func4_vpppl_t)(void *, void *, void *, uint32_t);
+typedef void (*lv_call_func6_vpplllc_t)(void *, void *, uint32_t, uint32_t, uint32_t, uint8_t);
 typedef void (*lv_call_func2_vpC_t)(void *, lv_color_t);
 typedef void (*lv_call_func4_vpwww_t)(void *, uint16_t, uint16_t, uint16_t);
 typedef uint16_t (*lv_call_func1_ww_t)(uint16_t);
@@ -192,7 +193,6 @@ typedef void * (*lv_call_func4_ppwwp_t)(void *, uint16_t, uint16_t, void *);
 typedef void (*lv_call_func5_vplllc_t)(void *, uint32_t, uint32_t, uint32_t, uint8_t);
 typedef void * (*lv_call_func4_ppwww_t)(void *, uint16_t, uint16_t, uint16_t);
 typedef void * (*lv_call_func5_pppwww_t)(void *, void *, uint16_t, uint16_t, uint16_t);
-typedef void (*lv_call_func6_vpplllc_t)(void *, void *, uint32_t, uint32_t, uint32_t, uint8_t);
 typedef uint32_t (*lv_call_func2_lpc_t)(void *, uint8_t);
 typedef uint8_t (*lv_call_func5_cpcppl_t)(void *, uint8_t, void *, void *, uint32_t);
 typedef lv_color_t (*lv_call_func2_Cpp_t)(void *, void *);
@@ -2433,6 +2433,63 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_UINT32:
 				a2l = (uint32_t)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
+				case ARG_UINT32:
+					a3l = (uint32_t)cdc->cdc_arg[3];
+					switch (cdc->cdc_argtype[4]) {
+					case ARG_UINT32:
+						a4l = (uint32_t)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_UINT8:
+							a5c = (uint8_t)cdc->cdc_arg[5];
+							switch (cdc->cdc_argtype[6]) {
+							case ARG_NONE:
+								switch (cdc->cdc_rettype) {
+								case ARG_NONE:
+									(*(lv_call_func6_vpplllc_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2l,
+									    a3l,
+									    a4l,
+									    a5c);
+									return (0);
+								}
+								break;
+							}
+							break;
+						case ARG_UINT32:
+							a5l = (uint32_t)cdc->cdc_arg[5];
+							switch (cdc->cdc_argtype[6]) {
+							case ARG_NONE:
+								switch (cdc->cdc_rettype) {
+								case ARG_NONE:
+									(*(lv_call_func6_vppllll_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2l,
+									    a3l,
+									    a4l,
+									    a5l);
+									return (0);
+								}
+								break;
+							}
+							break;
+						}
+						break;
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_UINT8:
+							retc = (*(lv_call_func4_cppll_t)cdc->cdc_func)(
+							    a0p,
+							    a1p,
+							    a2l,
+							    a3l);
+							return ((uint64_t)retc);
+						}
+						break;
+					}
+					break;
 				case ARG_NONE:
 					switch (cdc->cdc_rettype) {
 					case ARG_NONE:
@@ -2463,63 +2520,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1p,
 						    a2l);
 						return ((uint64_t)retl);
-					}
-					break;
-				case ARG_UINT32:
-					a3l = (uint32_t)cdc->cdc_arg[3];
-					switch (cdc->cdc_argtype[4]) {
-					case ARG_NONE:
-						switch (cdc->cdc_rettype) {
-						case ARG_UINT8:
-							retc = (*(lv_call_func4_cppll_t)cdc->cdc_func)(
-							    a0p,
-							    a1p,
-							    a2l,
-							    a3l);
-							return ((uint64_t)retc);
-						}
-						break;
-					case ARG_UINT32:
-						a4l = (uint32_t)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_UINT32:
-							a5l = (uint32_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_NONE:
-									(*(lv_call_func6_vppllll_t)cdc->cdc_func)(
-									    a0p,
-									    a1p,
-									    a2l,
-									    a3l,
-									    a4l,
-									    a5l);
-									return (0);
-								}
-								break;
-							}
-							break;
-						case ARG_UINT8:
-							a5c = (uint8_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_NONE:
-									(*(lv_call_func6_vpplllc_t)cdc->cdc_func)(
-									    a0p,
-									    a1p,
-									    a2l,
-									    a3l,
-									    a4l,
-									    a5c);
-									return (0);
-								}
-								break;
-							}
-							break;
-						}
-						break;
 					}
 					break;
 				case ARG_BUFPTR:

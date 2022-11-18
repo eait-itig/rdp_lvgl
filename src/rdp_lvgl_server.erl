@@ -27,7 +27,7 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
--module(rdpserv_example).
+-module(rdp_lvgl_server).
 -behaviour(rdp_server).
 
 -compile([{parse_transform, lager_transform}]).
@@ -36,7 +36,7 @@
 -include_lib("rdp_proto/include/rdpdr.hrl").
 
 -export([
-    init/1,
+    init/2,
     handle_connect/4,
     init_ui/2,
     handle_event/3,
@@ -45,37 +45,58 @@
     handle_info/3
     ]).
 
--export([start/0]).
+-export([find_image_path/1]).
 
 -type modkey() :: alt | ctrl | shift | capslock | numlock.
 
 -record(?MODULE, {
+    mod :: module(),
+    modstate :: term(),
     inst :: rdp_lvgl_nif:instance(),
+    suppress = false :: boolean(),
     flushref :: undefined | reference(),
     frame = 1 :: integer(),
     sent_sof = false :: boolean(),
-    ev :: rdp_lvgl_nif:event(),
-    evref :: reference(),
     keydown = none :: none | term(),
     modkeys = #{alt => false, ctrl => false, shift => false,
         capslock => false, numlock => false} :: #{modkey() => boolean()}
     }).
 
-start() ->
-    rdp_server_sup:start_link(3389, ?MODULE).
+init(Peer, {Mod, ModArgs}) ->
+    case erlang:apply(Mod, init, [Peer | ModArgs]) of
+        {ok, MS0} ->
+            {ok, #?MODULE{mod = Mod, modstate = MS0}};
+        Err ->
+            Err
+    end;
+init(Peer, Mod) ->
+    case Mod:init(Peer) of
+        {ok, MS0} ->
+            {ok, #?MODULE{mod = Mod, modstate = MS0}};
+        Err ->
+            Err
+    end.
 
-%% @arg Peer  the peer address (IPv4 or IPv6) connecting
-init(_Peer) ->
-    {ok, #?MODULE{}}.
-
-handle_connect(Cookie, Protocols, Srv, S = #?MODULE{}) ->
-    {accept, [{certfile, "etc/cert.pem"}, {keyfile, "etc/key.pem"}], S}.
-    % SslOptions should probably contain at least [{certfile, ...}, {keyfile, ...}]
+handle_connect(Cookie, Protocols, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
+    case Mod:handle_connect(Cookie, Protocols, Srv, MS0) of
+        {accept, MS1} ->
+            {accept, S0#?MODULE{modstate = MS1}};
+        {accept, AcceptOpts, MS1} ->
+            {accept, AcceptOpts, S0#?MODULE{modstate = MS1}};
+        {accept_raw, MS1} ->
+            {accept_raw, S0#?MODULE{modstate = MS1}};
+        {reject, Reason, MS1} ->
+            {reject, S0#?MODULE{modstate = MS1}};
+        {stop, Reason, MS1} ->
+            {stop, Reason, S0#?MODULE{modstate = MS1}}
+    end.
 
 choose_format(_Preferred, Supported, S = #?MODULE{}) ->
     lager:debug("using color format 16bpp out of ~p", [Supported]),
     {'16bpp', S}.
 
+handle_info({R, flush, _, _}, Srv, S = #?MODULE{flushref = R, suppress = true}) ->
+    {ok, S};
 handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = R}) ->
     W = (X2 - X1) + 1,
     H = (Y2 - Y1) + 1,
@@ -94,6 +115,10 @@ handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = 
     rdp_server:send_update(Srv, Update),
     {ok, S};
 
+handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R, suppress = true}) ->
+    #?MODULE{inst = Inst, frame = FrameId} = S0,
+    flush_done(Inst),
+    {ok, S0#?MODULE{frame = FrameId + 1, sent_sof = false}};
 handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R}) ->
     #?MODULE{inst = Inst, frame = FrameId} = S0,
     EOF = #ts_surface_frame_marker{frame = FrameId, action = finish},
@@ -102,9 +127,13 @@ handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R}) ->
     flush_done(Inst),
     {ok, S0#?MODULE{frame = FrameId + 1, sent_sof = false}};
 
-handle_info(Msg, Srv, S = #?MODULE{}) ->
-    lager:debug("message? ~p", [Msg]),
-    {ok, S}.
+handle_info(Msg, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
+    case Mod:handle_info(Msg, Srv, MS0) of
+        {ok, MS1} ->
+            {ok, S0#?MODULE{modstate = MS1}};
+        {stop, Reason, MS1} ->
+            {stop, Reason, S0#?MODULE{modstate = MS1}}
+    end.
 
 flush_done(Inst) ->
     erlang:garbage_collect(),
@@ -113,65 +142,55 @@ flush_done(Inst) ->
         {error, busy} -> flush_done(Inst)
     end.
 
+try_paths([Last], BaseName) ->
+    filename:join([Last, BaseName]);
+try_paths([Path | Next], BaseName) ->
+    case filelib:is_dir(Path) of
+        true ->
+            WCard = filename:join([Path, BaseName]),
+            case filelib:wildcard(WCard) of
+                [] -> try_paths(Next, BaseName);
+                _ -> filename:join([Path, BaseName])
+            end;
+        false -> try_paths(Next, BaseName)
+    end.
+
+find_image_path(Name) ->
+    Paths0 = [
+        filename:join(["..", lib, rdp_lvgl, priv]),
+        filename:join(["..", priv]),
+        filename:join([priv])
+    ],
+    Paths1 = case code:priv_dir(rdp_lvgl) of
+        {error, bad_name} -> Paths0;
+        Dir -> [Dir | Paths0]
+    end,
+    "A:" ++ try_paths(Paths1, Name).
+
 setup_cursor(Inst) ->
     {ok, SysLayer} = lv_disp:get_layer_sys(Inst),
     {ok, Parent} = lv_img:create(SysLayer),
     ok = lv_obj:add_flags(Parent, [overflow_visible, ignore_layout]),
     {ok, Img} = lv_img:create(Parent),
-    ok = lv_img:set_src(Img, "A:priv/mouse_cursor.png"),
+    ok = lv_img:set_src(Img, find_image_path("mouse_cursor.png")),
     ok = lv_obj:align(Img, top_left, {-4, -4}),
     ok = lv_indev:set_mouse_cursor(Inst, Parent).
 
-init_ui(Srv, S = #?MODULE{}) ->
+init_ui(Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
     {W, H, 16} = rdp_server:get_canvas(Srv),
-    Fsm = self(),
     {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W, H}),
     receive {MsgRef, setup_done} -> ok end,
-
-    {ok, Screen} = lv_scr:create(Inst),
-    {ok, Group} = lv_group:create(Inst),
-
-    {ok, Flex} = lv_obj:create(Inst, Screen),
-
-    FlowDir = if (W > H) -> row; true -> column end,
-    {ok, FlowStyle} = lv_style:create(Inst),
-    ok = lv_style:set_flex_flow(FlowStyle, FlowDir),
-    ok = lv_style:set_flex_align(FlowStyle, center, center, center),
-    ok = lv_style:set_bg_opacity(FlowStyle, 0),
-    ok = lv_obj:add_style(Flex, FlowStyle),
-    ok = lv_obj:set_size(Flex, {W, H}),
-    ok = lv_obj:center(Flex),
-
-    {ok, Lbl} = lv_label:create(Flex),
-    ok = lv_label:set_text(Lbl, "Welcome!"),
-
-    {ok, Text} = lv_textarea:create(Flex),
-    ok = lv_textarea:set_one_line(Text, true),
-    ok = lv_textarea:set_placeholder_text(Text, "Username"),
-    ok = lv_group:add_obj(Group, Text),
-
-    {ok, PwText} = lv_textarea:create(Flex),
-    ok = lv_textarea:set_one_line(PwText, true),
-    ok = lv_textarea:set_password_mode(PwText, true),
-    ok = lv_textarea:set_placeholder_text(PwText, "Password"),
-    ok = lv_group:add_obj(Group, PwText),
-
-    {ok, Btn} = lv_btn:create(Flex),
-    {ok, BtnLbl} = lv_label:create(Btn),
-    ok = lv_label:set_text(BtnLbl, "Login"),
-    {ok, Event, EvMsgRef} = lv_event:setup(Btn, pressed),
-
-    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
-    ok = lv_obj:set_size(Spinner, {50,50}),
-
-    ok = lv_scr:load(Inst, Screen),
-
-    ok = lv_indev:set_group(Inst, keyboard, Group),
     setup_cursor(Inst),
     %ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
 
-    {ok, #?MODULE{inst = Inst, flushref = MsgRef, ev = Event, evref = EvMsgRef}}.
-
+    case Mod:init_ui({Srv, Inst}, MS0) of
+        {ok, MS1} ->
+            {ok, S0#?MODULE{inst = Inst,
+                            flushref = MsgRef,
+                            modstate = MS1}};
+        {stop, Reason, MS1} ->
+            {stop, Reason, S0#?MODULE{modstate = MS1}}
+    end.
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
@@ -214,9 +233,12 @@ handle_event(#ts_inpevt_key{code = Code, flags = F, action = down}, Srv, S0 = #?
     lager:debug("ts code = ~p, ext = ~p, mk = ~p", [Code, Ext, MK]),
     case ts_key_to_lv(Code, Ext, MK) of
         null -> {ok, S1};
-        paste -> {ok, S1};
-        copy -> {ok, S1};
-        select_all -> {ok, S1};
+        paste ->
+            {ok, S1};
+        copy ->
+            {ok, S1};
+        select_all ->
+            {ok, S1};
         LvKey ->
             ok = lv_indev:send_key_event(Inst, LvKey, pressed),
             {ok, S1}
@@ -252,10 +274,35 @@ handle_event(#ts_inpevt_sync{flags = Flags}, Srv, S0 = #?MODULE{}) ->
     #?MODULE{modkeys = MK0} = S0,
     MK1 = MK0#{capslock => lists:member(capslock, Flags)},
     MK2 = MK1#{numlock => lists:member(numlock, Flags)},
-    {ok, S0#?MODULE{modkeys = MK2}}.
+    {ok, S0#?MODULE{modkeys = MK2}};
 
-terminate(_Reason, #?MODULE{}) ->
-    % any cleanup you need to do at exit
+handle_event(#ts_suppress_output{allow_updates = false}, Srv, S0 = #?MODULE{}) ->
+    {ok, S0#?MODULE{suppress = true}};
+handle_event(#ts_suppress_output{allow_updates = true, rect = R}, Srv, S0 = #?MODULE{}) ->
+    S1 = S0#?MODULE{suppress = false},
+    handle_event(#ts_refresh_rect{rects = [R]}, Srv, S1);
+
+handle_event(#ts_refresh_rect{rects = []}, Srv, S0 = #?MODULE{}) ->
+    {ok, S0};
+handle_event(#ts_refresh_rect{rects = [R | Rest]}, Srv, S0 = #?MODULE{}) ->
+    #?MODULE{inst = Inst, flushref = Ref} = S0,
+    {ok, Tiles} = rdp_lvgl_nif:read_framebuffer(Inst, R),
+    S1 = lists:foldl(fun ({TileRect, PixData}, SS0) ->
+        {ok, SS1} = handle_info({Ref, flush, TileRect, PixData}, Srv, SS0),
+        SS1
+    end, S0, Tiles),
+    handle_event(#ts_refresh_rect{rects = Rest}, Srv, S1);
+
+handle_event(Other, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
+    case Mod:handle_Event(Other, Srv, MS0) of
+        {ok, MS1} ->
+            {ok, S0#?MODULE{modstate = MS1}};
+        {stop, Reason, MS1} ->
+            {stop, Reason, S0#?MODULE{modstate = MS1}}
+    end.
+
+terminate(Reason, #?MODULE{mod = Mod, modstate = MS0}) ->
+    Mod:terminate(Reason, MS0),
     ok.
 
 ts_key_to_lv({$v, $V}, _, #{ctrl := true}) -> paste;

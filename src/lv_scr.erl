@@ -28,6 +28,8 @@
 -compile(export_all).
 -compile(nowarn_export_all).
 
+-export_type([load_anim/0]).
+
 -include("async_wrappers.hrl").
 
 -spec create(lv:instance()) -> {ok, lv:screen()} | lv:error().
@@ -37,3 +39,14 @@ create(Inst) ->
 -spec load(lv:instance(), lv:screen()) -> ok | lv:error().
 load(Inst, Screen) ->
     ?async_void_wrapper(scr_load, Inst, Screen).
+
+-type load_anim() :: none | over_left | over_right | over_top |
+    over_bottom | move_left | move_right | move_top | move_bottom |
+    fade_in | fade_out | out_left | out_right | out_top | out_bottom.
+-type msec() :: integer().
+
+-spec load_anim(lv:instance(), lv:screen(), load_anim(), msec(),
+    msec(), boolean()) -> ok | lv:error().
+load_anim(Inst, Screen, Anim, Time, Delay, AutoDel) ->
+    ?async_void_wrapper(scr_load_anim, Inst, Screen, Anim, Time, Delay,
+        AutoDel).

@@ -1,8 +1,10 @@
-/*
 %%
-%% RDP UI framework using LVGL
+%% rdpproxy
+%% remote desktop proxy
 %%
-%% Copyright 2022 Alex Wilson <alex@uq.edu.au>, The University of Queensland
+%% Copyright 2022 Alex Wilson <alex@uq.edu.au>
+%% The University of Queensland
+%% All rights reserved.
 %%
 %% Redistribution and use in source and binary forms, with or without
 %% modification, are permitted provided that the following conditions
@@ -23,30 +25,53 @@
 %% THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+%%
 
-#if !defined(_LVK_UTILS_H)
-#define _LVK_UTILS_H
+-module(lvgl_example).
+-behaviour(rdp_server).
 
-#include "erl_nif.h"
-#include <lvgl.h>
-#include <stdint.h>
-#include "shm.h"
+-compile([{parse_transform, lager_transform}]).
 
-uint lvk_next_tile(const lv_area_t *area, lv_area_t *tile);
+-export([
+    start/0
+    ]).
 
-ERL_NIF_TERM lvk_tile_to_iolist(ErlNifEnv *env, struct fbuf *fb,
-    lv_color_t *buf, void *rsrc, const lv_area_t *tile);
+-export([
+    init/1,
+    handle_connect/4,
+    init_ui/2,
+    handle_event/3,
+    terminate/2,
+    handle_info/3
+    ]).
 
-void lv_group_send_text(lv_group_t *group, const char *text);
-void lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr);
-void lv_disp_scr_load_anim(lv_disp_t *disp, lv_obj_t *src,
-    lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay,
-    bool auto_del);
-lv_obj_t *lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent);
-void lv_img_set_offset(lv_obj_t *obj, lv_point_t pt);
-lv_style_t *lv_style_alloc(void);
-void lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
-    lv_flex_align_t cross_place, lv_flex_align_t track_cross_place);
+-include_lib("rdp_proto/include/rdp_server.hrl").
+-include_lib("rdp_proto/include/rdpdr.hrl").
 
-#endif /* _LVK_UTILS_H */
+start() ->
+    rdp_server_sup:start_link(3389, {rdp_lvgl_server, ?MODULE}).
+
+-record(?MODULE, {
+    inst :: lv:instance(),
+    fsm :: pid()
+    }).
+
+init(_Peer) ->
+    {ok, #?MODULE{}}.
+
+handle_connect(_Cookie, _Protocols, _Srv, S0 = #?MODULE{}) ->
+    {accept, [{certfile, "etc/cert.pem"}, {keyfile, "etc/key.pem"}], S0}.
+
+init_ui({Srv, Inst}, S = #?MODULE{}) ->
+    {W, H, _} = rdp_server:get_canvas(Srv),
+    {ok, Pid} = lvgl_example_fsm:start_link(Srv, Inst, {W, H}),
+    {ok, S#?MODULE{fsm = Pid}}.
+
+handle_info(_Msg, _Srv, S0 = #?MODULE{}) ->
+    {ok, S0}.
+
+handle_event(_Evt, _Srv, S0 = #?MODULE{}) ->
+    {ok, S0}.
+
+terminate(Reason, #?MODULE{}) ->
+    ok.

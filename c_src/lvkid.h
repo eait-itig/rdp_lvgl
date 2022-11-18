@@ -120,11 +120,12 @@ struct lvkinst {
 
 	struct lvkhdl		*lvki_hdl;
 	struct lvkhdl		*lvki_fbhdl;
-	unsigned long		 lvki_flushing;
+	uint			 lvki_flushing;
 
 	enum lvkinst_state	 lvki_state;
 
 	struct fbuf		*lvki_fbuf;
+	lv_color_t		*lvki_cfb;
 	lvaddr_t		 lvki_disp;
 	lvaddr_t		 lvki_disp_drv;
 	lvaddr_t		 lvki_kbd;
@@ -236,14 +237,6 @@ int lvk_call(struct lvkid *kid, lvk_call_cb_t cb, void *priv,
     enum arg_type rt, lvk_call_func_t f, ...);
 int lvk_icall(struct lvkinst *inst, lvk_call_cb_t cb, void *priv,
     enum arg_type rt, lvk_call_func_t f, ...);
-
-void lv_group_send_text(lv_group_t *group, const char *text);
-void lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr);
-lv_obj_t *lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent);
-void lv_img_set_offset(lv_obj_t *obj, lv_point_t pt);
-lv_style_t *lv_style_alloc(void);
-void lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
-    lv_flex_align_t cross_place, lv_flex_align_t track_cross_place);
 
 void lv_ieq_push_mouse(lv_indev_drv_t *drv, lv_indev_state_t state,
     lv_point_t point);

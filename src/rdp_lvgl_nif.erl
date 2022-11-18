@@ -115,7 +115,9 @@ flush_done(_Inst) -> error(no_nif).
 -spec make_buffer(binary()) -> {ok, buffer()}.
 make_buffer(_Data) -> error(no_nif).
 
--spec read_framebuffer(instance(), lv:rect()) -> {ok, pixeldata()}.
+-type tile() :: {lv:rect(), pixeldata()}.
+
+-spec read_framebuffer(instance(), lv:rect()) -> {ok, [tile()]}.
 read_framebuffer(_Inst, _Rect) -> error(no_nif).
 
 -spec send_pointer_event(instance(), lv:point(), lv_indev:state()) -> ok | {error, term()}.
@@ -148,6 +150,9 @@ obj_align_to(_Obj, _RefObj, _AlignSpec) -> error(no_nif).
 
 -spec scr_load(instance(), object()) -> async_return().
 scr_load(_Inst, _Screen) -> error(no_nif).
+
+-spec scr_load_anim(instance(), object(), lv_scr:load_anim(), msec(), msec(), boolean()) -> async_return().
+scr_load_anim(_Inst, _Screen, _Anim, _Time, _Delay, _AutoDel) -> error(no_nif).
 
 -spec disp_set_bg_color(instance(), color()) -> async_return().
 disp_set_bg_color(_Inst, _Color) -> error(no_nif).
@@ -244,8 +249,8 @@ textarea_set_accepted_chars(_Obj, _Chars) -> error(no_nif).
 -spec textarea_set_max_length(object(), integer()) -> async_return().
 textarea_set_max_length(_Obj, _MaxLength) -> error(no_nif).
 
--spec textarea_set_text_sel(object(), boolean()) -> async_return().
-textarea_set_text_sel(_Obj, _State) -> error(no_nif).
+-spec textarea_set_text_selection(object(), boolean()) -> async_return().
+textarea_set_text_selection(_Obj, _State) -> error(no_nif).
 
 -spec textarea_get_text(object()) -> async_return(binary()).
 textarea_get_text(_Obj) -> error(no_nif).

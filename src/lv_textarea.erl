@@ -66,9 +66,9 @@ set_accepted_chars(Obj, Text) ->
 set_max_length(Obj, MaxLen) ->
     ?async_void_wrapper(textarea_set_max_length, Obj, MaxLen).
 
--spec set_text_sel(lv:textarea(), boolean()) -> ok | lv:error().
-set_text_sel(Obj, State) ->
-    ?async_void_wrapper(textarea_set_text_sel, Obj, State).
+-spec set_text_selection(lv:textarea(), boolean()) -> ok | lv:error().
+set_text_selection(Obj, State) ->
+    ?async_void_wrapper(textarea_set_text_selection, Obj, State).
 
 -spec get_text(lv:textarea()) -> {ok, binary()} | lv:error().
 get_text(Obj) ->

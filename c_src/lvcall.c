@@ -93,8 +93,6 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		cdc->cdc_rbuflen = rem;
 		/* FALL THROUGH */
 	case ARG_INLINE_BUF:
-		assert(cdc->cdc_rbuflen > 0);
-
 		data = (uint8_t *)rv;
 
 		rem = cdc->cdc_rbuflen;
@@ -111,7 +109,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		take = sizeof (rd[0].rd_return_buf.rdrb_data);
 		if (take > rem)
 			take = rem;
-		bcopy(data, rd[0].rd_return_buf.rdrb_data, take);
+		if (take > 0)
+			bcopy(data, rd[0].rd_return_buf.rdrb_data, take);
 		rem -= take;
 		off += take;
 

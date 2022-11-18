@@ -80,3 +80,67 @@ lvk_tile_to_iolist(ErlNifEnv *env, struct fbuf *fb, lv_color_t *buf,
 	list = enif_make_list_from_array(env, row, nrow);
 	return (list);
 }
+
+
+void
+lv_group_send_text(lv_group_t *group, const char *text)
+{
+	lv_obj_t *act;
+	act = lv_group_get_focused(group);
+	if (act == NULL)
+		return;
+	if (lv_obj_has_state(act, LV_STATE_DISABLED))
+		return;
+	if (!lv_obj_has_class(act, &lv_textarea_class))
+		return;
+	lv_textarea_add_text(act, text);
+}
+
+void
+lv_img_set_offset(lv_obj_t *obj, lv_point_t pt)
+{
+	lv_img_set_offset_x(obj, pt.x);
+	lv_img_set_offset_y(obj, pt.y);
+}
+
+void
+lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr)
+{
+	lv_disp_set_default(disp);
+	lv_scr_load(scr);
+}
+
+void
+lv_disp_scr_load_anim(lv_disp_t *disp, lv_obj_t *scr,
+    lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay,
+    bool auto_del)
+{
+	lv_disp_set_default(disp);
+	lv_scr_load_anim(scr, anim_type, time, delay, auto_del);
+}
+
+lv_obj_t *
+lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent)
+{
+	lv_disp_set_default(disp);
+	return (lv_obj_create(parent));
+}
+
+lv_style_t *
+lv_style_alloc(void)
+{
+	lv_style_t *sty = calloc(1, sizeof (*sty));
+	assert(sty != NULL);
+	lv_style_init(sty);
+	return (sty);
+}
+
+void
+lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
+    lv_flex_align_t cross_place, lv_flex_align_t track_cross_place)
+{
+	lv_style_set_flex_main_place(style, main_place);
+	lv_style_set_flex_cross_place(style, cross_place);
+	lv_style_set_flex_track_place(style, track_cross_place);
+	lv_style_set_layout(style, LV_LAYOUT_FLEX);
+}

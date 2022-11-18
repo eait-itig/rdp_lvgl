@@ -40,6 +40,7 @@
 #include "erl_nif.h"
 #include "shm.h"
 #include "lvkid.h"
+#include "lvkutils.h"
 
 static inline ERL_NIF_TERM
 enif_make_badarg2(ErlNifEnv *env, const char *param, ERL_NIF_TERM v)
@@ -1125,6 +1126,109 @@ out:
 	return (rv);
 }
 
+struct scr_load_anim {
+	const char		*sla_str;
+	lv_scr_load_anim_t	 sla_val;
+};
+const static struct scr_load_anim scr_load_anims[] = {
+	{ "none",		LV_SCR_LOAD_ANIM_NONE },
+	{ "fade_in",		LV_SCR_LOAD_ANIM_FADE_IN },
+	{ "fade_out",		LV_SCR_LOAD_ANIM_FADE_OUT },
+	{ "over_left",		LV_SCR_LOAD_ANIM_OVER_LEFT },
+	{ "over_right",		LV_SCR_LOAD_ANIM_OVER_RIGHT },
+	{ "over_top",		LV_SCR_LOAD_ANIM_OVER_TOP },
+	{ "over_bottom",	LV_SCR_LOAD_ANIM_OVER_BOTTOM },
+	{ "move_left",		LV_SCR_LOAD_ANIM_MOVE_LEFT },
+	{ "move_right",		LV_SCR_LOAD_ANIM_MOVE_RIGHT },
+	{ "move_top",		LV_SCR_LOAD_ANIM_MOVE_TOP },
+	{ "move_bottom",	LV_SCR_LOAD_ANIM_MOVE_BOTTOM },
+	{ "out_left",		LV_SCR_LOAD_ANIM_OUT_LEFT },
+	{ "out_right",		LV_SCR_LOAD_ANIM_OUT_RIGHT },
+	{ "out_top",		LV_SCR_LOAD_ANIM_OUT_TOP },
+	{ "out_bottom",		LV_SCR_LOAD_ANIM_OUT_BOTTOM },
+	{ NULL, 0 }
+};
+
+static ERL_NIF_TERM
+rlvgl_scr_load_anim(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkobj *screen;
+	struct lvkhdl *ihdl = NULL, *shdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	char atom[16];
+	lv_scr_load_anim_t anim;
+	uint time;
+	uint delay;
+	uint8_t autodel;
+	const struct scr_load_anim *sla;
+
+	if (argc != 6)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	for (sla = scr_load_anims; sla->sla_str != NULL; ++sla) {
+		if (strcmp(sla->sla_str, atom) == 0) {
+			anim = sla->sla_val;
+			break;
+		}
+	}
+	if (sla->sla_str == NULL)
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, argv[3], &time))
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, argv[4], &delay))
+		return (enif_make_badarg(env));
+	if (!enif_get_atom(env, argv[5], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	if (strcmp(atom, "true") == 0)
+		autodel = 1;
+	else if (strcmp(atom, "false") == 0)
+		autodel = 0;
+	else
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_inst_obj_hdl(env, argv[0], argv[1], &ihdl, &inst,
+	    &shdl, &screen, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_disp_scr_load_anim,
+	    ARG_PTR, inst->lvki_disp,
+	    ARG_OBJPTR, screen,
+	    ARG_UINT32, anim,
+	    ARG_UINT32, time,
+	    ARG_UINT32, delay,
+	    ARG_UINT8, autodel,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(ihdl);
+	/* leaving ihdl will drop all the locks */
+	free_ncd(ncd);
+	return (rv);
+}
+
 static ERL_NIF_TERM
 rlvgl_scr_load(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -1181,6 +1285,7 @@ const static struct obj_flag obj_flags[] = {
 	{ "clickable",		LV_OBJ_FLAG_CLICKABLE },
 	{ "click_focusable",	LV_OBJ_FLAG_CLICK_FOCUSABLE },
 	{ "checkable",		LV_OBJ_FLAG_CHECKABLE },
+	{ "flex_in_new_track",	LV_OBJ_FLAG_FLEX_IN_NEW_TRACK },
 	{ "scrollable",		LV_OBJ_FLAG_SCROLLABLE },
 	{ "scroll_elastic",	LV_OBJ_FLAG_SCROLL_ELASTIC },
 	{ "scroll_momentum",	LV_OBJ_FLAG_SCROLL_MOMENTUM },
@@ -1776,7 +1881,7 @@ rlvgl_textarea_get_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 
 	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
-	    ARG_INLINE_BUF, lv_textarea_get_text,
+	    ARG_INLINE_STR, lv_textarea_get_text,
 	    ARG_OBJPTR, obj,
 	    ARG_NONE);
 
@@ -2004,6 +2109,66 @@ rlvgl_textarea_set_password_mode(ErlNifEnv *env, int argc,
 
 	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_password_mode,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT8, val,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_text_selection(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	uint8_t val;
+	char atom[8];
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+	if (strcmp(atom, "true") == 0)
+		val = 1;
+	else if (strcmp(atom, "false") == 0)
+		val = 0;
+	else
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_text_selection,
 	    ARG_OBJPTR, obj,
 	    ARG_UINT8, val,
 	    ARG_NONE);
@@ -2699,6 +2864,83 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkhdl *hdl = NULL, *fbhdl;
+	struct fbuf *fb;
+	lv_color_t *buf;
+	int rc;
+	ERL_NIF_TERM rv, pixdata, pixtup;
+	uint x1, x2, y1, y2;
+	const ERL_NIF_TERM *tup;
+	int tuplen;
+	lv_area_t rect, tile;
+	uint do_release;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_tuple(env, argv[1], &tuplen, &tup))
+		return (enif_make_badarg(env));
+	if (tuplen != 4)
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, tup[0], &x1))
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, tup[1], &y1))
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, tup[2], &x2))
+		return (enif_make_badarg(env));
+	if (!enif_get_uint(env, tup[3], &y2))
+		return (enif_make_badarg(env));
+
+	rect.x1 = x1;
+	rect.x2 = x2;
+	rect.y1 = y1;
+	rect.y2 = y2;
+	bzero(&tile, sizeof (tile));
+
+	rc = enter_inst_hdl(env, argv[0], &hdl, &inst, 1);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	fb = inst->lvki_fbuf;
+	buf = inst->lvki_cfb;
+	fbhdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
+	if (hdl->lvkh_fbuf == NULL)
+		hdl->lvkh_fbuf = buf;
+
+	if (rect.x2 >= fb->fb_w)
+		rect.x2 = fb->fb_w - 1;
+	if (rect.y2 >= fb->fb_h)
+		rect.y2 = fb->fb_h - 1;
+
+	rv = enif_make_list(env, 0);
+	while (lvk_next_tile(&rect, &tile)) {
+		pixdata = lvk_tile_to_iolist(env, fb, buf, fbhdl, &tile);
+		pixtup = enif_make_tuple2(env,
+		    enif_make_tuple4(env,
+		    	enif_make_int(env, tile.x1),
+		    	enif_make_int(env, tile.y1),
+		    	enif_make_int(env, tile.x2),
+		    	enif_make_int(env, tile.y2)),
+		    pixdata);
+		rv = enif_make_list_cell(env, pixtup, rv);
+	}
+
+	rv = enif_make_tuple2(env, enif_make_atom(env, "ok"), rv);
+
+	if (do_release)
+		enif_release_resource(fbhdl);
+
+out:
+	leave_hdl(hdl);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_prefork(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	uint n;
@@ -2735,6 +2977,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "send_key_event", 	3, rlvgl_send_key_event },
 	{ "flush_done", 	1, rlvgl_flush_done },
 	{ "prefork",		1, rlvgl_prefork },
+	{ "read_framebuffer",	2, rlvgl_read_framebuffer },
 
 	/* lvgl APIs */
 	//{ "obj_clear_flags",		2, rlvgl_obj_clear_flags },
@@ -2761,6 +3004,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "obj_create", 		2, rlvgl_obj_create },
 	{ "obj_set_size",		2, rlvgl_obj_set_size },
 	{ "scr_load", 			2, rlvgl_scr_load },
+	{ "scr_load_anim",		6, rlvgl_scr_load_anim },
 	{ "set_mouse_cursor", 		2, rlvgl_set_mouse_cursor },
 	{ "spinner_create", 		3, rlvgl_spinner_create },
 	{ "style_create",		1, rlvgl_style_create },
@@ -2773,6 +3017,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "textarea_set_password_mode",	2, rlvgl_textarea_set_password_mode },
 	{ "textarea_set_placeholder_text", 2, rlvgl_textarea_set_placeholder },
 	{ "textarea_set_text",		2, rlvgl_textarea_set_text },
+	{ "textarea_set_text_selection",	2, rlvgl_textarea_set_text_selection },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

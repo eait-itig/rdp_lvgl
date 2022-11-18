@@ -38,7 +38,7 @@
     scrollable | scroll_elastic | scroll_momentum | scroll_one |
     scroll_chain_hor | scroll_chain_ver | scroll_on_focus | scroll_with_arrow |
     snappable | press_lock | event_bubble | gesture_bubble | adv_hittest |
-    ignore_layout | floating | overflow_visible.
+    ignore_layout | floating | overflow_visible | flex_in_new_track.
 
 -type align_spec() :: out_top_left | out_top_mid | out_top_right |
     out_right_top | out_right_mid | out_right_bottom | out_bottom_right |
