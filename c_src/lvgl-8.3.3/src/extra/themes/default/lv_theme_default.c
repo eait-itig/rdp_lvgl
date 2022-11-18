@@ -400,7 +400,7 @@ static void style_init(void)
 
 #if LV_USE_ARC
     style_init_reset(&styles->arc_indic);
-    lv_style_set_arc_color(&styles->arc_indic, color_grey);
+    lv_style_set_arc_color(&styles->arc_indic, LIGHT_COLOR_GREY);
     lv_style_set_arc_width(&styles->arc_indic, lv_disp_dpx(theme.disp, 15));
     lv_style_set_arc_rounded(&styles->arc_indic, true);
 

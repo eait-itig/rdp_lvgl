@@ -504,37 +504,44 @@ free_ncd(struct nif_call_data *ncd)
 	free(ncd);
 }
 
-static ERL_NIF_TERM
-rlvgl_disp_set_bg_color(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+static int
+enif_get_color(ErlNifEnv *env, ERL_NIF_TERM term, lv_color_t *pcol)
 {
 	const ERL_NIF_TERM *ctup;
 	int ctuplen;
+	uint r, g, b;
+
+	if (!enif_get_tuple(env, term, &ctuplen, &ctup))
+		return (0);
+	if (ctuplen != 3)
+		return (0);
+	if (!enif_get_uint(env, ctup[0], &r))
+		return (0);
+	if (!enif_get_uint(env, ctup[1], &g))
+		return (0);
+	if (!enif_get_uint(env, ctup[1], &b))
+		return (0);
+
+	*pcol = lv_color_make(r, g, b);
+
+	return (1);
+}
+
+static ERL_NIF_TERM
+rlvgl_disp_set_bg_color(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
 	struct lvkinst *inst;
 	struct lvkhdl *hdl = NULL;
-	uint r, g, b;
-	lv_color_t col;
 	struct nif_call_data *ncd = NULL;
 	ERL_NIF_TERM msgref, rv;
+	lv_color_t col;
 	int rc;
 
 	if (argc != 2)
 		return (enif_make_badarg(env));
 
-	if (!enif_get_tuple(env, argv[1], &ctuplen, &ctup))
+	if (!enif_get_color(env, argv[1], &col))
 		return (enif_make_badarg(env));
-	if (ctuplen != 3) {
-		return (enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "bad_color_len"), enif_make_uint(env,
-		    ctuplen))));
-	}
-	if (!enif_get_uint(env, ctup[0], &r))
-		return (enif_make_badarg(env));
-	if (!enif_get_uint(env, ctup[1], &g))
-		return (enif_make_badarg(env));
-	if (!enif_get_uint(env, ctup[1], &b))
-		return (enif_make_badarg(env));
-
-	col = lv_color_make(r, g, b);
 
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
@@ -1668,6 +1675,54 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_style_set_text_color(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkstyle *sty;
+	struct lvkhdl *hdl;
+	struct nif_call_data *ncd;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	lv_color_t col;
+
+	if (argc != 2)
+		return (enif_make_badargc(env, argc));
+
+	if (!enif_get_color(env, argv[1], &col))
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_sty_hdl(env, argv[0], &hdl, &sty, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(sty->lvks_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_style_set_text_color,
+	    ARG_STYPTR, sty,
+	    ARG_COLOR, &col,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_style_set_bg_opa(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct lvkstyle *sty;
@@ -1699,6 +1754,109 @@ rlvgl_style_set_bg_opa(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_style_set_bg_opa,
 	    ARG_STYPTR, sty,
 	    ARG_UINT8, opacity,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_style_set_outline_opa(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkstyle *sty;
+	struct lvkhdl *hdl;
+	struct nif_call_data *ncd;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	uint opacity;
+
+	if (argc != 2)
+		return (enif_make_badargc(env, argc));
+
+	if (!enif_get_uint(env, argv[1], &opacity) || opacity > 255)
+		return (enif_make_badarg2(env, "opacity", argv[1]));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_sty_hdl(env, argv[0], &hdl, &sty, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(sty->lvks_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_style_set_outline_opa,
+	    ARG_STYPTR, sty,
+	    ARG_UINT8, opacity,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_style_set_border_post(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkstyle *sty;
+	struct lvkhdl *hdl;
+	struct nif_call_data *ncd;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	uint8_t state;
+	char atom[8];
+
+	if (argc != 2)
+		return (enif_make_badargc(env, argc));
+
+	if (!enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg2(env, "boolean", argv[1]));
+	if (strcmp(atom, "true") == 0)
+		state = 1;
+	else if (strcmp(atom, "false") == 0)
+		state = 0;
+	else
+		return (enif_make_badarg2(env, "boolean", argv[1]));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_sty_hdl(env, argv[0], &hdl, &sty, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(sty->lvks_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_style_set_border_post,
+	    ARG_STYPTR, sty,
+	    ARG_UINT8, state,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3009,8 +3167,11 @@ static ErlNifFunc nif_funcs[] = {
 	{ "spinner_create", 		3, rlvgl_spinner_create },
 	{ "style_create",		1, rlvgl_style_create },
 	{ "style_set_bg_opa",		2, rlvgl_style_set_bg_opa },
+	{ "style_set_outline_opa",	2, rlvgl_style_set_outline_opa },
+	{ "style_set_border_post",	2, rlvgl_style_set_border_post },
 	{ "style_set_flex_align",	4, rlvgl_style_set_flex_align },
 	{ "style_set_flex_flow",	2, rlvgl_style_set_flex_flow },
+	{ "style_set_text_color",	2, rlvgl_style_set_text_color },
 	{ "textarea_create",		1, rlvgl_textarea_create },
 	{ "textarea_get_text",		1, rlvgl_textarea_get_text },
 	{ "textarea_set_one_line",	2, rlvgl_textarea_set_one_line },

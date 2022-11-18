@@ -222,6 +222,15 @@ obj_has_any_flags(_Obj, _Flags) -> error(no_nif).
 -spec style_set_bg_opa(style(), integer()) -> async_return().
 style_set_bg_opa(_Style, _Opacity) -> error(no_nif).
 
+-spec style_set_outline_opa(style(), integer()) -> async_return().
+style_set_outline_opa(_Style, _Opacity) -> error(no_nif).
+
+-spec style_set_text_color(style(), color()) -> async_return().
+style_set_text_color(_Style, _Color) -> error(no_nif).
+
+-spec style_set_border_post(style(), boolean()) -> async_return().
+style_set_border_post(_Style, _State) -> error(no_nif).
+
 -spec textarea_create(object()) -> async_return(object()).
 textarea_create(_Parent) -> error(no_nif).
 

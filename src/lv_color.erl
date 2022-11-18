@@ -37,3 +37,13 @@
 -type uint8() :: integer().
 -type opacity() :: uint8().
 -type color() :: {Red :: uint8(), Green :: uint8(), Blue :: uint8()}.
+
+-spec make(integer()) -> color().
+make(Hex) ->
+    {(Hex band 16#FF0000) bsr 16,
+     (Hex band 16#00FF00) bsr 8,
+     (Hex band 16#0000FF)}.
+
+-spec make(integer(), integer(), integer()) -> color().
+make(R, G, B) -> {R, G, B}.
+
