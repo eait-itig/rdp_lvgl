@@ -2809,6 +2809,47 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_send_wheel_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkhdl *hdl = NULL;
+	int dy;
+	int rc;
+	ERL_NIF_TERM rv;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_int(env, argv[1], &dy))
+		return (enif_make_badarg(env));
+
+	rc = enter_inst_hdl(env, argv[0], &hdl, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icast(inst,
+	    ARG_NONE, lv_wheel_scroll_by,
+	    ARG_PTR, inst->lvki_disp,
+	    ARG_PTR, inst->lvki_mouse,
+	    ARG_UINT32, dy,
+	    ARG_UINT32, LV_ANIM_ON,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rv = enif_make_atom(env, "ok");
+
+out:
+	leave_hdl(hdl);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_send_key_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct lvkinst *inst;
@@ -3099,6 +3140,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "send_text",		2, rlvgl_send_text },
 	{ "send_pointer_event", 3, rlvgl_send_pointer_event },
 	{ "send_key_event", 	3, rlvgl_send_key_event },
+	{ "send_wheel_event",	2, rlvgl_send_wheel_event },
 	{ "flush_done", 	1, rlvgl_flush_done },
 	{ "prefork",		1, rlvgl_prefork },
 	{ "read_framebuffer",	2, rlvgl_read_framebuffer },

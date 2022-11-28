@@ -163,6 +163,11 @@ const static struct enum_spec blend_mode_specs[] = {
 	{ "replace",		LV_BLEND_MODE_REPLACE },
 	{ NULL, 0 }
 };
+const static struct enum_spec anim_enable_specs[] = {
+	{ "off",		LV_ANIM_OFF },
+	{ "on",			LV_ANIM_ON },
+	{ NULL, 0 }
+};
 
 struct style_prop {
 	const char		*sp_str;

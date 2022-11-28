@@ -310,7 +310,9 @@ handle_event(#ts_inpevt_key{}, Srv, S = #?MODULE{}) ->
 handle_event(#ts_inpevt_unicode{code = Code, action = A}, Srv, S = #?MODULE{}) ->
     handle_event(#ts_inpevt_key{code = {Code,Code}, flags = [], action = A}, Srv, S);
 
-handle_event(#ts_inpevt_wheel{}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_wheel{clicks = N}, Srv, S = #?MODULE{}) ->
+    #?MODULE{inst = Inst} = S,
+    ok = rdp_lvgl_nif:send_wheel_event(Inst, N),
     {ok, S};
 
 handle_event(#ts_inpevt_sync{flags = Flags}, Srv, S0 = #?MODULE{}) ->

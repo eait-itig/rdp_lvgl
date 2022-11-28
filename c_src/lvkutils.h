@@ -51,5 +51,7 @@ void lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
     lv_flex_align_t cross_place, lv_flex_align_t track_cross_place);
 lv_point_t lv_obj_get_size(lv_obj_t *obj);
 lv_point_t lv_obj_get_pos(lv_obj_t *obj);
+void lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
+    lv_anim_enable_t anim);
 
 #endif /* _LVK_UTILS_H */

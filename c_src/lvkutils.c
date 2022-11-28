@@ -176,3 +176,26 @@ lv_obj_get_pos(lv_obj_t *obj)
 	};
 	return (pt);
 }
+
+void
+lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
+    lv_anim_enable_t anim)
+{
+	lv_point_t pt;
+	lv_obj_t *target;
+
+	lv_indev_get_point(mouse, &pt);
+
+	target = lv_indev_search_obj(disp->act_scr, &pt);
+
+	while (target != NULL &&
+	    !lv_obj_has_flag(target, LV_OBJ_FLAG_SCROLLABLE)) {
+		target = lv_obj_get_parent(target);
+	}
+
+	if (target == NULL)
+		return;
+
+	if (target != NULL)
+		lv_obj_scroll_by_bounded(target, 0, dy, anim);
+}

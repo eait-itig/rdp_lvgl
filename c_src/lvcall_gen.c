@@ -222,6 +222,7 @@ typedef uint16_t (*lv_call_func5_wplpwc_t)(void *, uint32_t, void *, uint16_t, u
 typedef uint8_t (*lv_call_func1_cw_t)(uint16_t);
 typedef void (*lv_call_func5_vpwwpC_t)(void *, uint16_t, uint16_t, void *, lv_color_t);
 typedef uint8_t (*lv_call_func6_cplllpc_t)(void *, uint32_t, uint32_t, uint32_t, void *, uint8_t);
+typedef void (*lv_call_func4_vppll_t)(void *, void *, uint32_t, uint32_t);
 uint64_t
 lv_do_real_call(const struct cdesc_call *cdc)
 {
@@ -2486,6 +2487,13 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							    a2l,
 							    a3l);
 							return ((uint64_t)retc);
+						case ARG_NONE:
+							(*(lv_call_func4_vppll_t)cdc->cdc_func)(
+							    a0p,
+							    a1p,
+							    a2l,
+							    a3l);
+							return (0);
 						}
 						break;
 					}

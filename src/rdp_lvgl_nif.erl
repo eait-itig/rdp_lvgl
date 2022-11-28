@@ -107,6 +107,9 @@ set_kbd_group(_Inst, _Group) -> error(no_nif).
 -spec send_text(instance(), string()) -> async_return().
 send_text(_Inst, _Text) -> error(no_nif).
 
+-spec send_wheel_event(instance(), integer()) -> ok | {error, term()}.
+send_wheel_event(_Inst, _Dy) -> error(no_nif).
+
 -type instance_msg() ::
     {msgref(), setup_done} |
     {msgref(), flush, lv:rect(), pixeldata()} |
