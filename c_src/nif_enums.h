@@ -105,6 +105,17 @@ const static struct enum_spec align_specs[] = {
 	{ "out_left_top",	LV_ALIGN_OUT_LEFT_MID },
 	{ NULL, 0 }
 };
+const static struct enum_spec dir_specs[] = {
+	{ "none",		LV_DIR_NONE },
+	{ "left",		LV_DIR_LEFT },
+	{ "right",		LV_DIR_RIGHT },
+	{ "top",		LV_DIR_TOP },
+	{ "bottom",		LV_DIR_BOTTOM },
+	{ "horizontal",		LV_DIR_HOR },
+	{ "vertical",		LV_DIR_VER },
+	{ "all",		LV_DIR_ALL },
+	{ NULL, 0 }
+};
 const static struct enum_spec base_dir_specs[] = {
 	{ "left_to_right",	LV_BASE_DIR_LTR },
 	{ "right_to_left",	LV_BASE_DIR_RTL },

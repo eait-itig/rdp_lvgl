@@ -31,7 +31,7 @@
 -include("async_wrappers.hrl").
 
 -export_type([
-    flag/0, align_spec/0
+    flag/0, align_spec/0, dir_spec/0
     ]).
 
 -type flag() :: hidden | clickable | click_focusable | checkable |
@@ -45,6 +45,8 @@
     out_bottom_mid | out_bottom_left | out_left_bottom | out_left_mid |
     out_left_top | top_left | top_mid | top_right | left_mid | center |
     right_mid | bottom_left | bottom_mid | bottom_right.
+
+-type dir_spec() :: top | bottom | left | right | horizontal | vertical | all.
 
 -spec add_flags(lv:object(), [flag()]) -> ok | lv:error().
 add_flags(Obj, Flags) ->

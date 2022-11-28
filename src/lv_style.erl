@@ -86,7 +86,7 @@ set_border_side(Style, Sides) ->
     ?async_void_wrapper(style_set_prop, Style, border_side, Sides).
 
 -spec set_border_color(lv:style(), lv:color()) -> ok | lv:error().
-set_text_color(Style, Color) ->
+set_border_color(Style, Color) ->
     ?async_void_wrapper(style_set_prop, Style, border_color, Color).
 
 -spec set_border_post(lv:style(), boolean()) -> ok | lv:error().

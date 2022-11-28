@@ -39,6 +39,7 @@ ERL_NIF_TERM lvk_tile_to_iolist(ErlNifEnv *env, struct fbuf *fb,
     lv_color_t *buf, void *rsrc, const lv_area_t *tile);
 
 void lv_group_send_text(lv_group_t *group, const char *text);
+void lv_indev_send_text(lv_indev_t *indev, const char *text);
 void lv_disp_scr_load(lv_disp_t *disp, lv_obj_t *scr);
 void lv_disp_scr_load_anim(lv_disp_t *disp, lv_obj_t *src,
     lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay,

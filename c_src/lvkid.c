@@ -200,6 +200,8 @@ lvkid_hdl_mon_down(ErlNifEnv *env, void *arg, ErlNifPid *pid,
 		pthread_rwlock_wrlock(&inst->lvki_lock);
 
 	switch (hdl->lvkh_type) {
+	case LVK_NONE:
+		break;
 	case LVK_INST:
 		assert(hdl->lvkh_ptr == inst);
 		lvkinst_teardown(inst);

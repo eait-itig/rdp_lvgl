@@ -28,7 +28,8 @@
 -export_type([
     object/0, instance/0, event/0, style/0, error/0, rect/0, point/0, size/0,
     color/0,
-    btn/0, label/0, scr/0, img/0, spinner/0, textarea/0
+    btn/0, label/0, scr/0, img/0, spinner/0, textarea/0,
+    flags/1
 	]).
 
 -opaque object() :: rdp_lvgl_nif:object().
@@ -52,3 +53,6 @@
 -type img() :: object().
 -type spinner() :: object().
 -type textarea() :: object().
+-type tabview() :: object().
+
+-type flags(T) :: T | [T].

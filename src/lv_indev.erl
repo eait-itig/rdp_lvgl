@@ -55,3 +55,7 @@ send_key_event(Inst, Key, State) ->
 -spec set_group(lv:instance(), indev(), lv:group()) -> ok | lv:error().
 set_group(Inst, keyboard, Group) ->
     ?async_void_wrapper(set_kbd_group, Inst, Group).
+
+-spec send_text(lv:instance(), string()) -> ok | lv:error().
+send_text(Inst, Text) ->
+    ?async_void_wrapper(send_text, Inst, Text).

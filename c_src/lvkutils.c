@@ -97,6 +97,16 @@ lv_group_send_text(lv_group_t *group, const char *text)
 }
 
 void
+lv_indev_send_text(lv_indev_t *indev, const char *text)
+{
+	lv_group_t *group;
+	group = indev->group;
+	if (group == NULL)
+		return;
+	lv_group_send_text(group, text);
+}
+
+void
 lv_img_set_offset(lv_obj_t *obj, lv_point_t pt)
 {
 	lv_img_set_offset_x(obj, pt.x);

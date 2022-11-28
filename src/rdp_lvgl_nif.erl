@@ -104,6 +104,9 @@ setup_event(_Obj, _Type, _CustomMsg) -> error(no_nif).
 -spec set_kbd_group(instance(), group()) -> async_return().
 set_kbd_group(_Inst, _Group) -> error(no_nif).
 
+-spec send_text(instance(), string()) -> async_return().
+send_text(_Inst, _Text) -> error(no_nif).
+
 -type instance_msg() ::
     {msgref(), setup_done} |
     {msgref(), flush, lv:rect(), pixeldata()} |

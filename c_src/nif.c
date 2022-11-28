@@ -2889,6 +2889,54 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_send_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct lvkhdl *hdl = NULL;
+	ErlNifBinary bin;
+	ERL_NIF_TERM msgref, rv;
+	struct nif_call_data *ncd = NULL;
+	int rc;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &hdl, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_indev_send_text,
+	    ARG_PTR, inst->lvki_kbd,
+	    ARG_INLINE_BUF, bin.data, bin.size,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_flush_done(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct lvkinst *inst;
@@ -3048,6 +3096,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "setup_event",	2, rlvgl_setup_event },
 	{ "setup_event",	3, rlvgl_setup_event },
 	{ "set_kbd_group",	2, rlvgl_set_kbd_group },
+	{ "send_text",		2, rlvgl_send_text },
 	{ "send_pointer_event", 3, rlvgl_send_pointer_event },
 	{ "send_key_event", 	3, rlvgl_send_key_event },
 	{ "flush_done", 	1, rlvgl_flush_done },

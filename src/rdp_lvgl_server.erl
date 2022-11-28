@@ -45,6 +45,10 @@
     handle_info/3
     ]).
 
+-export([
+    paste_proc/2
+    ]).
+
 -export([find_image_path/1]).
 
 -type modkey() :: alt | ctrl | shift | capslock | numlock.
@@ -59,7 +63,8 @@
     sent_sof = false :: boolean(),
     keydown = none :: none | term(),
     modkeys = #{alt => false, ctrl => false, shift => false,
-        capslock => false, numlock => false} :: #{modkey() => boolean()}
+        capslock => false, numlock => false} :: #{modkey() => boolean()},
+    clipmon :: undefined | reference()
     }).
 
 init(Peer, {Mod, ModArgs}) ->
@@ -127,6 +132,13 @@ handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R}) ->
     flush_done(Inst),
     {ok, S0#?MODULE{frame = FrameId + 1, sent_sof = false}};
 
+handle_info({'DOWN', ClipMon, process, _Pid, Why}, Srv, S0 = #?MODULE{clipmon = ClipMon}) ->
+    case Why of
+        normal -> ok;
+        _ -> lager:debug("clipmon died: ~p", [Why])
+    end,
+    {ok, S0#?MODULE{clipmon = undefined}};
+
 handle_info(Msg, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
     case Mod:handle_info(Msg, Srv, MS0) of
         {ok, MS1} ->
@@ -192,6 +204,41 @@ init_ui(Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
             {stop, Reason, S0#?MODULE{modstate = MS1}}
     end.
 
+handle_paste(Srv, S = #?MODULE{clipmon = undefined, inst = Inst}) ->
+    {Pid, MonRef} = spawn_monitor(?MODULE, paste_proc, [Srv, Inst]),
+    {ok, S#?MODULE{clipmon = MonRef}};
+handle_paste(Srv, S = #?MODULE{}) ->
+    {ok, S}.
+
+paste_proc(Srv, Inst) ->
+    case rdp_server:get_vchan_pid(Srv, cliprdr_fsm) of
+        {ok, ClipRdr} ->
+            case cliprdr_fsm:list_formats(ClipRdr) of
+                {ok, Fmts} ->
+                    Fmt = case lists:member(unicode, Fmts) of
+                        true -> unicode;
+                        false -> text
+                    end,
+                    case cliprdr_fsm:paste(ClipRdr, Fmt) of
+                        {ok, Data} ->
+                            ok = lv_indev:send_text(Inst, Data);
+                        Err ->
+                            lager:debug("paste error: ~p", [Err])
+                    end;
+                Err ->
+                    lager:debug("paste requested, failed to list clipboard "
+                        "formats: ~p", [Err])
+            end;
+        _ ->
+            ok
+    end.
+
+handle_copy(Srv, S = #?MODULE{}) ->
+    {ok, S}.
+
+handle_select_all(Srv, S = #?MODULE{}) ->
+    {ok, S}.
+
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_pointer_event(Inst, Pt, released),
@@ -232,12 +279,9 @@ handle_event(#ts_inpevt_key{code = Code, flags = F, action = down}, Srv, S0 = #?
     S1 = S0#?MODULE{keydown = {Ext, Code}},
     case ts_key_to_lv(Code, Ext, MK) of
         null -> {ok, S1};
-        paste ->
-            {ok, S1};
-        copy ->
-            {ok, S1};
-        select_all ->
-            {ok, S1};
+        paste -> handle_paste(Srv, S1);
+        copy -> handle_copy(Srv, S1);
+        select_all -> handle_select_all(Srv, S1);
         LvKey ->
             ok = lv_indev:send_key_event(Inst, LvKey, pressed),
             {ok, S1}
