@@ -34,11 +34,14 @@
 
 -include("async_wrappers.hrl").
 
+-type px() :: integer().
 -type layout() :: flex | grid.
 -type flex_flow() :: row | column | row_wrap | row_reverse | row_wrap_reverse |
     column_wrap | column_reverse | column_wrap_reverse.
 -type flex_align() :: start | 'end' | center | space_evenly | space_around |
     space_between.
+-type text_align() :: auto | left | center | right.
+-type border_side() :: none | bottom | top | left | right | full.
 
 -spec create(lv:instance()) -> {ok, lv:style()} | lv:error().
 create(Inst) ->
@@ -77,6 +80,39 @@ set_outline_opacity(Style, Opacity) ->
 set_text_color(Style, Color) ->
     ?async_void_wrapper(style_set_prop, Style, text_color, Color).
 
+-spec set_border_side(lv:style(), border_side() | [border_side()]) ->
+    ok | lv:error().
+set_border_side(Style, Sides) ->
+    ?async_void_wrapper(style_set_prop, Style, border_side, Sides).
+
+-spec set_border_color(lv:style(), lv:color()) -> ok | lv:error().
+set_text_color(Style, Color) ->
+    ?async_void_wrapper(style_set_prop, Style, border_color, Color).
+
 -spec set_border_post(lv:style(), boolean()) -> ok | lv:error().
 set_border_post(Style, State) ->
     ?async_void_wrapper(style_set_prop, Style, border_post, State).
+
+-spec set_radius(lv:style(), px()) -> ok | lv:error().
+set_radius(Style, Radius) ->
+    ?async_void_wrapper(style_set_prop, Style, radius, Radius).
+
+-spec set_pad_top(lv:style(), px()) -> ok | lv:error().
+set_pad_top(Style, Radius) ->
+    ?async_void_wrapper(style_set_prop, Style, pad_top, Radius).
+
+-spec set_pad_bottom(lv:style(), px()) -> ok | lv:error().
+set_pad_bottom(Style, Radius) ->
+    ?async_void_wrapper(style_set_prop, Style, pad_bottom, Radius).
+
+-spec set_pad_left(lv:style(), px()) -> ok | lv:error().
+set_pad_left(Style, Radius) ->
+    ?async_void_wrapper(style_set_prop, Style, pad_left, Radius).
+
+-spec set_pad_right(lv:style(), px()) -> ok | lv:error().
+set_pad_right(Style, Radius) ->
+    ?async_void_wrapper(style_set_prop, Style, pad_right, Radius).
+
+-spec set_text_align(lv:style(), text_align()) -> ok | lv:error().
+set_text_align(Style, Align) ->
+    ?async_void_wrapper(style_set_prop, Style, text_align, Align).
