@@ -121,8 +121,8 @@ prefork(_N) -> error(no_nif).
 -spec flush_done(instance()) -> ok | {error, term()}.
 flush_done(_Inst) -> error(no_nif).
 
--spec make_buffer(binary()) -> {ok, buffer()}.
-make_buffer(_Data) -> error(no_nif).
+-spec make_buffer(instance(), binary()) -> async_return(buffer()).
+make_buffer(_Inst, _Data) -> error(no_nif).
 
 -type tile() :: {lv:rect(), pixeldata()}.
 
@@ -170,7 +170,7 @@ disp_set_bg_color(_Inst, _Color) -> error(no_nif).
     async_return(object()).
 spinner_create(_Obj, _Time, _ArcLen) -> error(no_nif).
 
--spec obj_set_size(object(), lv:size()) -> async_return().
+-spec obj_set_size(object(), lv_obj:size_spec()) -> async_return().
 obj_set_size(_Obj, _Size) -> error(no_nif).
 
 -spec obj_center(object()) -> async_return().
@@ -274,7 +274,7 @@ textarea_set_placeholder_text(_Obj, _Text) -> error(no_nif).
 -spec textarea_add_text(object(), string()) -> async_return().
 textarea_add_text(_Obj, _Text) -> error(no_nif).
 
--spec textarea_set_accepted_chars(object(), string()) -> async_return().
+-spec textarea_set_accepted_chars(object(), buffer()) -> async_return().
 textarea_set_accepted_chars(_Obj, _Chars) -> error(no_nif).
 
 -spec textarea_set_max_length(object(), integer()) -> async_return().

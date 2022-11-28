@@ -65,6 +65,7 @@ struct nif_call_data {
 	ErlNifEnv		*ncd_env;
 	ERL_NIF_TERM		 ncd_msgref;
 	ErlNifPid		 ncd_owner;
+	void			*ncd_priv;
 };
 
 static void
@@ -338,6 +339,38 @@ enter_inst_obj_hdl(ErlNifEnv *env, ERL_NIF_TERM iterm, ERL_NIF_TERM oterm,
 	*pinst = inst;
 	*pohdl = ohdl;
 	*pobj = obj;
+
+	return (0);
+}
+
+static int
+unpack_buf_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct lvkhdl *ohdl,
+    struct lvkbuf **pbuf)
+{
+	struct lvkhdl *hdl;
+	struct lvkid *kid;
+
+	if (!enif_get_resource(env, term, lvkid_hdl_rsrc, (void **)&hdl)) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "bad_lvgl_handle"), term));
+		return (EINVAL);
+	}
+
+	kid = hdl->lvkh_kid;
+	if (ohdl->lvkh_kid != kid) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "buf_hdl_wrong_lvkid"), term));
+		return (EINVAL);
+	}
+
+	if (hdl->lvkh_type != LVK_BUF) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "not_lv_buf"), term));
+		pthread_rwlock_unlock(&kid->lvk_lock);
+		return (EBADF);
+	}
+
+	*pbuf = hdl->lvkh_ptr;
 
 	return (0);
 }
@@ -1294,6 +1327,152 @@ parse_flags(ErlNifEnv *env, ERL_NIF_TERM list, lv_obj_flag_t *pflags)
 	return (0);
 }
 
+static int
+parse_font_spec(ErlNifEnv *env, ERL_NIF_TERM term, const lv_font_t **pfont)
+{
+	char *family = strdup("montserrat");
+	char *variant = NULL;
+	char atom[32];
+	uint size = 14;
+	ErlNifBinary bin;
+	const struct font_spec *fs;
+	int tuplen;
+	const ERL_NIF_TERM *tup;
+	int rc;
+
+	if (enif_get_uint(env, term, &size)) {
+		goto search;
+	}
+
+	if (enif_get_atom(env, term, atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		free(variant);
+		variant = strdup(atom);
+		goto search;
+	}
+
+	if (enif_inspect_iolist_as_binary(env, term, &bin)) {
+		free(family);
+		family = malloc(bin.size + 1);
+		bcopy(bin.data, family, bin.size);
+		family[bin.size] = '\0';
+		goto search;
+	}
+
+	if (enif_get_tuple(env, term, &tuplen, &tup)) {
+		if (tuplen == 2 && enif_is_atom(env, tup[0])) {
+			if (!enif_get_atom(env, tup[0], atom, sizeof (atom),
+			    ERL_NIF_LATIN1)) {
+			    	goto err;
+			}
+			if (!enif_get_uint(env, tup[1], &size))
+				goto err;
+			free(variant);
+			variant = strdup(atom);
+			goto search;
+
+		} else if (tuplen == 2) {
+			if (!enif_inspect_iolist_as_binary(env, tup[0], &bin))
+				goto err;
+			if (!enif_get_uint(env, tup[1], &size))
+				goto err;
+			free(family);
+			family = malloc(bin.size + 1);
+			bcopy(bin.data, family, bin.size);
+			family[bin.size] = '\0';
+			goto search;
+
+		} else if (tuplen == 3) {
+			if (!enif_inspect_iolist_as_binary(env, tup[0], &bin))
+				goto err;
+			if (!enif_get_atom(env, tup[1], atom, sizeof (atom),
+			    ERL_NIF_LATIN1)) {
+			    	goto err;
+			}
+			if (!enif_get_uint(env, tup[2], &size))
+				goto err;
+			free(variant);
+			variant = strdup(atom);
+			free(family);
+			family = malloc(bin.size + 1);
+			bcopy(bin.data, family, bin.size);
+			family[bin.size] = '\0';
+			goto search;
+		}
+	}
+
+	goto err;
+
+search:
+	/* Round 1: exact match including variant */
+	for (fs = font_specs; fs->fs_font != NULL; ++fs) {
+		if (strcasecmp(fs->fs_family, family) != 0)
+			continue;
+		if (variant != NULL && fs->fs_variant == NULL)
+			continue;
+		if (variant == NULL && fs->fs_variant != NULL)
+			continue;
+		if (variant != NULL && strcasecmp(fs->fs_variant, variant) != 0)
+			continue;
+		if (fs->fs_size != size)
+			continue;
+		break;
+	}
+	if (fs->fs_font != NULL) {
+		*pfont = fs->fs_font;
+		rc = 0;
+		goto out;
+	}
+	/* Round 2: family and size */
+	for (fs = font_specs; fs->fs_font != NULL; ++fs) {
+		if (strcasecmp(fs->fs_family, family) != 0)
+			continue;
+		if (fs->fs_size != size)
+			continue;
+		break;
+	}
+	if (fs->fs_font != NULL) {
+		*pfont = fs->fs_font;
+		rc = 0;
+		goto out;
+	}
+	/* Round 3: family and next larger size */
+	for (fs = font_specs; fs->fs_font != NULL; ++fs) {
+		if (strcasecmp(fs->fs_family, family) != 0)
+			continue;
+		if (fs->fs_size < size)
+			continue;
+		break;
+	}
+	if (fs->fs_font != NULL) {
+		*pfont = fs->fs_font;
+		rc = 0;
+		goto out;
+	}
+	/* Round 4: size only */
+	for (fs = font_specs; fs->fs_font != NULL; ++fs) {
+		if (fs->fs_size < size)
+			continue;
+		break;
+	}
+	if (fs->fs_font != NULL) {
+		*pfont = fs->fs_font;
+		rc = 0;
+		goto out;
+	}
+
+err:
+	enif_raise_exception(env, enif_make_tuple2(env,
+	    enif_make_atom(env, "bad_font_spec"),
+	    term));
+	rc = EINVAL;
+	goto out;
+
+out:
+	free(family);
+	free(variant);
+	return (rc);
+}
+
 static ERL_NIF_TERM
 rlvgl_obj_add_flags(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -1499,6 +1678,55 @@ out:
 	return (rv);
 }
 
+static int
+parse_coord(ErlNifEnv *env, ERL_NIF_TERM term, lv_coord_t *pcoord)
+{
+	int tuplen;
+	const ERL_NIF_TERM *tup;
+	int pix;
+	char atom[16];
+
+	if (enif_get_int(env, term, &pix)) {
+		*pcoord = pix;
+		return (0);
+	}
+
+	if (enif_get_atom(env, term, atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		if (strcmp(atom, "content") == 0) {
+			*pcoord = LV_SIZE_CONTENT;
+			return (0);
+		} else {
+			goto bad;
+		}
+	}
+
+	if (enif_get_tuple(env, term, &tuplen, &tup)) {
+		if (tuplen != 2)
+			goto bad;
+
+		if (!enif_get_atom(env, tup[0], atom, sizeof (atom),
+		    ERL_NIF_LATIN1)) {
+			goto bad;
+		}
+
+		if (!enif_get_int(env, tup[1], &pix))
+			goto bad;
+
+		if (strcmp(atom, "percent") == 0) {
+			*pcoord = LV_PCT(pix);
+			return (0);
+		}
+
+		goto bad;
+	}
+
+bad:
+	enif_raise_exception(env, enif_make_tuple2(env,
+	    enif_make_atom(env, "bad_coord"),
+	    term));
+	return (EINVAL);
+}
+
 static ERL_NIF_TERM
 rlvgl_obj_set_size(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -1506,7 +1734,7 @@ rlvgl_obj_set_size(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	struct lvkhdl *ohdl;
 	struct nif_call_data *ncd;
 	ERL_NIF_TERM msgref, rv;
-	uint w, h;
+	lv_coord_t w, h;
 	const ERL_NIF_TERM *tup;
 	int tuplen;
 	int rc;
@@ -1518,10 +1746,10 @@ rlvgl_obj_set_size(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		return (enif_make_badarg(env));
 	if (tuplen != 2)
 		return (enif_make_badarg(env));
-	if (!enif_get_uint(env, tup[0], &w))
-		return (enif_make_badarg(env));
-	if (!enif_get_uint(env, tup[1], &h))
-		return (enif_make_badarg(env));
+	if ((rc = parse_coord(env, tup[0], &w)))
+		return (make_errno(env, rc));
+	if ((rc = parse_coord(env, tup[1], &h)))
+		return (make_errno(env, rc));
 
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
@@ -1783,6 +2011,7 @@ rlvgl_style_set_prop(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	lv_style_value_t v;
 	lv_style_prop_t prop;
 	lv_color_t col;
+	const lv_font_t *font;
 	const struct style_prop *sp;
 	char atom[32];
 	int intval;
@@ -1802,23 +2031,34 @@ rlvgl_style_set_prop(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	prop = sp->sp_prop;
 
 	switch (sp->sp_type) {
-	case ARG_COLOR:
+	case SPT_INT32:
+		if (!enif_get_int(env, argv[2], &intval)) {
+			return (enif_make_badarg2(env, "number", argv[2]));
+		}
+		v = (lv_style_value_t){ .num = intval };
+		break;
+	case SPT_COLOR:
 		if (!enif_get_color(env, argv[2], &col))
 			return (enif_make_badarg2(env, "color", argv[2]));
 		v = (lv_style_value_t){ .color = col };
 		break;
-	case ARG_UINT32:
-		if (sp->sp_enum == NULL) {
-			if (!enif_get_int(env, argv[2], &intval)) {
-				return (enif_make_badarg2(env, "number",
-				    argv[2]));
-			}
-			v = (lv_style_value_t){ .num = intval };
-		} else {
-			rc = parse_enum(env, argv[2], sp->sp_enum,
-			    sp->sp_multi_enum, &intval);
-			v = (lv_style_value_t){ .num = intval };
-		}
+	case SPT_ENUM:
+		rc = parse_enum(env, argv[2], sp->sp_enum, false, &intval);
+		if (rc)
+			return (make_errno(env, rc));
+		v = (lv_style_value_t){ .num = intval };
+		break;
+	case SPT_MULTI_ENUM:
+		rc = parse_enum(env, argv[2], sp->sp_enum, true, &intval);
+		if (rc)
+			return (make_errno(env, rc));
+		v = (lv_style_value_t){ .num = intval };
+		break;
+	case SPT_FONT:
+		rc = parse_font_spec(env, argv[2], &font);
+		if (rc)
+			return (make_errno(env, rc));
+		v = (lv_style_value_t){ .ptr = font };
 		break;
 	default:
 		assert(0);
@@ -2079,6 +2319,63 @@ rlvgl_textarea_set_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_textarea_set_text,
 	    ARG_OBJPTR, obj,
 	    ARG_INLINE_BUF, bin.data, bin.size,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_accepted_chars(ErlNifEnv *env, int argc,
+    const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct lvkbuf *buf = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_textarea_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = unpack_buf_hdl(env, argv[1], hdl, &buf);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_accepted_chars,
+	    ARG_OBJPTR, obj,
+	    ARG_BUFPTR, buf,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -2561,9 +2858,10 @@ rlvgl_img_set_src(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	struct nif_call_data *ncd = NULL;
 	ERL_NIF_TERM msgref, rv;
 	int rc;
-	char atom[16];
+	char atom[24];
 	ErlNifBinary bin;
 	enum arg_type atype;
+	const struct symbol_src *ss;
 	void *arg;
 
 	if (argc != 2)
@@ -2571,11 +2869,13 @@ rlvgl_img_set_src(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1)) {
 		atype = ARG_PTR;
-		if (strcmp(atom, "gps") == 0) {
-			arg = LV_SYMBOL_GPS;
-		} else {
-			return (enif_make_badarg(env));
+		for (ss = symbol_srcs; ss->ss_atom != NULL; ++ss) {
+			if (strcmp(atom, ss->ss_atom) == 0)
+				break;
 		}
+		if (ss->ss_atom == NULL)
+			return (enif_make_badarg(env));
+		arg = (void *)ss->ss_value;
 	} else if (enif_inspect_iolist_as_binary(env, argv[1], &bin)) {
 		atype = ARG_INLINE_BUF;
 		if (bin.size > UINT8_MAX)
@@ -2626,6 +2926,45 @@ out:
 	leave_hdl(ohdl);
 	free_ncd(ncd);
 	return (rv);
+}
+
+static void
+rlvgl_setup_buf_cb(struct rdesc **rd, uint nrd, void *priv)
+{
+	struct nif_call_data *ncd = priv;
+	struct lvkbuf *buf = ncd->ncd_priv;
+	struct lvkid *kid = buf->lvkb_kid;
+	struct lvkinst *inst;
+	ERL_NIF_TERM msg;
+	ErlNifEnv *env = ncd->ncd_env;
+
+	assert(nrd == 1);
+
+	if (rd[0]->rd_error != 0) {
+		msg = enif_make_tuple4(env,
+		    ncd->ncd_msgref,
+		    enif_make_atom(env, "error"),
+		    enif_make_uint(env, rd[0]->rd_error),
+		    enif_make_string(env, strerror(rd[0]->rd_error),
+		    ERL_NIF_LATIN1));
+	} else {
+		pthread_rwlock_wrlock(&kid->lvk_lock);
+		inst = buf->lvkb_inst;
+		if (inst != NULL)
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+		buf->lvkb_ptr = rd[0]->rd_return.rdr_val;
+		if (inst != NULL)
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		pthread_rwlock_unlock(&kid->lvk_lock);
+
+		msg = enif_make_tuple2(env,
+		    ncd->ncd_msgref,
+		    enif_make_atom(env, "ok"));
+	}
+
+	enif_send(NULL, &ncd->ncd_owner, env, msg);
+	enif_free_env(env);
+	free(ncd);
 }
 
 static void
@@ -2743,6 +3082,104 @@ out:
 	leave_hdl(ohdl);
 	free_ncd(ncd);
 	free(evt);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkbuf *buf = NULL;
+	struct lvkinst *inst = NULL;
+	struct lvkhdl *ihdl = NULL, *bhdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	struct cdesc cd[8];
+	struct lvkid *kid;
+	ERL_NIF_TERM rv, msgref;
+	uint do_release;
+	int rc;
+	ErlNifBinary bin;
+	uint nc = 1;
+	size_t rem, off, take;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &ihdl, &inst, 1);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	kid = inst->lvki_kid;
+
+	buf = calloc(1, sizeof (struct lvkbuf));
+	assert(buf != NULL);
+	buf->lvkb_kid = kid;
+	buf->lvkb_inst = inst;
+	buf->lvkb_len = bin.size;
+
+	ncd->ncd_priv = buf;
+
+	LIST_INSERT_HEAD(&inst->lvki_bufs, buf, lvkb_entry);
+
+	bhdl = lvkid_make_hdl(LVK_BUF, buf, &do_release);
+
+	cd[0] = (struct cdesc){
+		.cd_op = CMD_COPY_BUF,
+		.cd_chain = 0,
+		.cd_copy_buf = (struct cdesc_copybuf){
+			.cdcs_len = bin.size,
+		}
+	};
+	rem = bin.size;
+	off = 0;
+
+	take = sizeof (cd[0].cd_copy_buf.cdcs_data);
+	if (take > rem)
+		take = rem;
+	bcopy(&bin.data[off], cd[0].cd_copy_buf.cdcs_data, take);
+	rem -= take;
+	off += take;
+
+	nc = 1;
+	while (nc < 8 && rem > 0) {
+		cd[nc - 1].cd_chain = 1;
+		cd[nc] = (struct cdesc){
+			.cd_op = CMD_COPY_BUF,
+			.cd_chain = 0,
+		};
+		take = sizeof (cd[nc].cd_data);
+		if (take > rem)
+			take = rem;
+		bcopy(&bin.data[off], cd[nc].cd_data, take);
+		rem -= take;
+		off += take;
+		++nc;
+	}
+	lvk_cmd(kid, cd, nc, rlvgl_setup_buf_cb, ncd);
+
+	ncd = NULL;
+	buf = NULL;
+	rv = enif_make_tuple3(env,
+	    enif_make_atom(env, "async"),
+	    enif_make_resource(env, bhdl),
+	    msgref);
+
+	if (do_release)
+		enif_release_resource(bhdl);
+
+out:
+	leave_hdl(ihdl);
+	free_ncd(ncd);
+	free(buf);
 	return (rv);
 }
 
@@ -3144,6 +3581,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "flush_done", 	1, rlvgl_flush_done },
 	{ "prefork",		1, rlvgl_prefork },
 	{ "read_framebuffer",	2, rlvgl_read_framebuffer },
+	{ "make_buffer",	2, rlvgl_make_buffer },
 
 	/* lvgl APIs */
 	//{ "obj_clear_flags",		2, rlvgl_obj_clear_flags },
@@ -3186,6 +3624,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "textarea_set_placeholder_text", 2, rlvgl_textarea_set_placeholder },
 	{ "textarea_set_text",		2, rlvgl_textarea_set_text },
 	{ "textarea_set_text_selection",	2, rlvgl_textarea_set_text_selection },
+	{ "textarea_set_accepted_chars", 2, rlvgl_textarea_set_accepted_chars },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

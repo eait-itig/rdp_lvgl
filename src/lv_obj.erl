@@ -31,7 +31,7 @@
 -include("async_wrappers.hrl").
 
 -export_type([
-    flag/0, align_spec/0, dir_spec/0
+    flag/0, align_spec/0, dir_spec/0, size_spec/0
     ]).
 
 -type flag() :: hidden | clickable | click_focusable | checkable |
@@ -80,7 +80,11 @@ align_to(Obj, RefObj, Spec, Offset) ->
 align_to(Obj, RefObj, Spec) ->
     ?async_void_wrapper(obj_align_to, Obj, RefObj, Spec).
 
--spec set_size(lv:object(), lv:size()) -> ok | lv:error().
+-type px() :: integer().
+-type size_dim_spec() :: content | {percent, integer()} | px().
+-type size_spec() :: {Width :: size_dim_spec(), Height :: size_dim_spec()}.
+
+-spec set_size(lv:object(), size_spec()) -> ok | lv:error().
 set_size(Obj, Size) ->
     ?async_void_wrapper(obj_set_size, Obj, Size).
 

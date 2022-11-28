@@ -88,7 +88,6 @@ struct lvkid {
 	struct lvkinst_list	 lvk_insts;
 	struct lvkcmd_list	 lvk_cmds;
 	struct lvkevt_list	 lvk_evts;
-	struct lvkbuf_list	 lvk_bufs;
 
 	pthread_t		 lvk_lv_th;
 	pthread_t		 lvk_rsp_th;
@@ -136,6 +135,7 @@ struct lvkinst {
 	struct lvkobj_list	 lvki_objs;
 	struct lvkstyle_list	 lvki_styles;
 	struct lvkgroup_list	 lvki_groups;
+	struct lvkbuf_list	 lvki_bufs;
 
 	ErlNifEnv		*lvki_env;
 	ERL_NIF_TERM		 lvki_msgref;
@@ -165,12 +165,13 @@ struct lvkgroup {
 struct lvkbuf {
 	struct lvkid		*lvkb_kid;
 	LIST_ENTRY(lvkbuf)	 lvkb_entry;
+	struct lvkinst		*lvkb_inst;
 
+	uint			 lvkb_teardown;
 	struct lvkhdl		*lvkb_hdl;
 
 	lvaddr_t		 lvkb_ptr;
 	size_t			 lvkb_len;
-	void			*lvkb_data;
 };
 
 struct lvkobj {

@@ -844,6 +844,66 @@ next:
 	return (NULL);
 }
 
+static void
+lvkid_lv_cmd_copy_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc **cd,
+    uint ncd)
+{
+	struct cdesc_copybuf *cdcs = &cd[0]->cd_copy_buf;
+	uint8_t *bptr;
+	size_t rem, off, take;
+	uint i;
+	struct rdesc rd;
+
+	rem = cdcs->cdcs_len;
+	bptr = malloc(rem);
+	assert(bptr != NULL);
+	off = 0;
+
+	take = sizeof (cdcs->cdcs_data);
+	if (take > rem)
+		take = rem;
+
+	bcopy(cdcs->cdcs_data, &bptr[off], take);
+	off += take;
+	rem -= take;
+
+	for (i = 1; i < ncd; ++i) {
+		take = sizeof (cd[i]->cd_data);
+		if (take > rem)
+			take = rem;
+		bcopy(cd[i]->cd_data, &bptr[off], take);
+		off += take;
+		rem -= take;
+	}
+	assert(rem == 0);
+
+	rd = (struct rdesc){
+		.rd_error = 0,
+		.rd_cookie = cd[0]->cd_cookie,
+		.rd_return = (struct rdesc_return){
+			.rdr_val = (uint64_t)bptr
+		}
+	};
+	shm_produce_rsp(shm, &rd, 1);
+}
+
+static void
+lvkid_lv_cmd_free_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
+{
+	struct cdesc_freebuf *cdfs = &cd->cd_free_buf;
+	uint8_t *bptr;
+	struct rdesc rd;
+
+	bptr = (uint8_t *)cdfs->cdfs_buf;
+	free(bptr);
+
+	rd = (struct rdesc){
+		.rd_error = 0,
+		.rd_cookie = cd->cd_cookie
+	};
+	shm_produce_rsp(shm, &rd, 1);
+}
+
 static void *
 lvkid_lv_cmd_ring(void *arg)
 {
@@ -874,8 +934,11 @@ lvkid_lv_cmd_ring(void *arg)
 			pthread_mutex_unlock(&lv_mtx);
 			break;
 		case CMD_COPY_BUF:
+			lvkid_lv_cmd_copy_buf(kid, shm, cd, ncd);
 			break;
 		case CMD_FREE_BUF:
+			assert(ncd == 1);
+			lvkid_lv_cmd_free_buf(kid, shm, cd[0]);
 			break;
 		case CMD_SETUP_EVENT:
 			assert(ncd == 1);
@@ -1973,6 +2036,50 @@ lvkevt_teardown(struct lvkevt *evt)
 }
 
 static void
+lvkbuf_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
+{
+	struct lvkbuf *buf = priv;
+	struct lvkid *kid = buf->lvkb_kid;
+	struct lvkinst *inst;
+	assert(nrd == 1);
+
+	pthread_rwlock_wrlock(&kid->lvk_lock);
+	inst = buf->lvkb_inst;
+	if (inst != NULL) {
+		pthread_rwlock_wrlock(&inst->lvki_lock);
+		LIST_REMOVE(buf, lvkb_entry);
+		pthread_rwlock_unlock(&inst->lvki_lock);
+	}
+	if (buf->lvkb_hdl) {
+		buf->lvkb_hdl->lvkh_type = LVK_NONE;
+		buf->lvkb_hdl->lvkh_ptr = NULL;
+		buf->lvkb_hdl->lvkh_inst = NULL;
+		buf->lvkb_hdl = NULL;
+	}
+	pthread_rwlock_unlock(&kid->lvk_lock);
+
+	free(buf);
+}
+
+static void
+lvkbuf_teardown(struct lvkbuf *buf)
+{
+	struct cdesc cd;
+	struct lvkid *kid = buf->lvkb_kid;
+	if (buf->lvkb_teardown)
+		return;
+	buf->lvkb_teardown = 1;
+	cd = (struct cdesc){
+		.cd_op = CMD_FREE_BUF,
+		.cd_free_buf = (struct cdesc_freebuf){
+			.cdfs_buf = buf->lvkb_ptr,
+			.cdfs_len = buf->lvkb_len,
+		}
+	};
+	lvk_cmd(kid, &cd, 1, lvkbuf_teardown_cb, buf);
+}
+
+static void
 lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 {
 	struct lvkinst *inst = priv;
@@ -1980,6 +2087,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkobj *obj, *nobj;
 	struct lvkstyle *sty, *nsty;
 	struct lvkgroup *grp, *ngrp;
+	struct lvkbuf *buf, *nbuf;
 
 	assert(nrd == 1);
 	fprintf(stderr, "inst %p teardown cb\r\n", inst);
@@ -2021,6 +2129,11 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 		}
 		LIST_REMOVE(grp, lvkg_entry);
 		free(grp);
+	}
+	LIST_FOREACH_SAFE(buf, &inst->lvki_bufs, lvkb_entry, nbuf) {
+		LIST_REMOVE(buf, lvkb_entry);
+		buf->lvkb_inst = NULL;
+		lvkbuf_teardown(buf);
 	}
 	enif_free_env(inst->lvki_env);
 	LIST_REMOVE(inst, lvki_entry);

@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include "shm.h"
 
+extern lv_font_t roboto_20;
+extern lv_font_t roboto_24;
+
 uint lvk_next_tile(const lv_area_t *area, lv_area_t *tile);
 
 ERL_NIF_TERM lvk_tile_to_iolist(ErlNifEnv *env, struct fbuf *fb,

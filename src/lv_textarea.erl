@@ -58,9 +58,9 @@ set_placeholder_text(Obj, Text) ->
 add_text(Obj, Text) ->
     ?async_void_wrapper(textarea_add_text, Obj, Text).
 
--spec set_accepted_chars(lv:textarea(), string()) -> ok | lv:error().
-set_accepted_chars(Obj, Text) ->
-    ?async_void_wrapper(textarea_set_accepted_chars, Obj, Text).
+-spec set_accepted_chars(lv:textarea(), lv:buffer()) -> ok | lv:error().
+set_accepted_chars(Obj, Buffer) ->
+    ?async_void_wrapper(textarea_set_accepted_chars, Obj, Buffer).
 
 -spec set_max_length(lv:textarea(), integer()) -> ok | lv:error().
 set_max_length(Obj, MaxLen) ->

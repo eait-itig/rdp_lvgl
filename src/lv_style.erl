@@ -116,3 +116,7 @@ set_pad_right(Style, Radius) ->
 -spec set_text_align(lv:style(), text_align()) -> ok | lv:error().
 set_text_align(Style, Align) ->
     ?async_void_wrapper(style_set_prop, Style, text_align, Align).
+
+-spec set_text_font(lv:style(), lv:font()) -> ok | lv:error().
+set_text_font(Style, Font) ->
+    ?async_void_wrapper(style_set_prop, Style, text_font, Font).

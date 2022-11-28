@@ -58,9 +58,11 @@ start_link(Srv, Inst, Res) ->
     inst :: lv:instance(),
     flowsty :: lv:style(),
     errsty :: lv:style(),
+    apsty :: lv:style(),
+    hdsty :: lv:style(),
+    rlsty :: lv:style(),
+    chars :: lv:buffer(),
     evs = [] :: [lv:event()],
-    login_inp :: undefined | lv:textarea(),
-    pw_inp :: undefined | lv:textarea(),
     errmsg :: undefined | string(),
     login :: undefined | string(),
     password :: undefined | string()
@@ -74,11 +76,30 @@ init([Srv, Inst, {W, H}]) ->
     ok = lv_style:set_bg_opacity(FlowStyle, 0),
     ok = lv_style:set_border_opacity(FlowStyle, 0),
 
+    {ok, APStyle} = lv_style:create(Inst),
+    ok = lv_style:set_bg_opacity(APStyle, 10),
+    ok = lv_style:set_border_opacity(APStyle, 0),
+
+    {ok, HdStyle} = lv_style:create(Inst),
+    ok = lv_style:set_text_font(HdStyle, {"roboto", bold, 24}),
+
     {ok, ErrMsgStyle} = lv_style:create(Inst),
     ok = lv_style:set_text_color(ErrMsgStyle, lv_color:make(16#FF6060)),
 
-    S0 = #?MODULE{srv = Srv, inst = Inst, flowsty = FlowStyle,
-                  errsty = ErrMsgStyle, res = {W, H}},
+    {ok, RLStyle} = lv_style:create(Inst),
+    ok = lv_style:set_border_side(RLStyle, [left]),
+    ok = lv_style:set_border_color(RLStyle, lv_color:make(16#FFFFFF)),
+    ok = lv_style:set_border_opacity(RLStyle, 110),
+    ok = lv_style:set_pad_left(RLStyle, 10),
+    ok = lv_style:set_pad_top(RLStyle, 0),
+    ok = lv_style:set_pad_bottom(RLStyle, 0),
+    ok = lv_style:set_radius(RLStyle, 0),
+
+    {ok, Chars} = lv:make_buffer(Inst, "0123456789"),
+
+    S0 = #?MODULE{srv = Srv, inst = Inst, flowsty = FlowStyle, hdsty = HdStyle,
+                  apsty = APStyle, errsty = ErrMsgStyle, res = {W, H},
+                  chars = Chars, rlsty = RLStyle},
 
     {ok, loading, S0}.
 
@@ -90,58 +111,111 @@ terminate(_Why, _State, #?MODULE{}) ->
 code_change(_OldVsn, OldState, S0, _Extra) ->
     {ok, OldState, S0}.
 
-
-loading(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
+make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
     {ok, Screen} = lv_scr:create(Inst),
-    {ok, Spinner} = lv_spinner:create(Screen, 1000, 90),
-    ok = lv_obj:center(Spinner),
-    ok = lv_scr:load_anim(Inst, Screen, fade_in, 100, 0, true),
-    {keep_state_and_data, [{state_timeout, 1000, advance}]};
-loading(state_timeout, advance, S0 = #?MODULE{}) ->
-    {next_state, login, S0}.
-
-
-login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
-                                       flowsty = FlowStyle,
-                                       errsty = ErrStyle,
-                                       res = {W, H}}) ->
-    {ok, Screen} = lv_scr:create(Inst),
-    {ok, Group} = lv_group:create(Inst),
-
     {ok, Logo} = lv_img:create(Screen),
     ok = lv_img:set_src(Logo,
         rdp_lvgl_server:find_image_path("uq-logo.png")),
     {ok, {LogoW, LogoH}} = lv_obj:get_size(Logo),
-
     {ok, Flex} = lv_obj:create(Inst, Screen),
     ok = lv_obj:add_style(Flex, FlowStyle),
 
     if
         (W > H) ->
             ok = lv_obj:align(Logo, center, {-1 * LogoW div 2 - 10, 0}),
-            ok = lv_obj:set_size(Flex, {W div 3, H}),
+            ok = lv_obj:set_size(Flex, {{percent, 30}, {percent, 100}}),
             ok = lv_obj:align(Flex, center, {W div 6 + 10, 0});
         true ->
             ok = lv_obj:align(Logo, top_mid, {0, H div 6}),
-            ok = lv_obj:set_size(Flex, {W, 2 * (H div 3)}),
+            ok = lv_obj:set_size(Flex, {{percent, 100}, {percent, 66}}),
             ok = lv_obj:align(Flex, bottom_mid)
     end,
+    {Screen, Flex}.
+
+loading(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
+    {Screen, Flex} = make_flex(S0),
+    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
+    ok = lv_scr:load_anim(Inst, Screen, fade_in, 100, 0, true),
+    {keep_state_and_data, [{state_timeout, 1000, advance}]};
+loading(state_timeout, advance, S0 = #?MODULE{}) ->
+    {next_state, login, S0}.
+
+make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
+                                                 flowsty = FlowStyle,
+                                                 apsty = APStyle,
+                                                 rlsty = RLStyle,
+                                                 res = {W, H}}) ->
+    {ok, Outer} = lv_obj:create(Inst, TopLevel),
+    ok = lv_obj:add_style(Outer, APStyle),
+    ok = lv_obj:set_size(Outer, {{percent, 100}, content}),
+
+    {ok, Sym} = lv_img:create(Outer),
+    ok = lv_img:set_src(Sym, Symbol),
+    ok = lv_obj:align(Sym, left_mid),
+
+    {ok, InnerFlex} = lv_obj:create(Inst, Outer),
+    ok = lv_obj:add_style(InnerFlex, FlowStyle),
+    ok = lv_obj:set_size(InnerFlex, {content, content}),
+    ok = lv_obj:align(InnerFlex, top_left, {30, 0}),
+    ok = lv_obj:add_style(InnerFlex, RLStyle),
+    InnerFlex.
+
+
+login(enter, _PrevState, S0 = #?MODULE{inst = Inst, hdsty = HdStyle,
+                                       errsty = ErrStyle, chars = Chars}) ->
+    {Screen, Flex} = make_flex(S0),
+    {ok, Group} = lv_group:create(Inst),
 
     {ok, Lbl} = lv_label:create(Flex),
-    ok = lv_label:set_text(Lbl, "Welcome!"),
+    ok = lv_label:set_text(Lbl, "Faculty of EAIT"),
+    ok = lv_obj:add_style(Lbl, HdStyle),
 
-    {ok, Text} = lv_textarea:create(Flex),
+    {ok, Lbl2} = lv_label:create(Flex),
+    ok = lv_label:set_text(Lbl2, "Staff Remote Access"),
+
+    UPwFlex = make_auth_method_flex(Flex, keyboard, S0),
+
+    {ok, Text} = lv_textarea:create(UPwFlex),
     ok = lv_textarea:set_one_line(Text, true),
     ok = lv_textarea:set_text_selection(Text, true),
     ok = lv_textarea:set_placeholder_text(Text, "Username"),
     ok = lv_group:add_obj(Group, Text),
 
-    {ok, PwText} = lv_textarea:create(Flex),
+    {ok, PwText} = lv_textarea:create(UPwFlex),
     ok = lv_textarea:set_one_line(PwText, true),
     ok = lv_textarea:set_password_mode(PwText, true),
     ok = lv_textarea:set_text_selection(PwText, true),
     ok = lv_textarea:set_placeholder_text(PwText, "Password"),
     ok = lv_group:add_obj(Group, PwText),
+
+    {ok, Btn} = lv_btn:create(UPwFlex),
+    {ok, BtnLbl} = lv_label:create(Btn),
+    ok = lv_label:set_text(BtnLbl, "Login"),
+
+    {ok, BtnEvent, _} = lv_event:setup(Btn, pressed, {login, Text, PwText}),
+    {ok, AcEvent, _} = lv_event:setup(PwText, ready, {login, Text, PwText}),
+
+    YkFlex = make_auth_method_flex(Flex, sd_card, S0),
+
+    {ok, UserLbl} = lv_label:create(YkFlex),
+    ok = lv_label:set_text(UserLbl, "chemlabs@eait.uq.edu.au"),
+
+    {ok, PinText} = lv_textarea:create(YkFlex),
+    ok = lv_textarea:set_one_line(PinText, true),
+    ok = lv_textarea:set_text_selection(PinText, true),
+    ok = lv_textarea:set_placeholder_text(PinText, "PIN"),
+    ok = lv_textarea:set_accepted_chars(PinText, Chars),
+    ok = lv_textarea:set_password_mode(PinText, true),
+    ok = lv_group:add_obj(Group, PinText),
+
+    {ok, YkBtn} = lv_btn:create(YkFlex),
+    {ok, YkBtnLbl} = lv_label:create(YkBtn),
+    ok = lv_label:set_text(YkBtnLbl, "Login"),
+
+    {ok, YkBtnEvent, _} = lv_event:setup(YkBtn, pressed,
+        {login_pin, "chemlabs", PinText}),
+    {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
+        {login_pin, "chemlabs", PinText}),
 
     case S0#?MODULE.errmsg of
         undefined -> ok;
@@ -151,56 +225,29 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
             ok = lv_obj:add_style(ErrLbl, ErrStyle)
     end,
 
-    {ok, Btn} = lv_btn:create(Flex),
-    {ok, BtnLbl} = lv_label:create(Btn),
-    ok = lv_label:set_text(BtnLbl, "Login"),
-
-    {ok, BtnEvent, _} = lv_event:setup(Btn, pressed, login),
-    {ok, AcEvent, _} = lv_event:setup(PwText, ready, login),
-
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
 
     ok = lv_indev:set_group(Inst, keyboard, Group),
 
-    {keep_state, S0#?MODULE{login_inp = Text,
-                            pw_inp = PwText,
-                            evs = [BtnEvent, AcEvent]}};
+    {keep_state, S0#?MODULE{evs = [BtnEvent, AcEvent, YkBtnEvent, YkAcEvent]}};
 
-login(info, {_Ref, login}, S0 = #?MODULE{login_inp = LoginInp,
-                                         pw_inp = PwInp}) ->
+login(info, {_Ref, {login, LoginInp, PwInp}}, S0 = #?MODULE{}) ->
     {ok, Login} = lv_textarea:get_text(LoginInp),
     {ok, Pw} = lv_textarea:get_text(PwInp),
     lager:debug("logging in with ~p/~p", [Login, Pw]),
-    {next_state, checking_login, S0#?MODULE{login = Login, password = Pw}}.
+    {next_state, checking_login, S0#?MODULE{login = Login, password = Pw}};
+
+login(info, {_Ref, {login_pin, Login, PinInp}}, S0 = #?MODULE{}) ->
+    {ok, Pin} = lv_textarea:get_text(PinInp),
+    lager:debug("logging in with account ~p, PIN ~p", [Login, Pin]),
+    {next_state, checking_login, S0#?MODULE{login = Login, password = Pin}}.
 
 
 checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
                                                 flowsty = FlowStyle,
                                                 res = {W, H}}) ->
-    {ok, Screen} = lv_scr:create(Inst),
-
-    {ok, Flex} = lv_obj:create(Inst, Screen),
-    ok = lv_obj:add_style(Flex, FlowStyle),
-
-    {ok, Logo} = lv_img:create(Screen),
-    ok = lv_img:set_src(Logo,
-        rdp_lvgl_server:find_image_path("uq-logo.png")),
-    {ok, {LogoW, LogoH}} = lv_obj:get_size(Logo),
-
-    if
-        (W > H) ->
-            ok = lv_obj:align(Logo, center, {-1 * LogoW div 2 - 10, 0}),
-            ok = lv_obj:set_size(Flex, {W div 3, H}),
-            ok = lv_obj:align(Flex, center, {W div 6 + 10, 0});
-        true ->
-            ok = lv_obj:align(Logo, top_mid, {0, H div 6}),
-            ok = lv_obj:set_size(Flex, {W, 2 * (H div 3)}),
-            ok = lv_obj:align(Flex, bottom_mid)
-    end,
-
+    {Screen, Flex} = make_flex(S0),
     {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
-    ok = lv_obj:add_flags(Spinner, [flex_in_new_track]),
-
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
 
     {keep_state_and_data, [{state_timeout, 1000, advance}]};
