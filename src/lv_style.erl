@@ -63,16 +63,20 @@ set_flex_align(Style, Main, Cross, Track) ->
 
 -spec set_bg_opacity(lv:style(), lv_color:opacity()) -> ok | lv:error().
 set_bg_opacity(Style, Opacity) ->
-    ?async_void_wrapper(style_set_bg_opa, Style, Opacity).
+    ?async_void_wrapper(style_set_prop, Style, bg_opa, Opacity).
+
+-spec set_border_opacity(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_border_opacity(Style, Opacity) ->
+    ?async_void_wrapper(style_set_prop, Style, border_opa, Opacity).
 
 -spec set_outline_opacity(lv:style(), lv_color:opacity()) -> ok | lv:error().
 set_outline_opacity(Style, Opacity) ->
-    ?async_void_wrapper(style_set_outline_opa, Style, Opacity).
+    ?async_void_wrapper(style_set_prop, Style, outline_opa, Opacity).
 
 -spec set_text_color(lv:style(), lv:color()) -> ok | lv:error().
 set_text_color(Style, Color) ->
-    ?async_void_wrapper(style_set_text_color, Style, Color).
+    ?async_void_wrapper(style_set_prop, Style, text_color, Color).
 
 -spec set_border_post(lv:style(), boolean()) -> ok | lv:error().
 set_border_post(Style, State) ->
-    ?async_void_wrapper(style_set_border_post, Style, State).
+    ?async_void_wrapper(style_set_prop, Style, border_post, State).

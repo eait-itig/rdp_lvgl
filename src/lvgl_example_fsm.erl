@@ -58,8 +58,7 @@ start_link(Srv, Inst, Res) ->
     inst :: lv:instance(),
     flowsty :: lv:style(),
     errsty :: lv:style(),
-    loginev :: undefined | {lv:event(), reference()},
-    acceptev :: undefined | {lv:event(), reference()},
+    evs = [] :: [lv:event()],
     login_inp :: undefined | lv:textarea(),
     pw_inp :: undefined | lv:textarea(),
     errmsg :: undefined | string(),
@@ -68,16 +67,12 @@ start_link(Srv, Inst, Res) ->
     }).
 
 init([Srv, Inst, {W, H}]) ->
-    FlowDir = if
-        (W > H) -> column;
-        true -> row
-    end,
-
     {ok, FlowStyle} = lv_style:create(Inst),
-    ok = lv_style:set_flex_flow(FlowStyle, FlowDir),
-    ok = lv_style:set_flex_align(FlowStyle, center, start, center),
+    ok = lv_style:set_flex_flow(FlowStyle, column),
+    ok = lv_style:set_flex_align(FlowStyle, center, start,
+        if (W > H) -> start; true -> center end),
     ok = lv_style:set_bg_opacity(FlowStyle, 0),
-    ok = lv_style:set_border_post(FlowStyle, false),
+    ok = lv_style:set_border_opacity(FlowStyle, 0),
 
     {ok, ErrMsgStyle} = lv_style:create(Inst),
     ok = lv_style:set_text_color(ErrMsgStyle, lv_color:make(16#FF6060)),
@@ -116,18 +111,19 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
     {ok, Logo} = lv_img:create(Screen),
     ok = lv_img:set_src(Logo,
         rdp_lvgl_server:find_image_path("uq-logo.png")),
+    {ok, {LogoW, LogoH}} = lv_obj:get_size(Logo),
 
     {ok, Flex} = lv_obj:create(Inst, Screen),
     ok = lv_obj:add_style(Flex, FlowStyle),
 
     if
         (W > H) ->
+            ok = lv_obj:align(Logo, center, {-1 * LogoW div 2 - 10, 0}),
             ok = lv_obj:set_size(Flex, {W div 3, H}),
-            ok = lv_obj:align(Logo, center, {-1 * W div 6, 0}),
-            ok = lv_obj:align(Flex, center, {W div 6, 0});
+            ok = lv_obj:align(Flex, center, {W div 6 + 10, 0});
         true ->
+            ok = lv_obj:align(Logo, top_mid, {0, H div 6}),
             ok = lv_obj:set_size(Flex, {W, 2 * (H div 3)}),
-            ok = lv_obj:align(Logo, center, {0, -1 * H div 3}),
             ok = lv_obj:align(Flex, bottom_mid)
     end,
 
@@ -159,8 +155,8 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
     {ok, BtnLbl} = lv_label:create(Btn),
     ok = lv_label:set_text(BtnLbl, "Login"),
 
-    {ok, Event, EvMsgRef} = lv_event:setup(Btn, pressed),
-    {ok, AcEvent, AcMsgRef} = lv_event:setup(PwText, ready),
+    {ok, BtnEvent, _} = lv_event:setup(Btn, pressed, login),
+    {ok, AcEvent, _} = lv_event:setup(PwText, ready, login),
 
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
 
@@ -168,16 +164,10 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
 
     {keep_state, S0#?MODULE{login_inp = Text,
                             pw_inp = PwText,
-                            loginev = {Event, EvMsgRef},
-                            acceptev = {AcEvent, AcMsgRef}}};
+                            evs = [BtnEvent, AcEvent]}};
 
-login(info, {R, event, pressed, _, _}, S0 = #?MODULE{loginev = {_, R}}) ->
-    login(event, login, S0);
-login(info, {R, event, ready, _, _}, S0 = #?MODULE{acceptev = {_, R}}) ->
-    login(event, login, S0);
-
-login(event, login, S0 = #?MODULE{login_inp = LoginInp,
-                                  pw_inp = PwInp}) ->
+login(info, {_Ref, login}, S0 = #?MODULE{login_inp = LoginInp,
+                                         pw_inp = PwInp}) ->
     {ok, Login} = lv_textarea:get_text(LoginInp),
     {ok, Pw} = lv_textarea:get_text(PwInp),
     lager:debug("logging in with ~p/~p", [Login, Pw]),
@@ -191,12 +181,22 @@ checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
 
     {ok, Flex} = lv_obj:create(Inst, Screen),
     ok = lv_obj:add_style(Flex, FlowStyle),
-    ok = lv_obj:set_size(Flex, {W, H}),
-    ok = lv_obj:center(Flex),
 
-    {ok, Logo} = lv_img:create(Flex),
+    {ok, Logo} = lv_img:create(Screen),
     ok = lv_img:set_src(Logo,
         rdp_lvgl_server:find_image_path("uq-logo.png")),
+    {ok, {LogoW, LogoH}} = lv_obj:get_size(Logo),
+
+    if
+        (W > H) ->
+            ok = lv_obj:align(Logo, center, {-1 * LogoW div 2 - 10, 0}),
+            ok = lv_obj:set_size(Flex, {W div 3, H}),
+            ok = lv_obj:align(Flex, center, {W div 6 + 10, 0});
+        true ->
+            ok = lv_obj:align(Logo, top_mid, {0, H div 6}),
+            ok = lv_obj:set_size(Flex, {W, 2 * (H div 3)}),
+            ok = lv_obj:align(Flex, bottom_mid)
+    end,
 
     {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_obj:add_flags(Spinner, [flex_in_new_track]),

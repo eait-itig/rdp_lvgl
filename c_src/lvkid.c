@@ -70,6 +70,7 @@ struct lvinst {
 	uint64_t		 lvi_udata;
 	uint64_t		 lvi_in_wait;
 	uint			 lvi_stalled;
+	uint			 lvi_phinal;
 	struct input_event_q	 lvi_mouse_q;
 	struct input_event_q	 lvi_kbd_q;
 	lv_obj_t		*lvi_cursor;
@@ -207,6 +208,8 @@ lvkid_hdl_mon_down(ErlNifEnv *env, void *arg, ErlNifPid *pid,
 		evt = hdl->lvkh_ptr;
 		lvkevt_teardown(evt);
 		break;
+	default:
+		assert(0);
 	}
 
 	if (inst != NULL)
@@ -624,6 +627,9 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 
 	fprintf(stderr, "processing teardown for %p\r\n", inst);
 
+	while (!inst->lvi_phinal)
+		pthread_cond_wait(&lv_flush_cond, &lv_flush_mtx);
+
 	fb = inst->lvi_fbuf;
 	fb->fb_state = FBUF_FREE;
 	fb->fb_priv = NULL;
@@ -814,6 +820,12 @@ lvkid_lv_phlush_ring(void *arg)
 		assert(drv == &inst->lvi_disp_drv);
 		assert(inst->lvi_disp != NULL);
 
+		if (pd->pd_final == 1) {
+			inst->lvi_phinal = 1;
+			pthread_cond_broadcast(&lv_flush_cond);
+			goto next;
+		}
+
 		if (inst->lvi_stalled) {
 			inst->lvi_stalled = 0;
 		} else {
@@ -821,6 +833,7 @@ lvkid_lv_phlush_ring(void *arg)
 			pthread_cond_broadcast(&lv_flush_cond);
 		}
 
+next:
 		pthread_mutex_unlock(&lv_flush_mtx);
 
 		shm_finish_phlush(pd);
@@ -1674,6 +1687,13 @@ lvkid_erl_evt_ring(void *arg)
 		evt->lvke_msgref = enif_make_copy(evt->lvke_env, ref);
 		owner = evt->lvke_owner;
 
+		if (evt->lvke_custom_msg) {
+			msg = evt->lvke_msg;
+			evt->lvke_msg = enif_make_copy(evt->lvke_env, msg);
+			msg = enif_make_tuple2(env, ref, msg);
+			goto send;
+		}
+
 		if (ed->ed_target_udata != 0) {
 			tgt = (struct lvkobj *)ed->ed_target_udata;
 			assert(tgt->lvko_kid == kid);
@@ -1728,6 +1748,7 @@ lvkid_erl_evt_ring(void *arg)
 		    tgterl,
 		    ctgterl);
 
+send:
 		enif_send(NULL, &owner, env, msg);
 		enif_free_env(env);
 
@@ -2014,6 +2035,7 @@ lvkinst_teardown(struct lvkinst *inst)
 	struct lvkid *kid = inst->lvki_kid;
 	struct lvkgroup *grp;
 	struct cdesc cd;
+	struct pdesc pd;
 	if (inst->lvki_state == LVKINST_DRAIN)
 		return;
 	inst->lvki_fbuf->fb_state = FBUF_TEARDOWN;
@@ -2044,15 +2066,13 @@ lvkinst_teardown(struct lvkinst *inst)
 	 * If a flush was in progress, submit an early end for it now.
 	 * Otherwise teardown will have to wait for it.
 	 */
-	if (inst->lvki_flushing) {
-		struct pdesc pd;
-		pd = (struct pdesc){
-			.pd_disp_drv = inst->lvki_disp_drv
-		};
-		shm_produce_phlush(kid->lvk_shm, &pd);
-		inst->lvki_flushing = 0;
-		/* lvk_cmd will ring the doorbell */
-	}
+	pd = (struct pdesc){
+		.pd_final	= 1,
+		.pd_disp_drv	= inst->lvki_disp_drv
+	};
+	shm_produce_phlush(kid->lvk_shm, &pd);
+	inst->lvki_flushing = 0;
+	/* lvk_cmd will ring the doorbell */
 	/*
 	 * Then the actual teardown command. This will nuke the display driver
 	 * as well as all input drivers.

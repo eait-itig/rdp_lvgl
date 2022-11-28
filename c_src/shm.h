@@ -242,7 +242,7 @@ struct edesc {
 
 struct pdesc {
 	atomic_uint		pd_owner;
-	uint32_t		pd_pad;
+	uint32_t		pd_final;
 	uint64_t		pd_disp_drv;
 };
 

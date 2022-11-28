@@ -144,3 +144,25 @@ lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
 	lv_style_set_flex_track_place(style, track_cross_place);
 	lv_style_set_layout(style, LV_LAYOUT_FLEX);
 }
+
+lv_point_t
+lv_obj_get_size(lv_obj_t *obj)
+{
+	lv_point_t pt;
+	pt = (lv_point_t){
+		.x = lv_obj_get_self_width(obj),
+		.y = lv_obj_get_self_height(obj)
+	};
+	return (pt);
+}
+
+lv_point_t
+lv_obj_get_pos(lv_obj_t *obj)
+{
+	lv_point_t pt;
+	pt = (lv_point_t){
+		.x = lv_obj_get_x(obj),
+		.y = lv_obj_get_y(obj)
+	};
+	return (pt);
+}

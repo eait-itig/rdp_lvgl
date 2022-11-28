@@ -98,6 +98,9 @@ setup_instance(_Size) -> error(no_nif).
 -spec setup_event(object(), lv_event:type()) -> {async, event(), msgref()} | lv:error().
 setup_event(_Obj, _Type) -> error(no_nif).
 
+-spec setup_event(object(), lv_event:type(), term()) -> {async, event(), msgref()} | lv:error().
+setup_event(_Obj, _Type, _CustomMsg) -> error(no_nif).
+
 -spec set_kbd_group(instance(), group()) -> async_return().
 set_kbd_group(_Inst, _Group) -> error(no_nif).
 
@@ -219,17 +222,30 @@ obj_has_all_flags(_Obj, _Flags) -> error(no_nif).
 -spec obj_has_any_flags(object(), [lv_obj:flag()]) -> async_return(boolean()).
 obj_has_any_flags(_Obj, _Flags) -> error(no_nif).
 
--spec style_set_bg_opa(style(), integer()) -> async_return().
-style_set_bg_opa(_Style, _Opacity) -> error(no_nif).
+-spec obj_get_pos(object()) -> async_return(lv:point()).
+obj_get_pos(_Obj) -> error(no_nif).
 
--spec style_set_outline_opa(style(), integer()) -> async_return().
-style_set_outline_opa(_Style, _Opacity) -> error(no_nif).
+-spec obj_get_size(object()) -> async_return(lv:size()).
+obj_get_size(_Obj) -> error(no_nif).
 
--spec style_set_text_color(style(), color()) -> async_return().
-style_set_text_color(_Style, _Color) -> error(no_nif).
-
--spec style_set_border_post(style(), boolean()) -> async_return().
-style_set_border_post(_Style, _State) -> error(no_nif).
+-type style_generic_prop() :: width | min_width | max_width | height |
+    min_height | max_height | x | y | align | radius | pad_top | pad_bottom |
+    pad_left | pad_right | pad_row | pad_column | base_dir | clip_corner |
+    bg_color | bg_opa | bg_grad_color | bg_grad_dir | bg_main_stop |
+    bg_grad_stop | bg_img_opa | bg_img_recolor | bg_img_recolor_opa |
+    bg_img_tiled | border_color | border_opa | border_width | border_side |
+    border_post | outline_width | outline_color | outline_opa | outline_pad |
+    shadow_width | shadow_ofs_x | shadow_ofs_y | shadow_spread | shadow_color |
+    shadow_opa | img_opa | img_recolor | img_recolor_opa | line_width |
+    line_dash_width | line_dash_gap | line_rounded | line_color | line_opa |
+    arc_width | arc_rounded | arc_color | arc_opa | text_color | text_opa |
+    text_letter_space | text_line_space | text_decor | text_align | opa |
+    color_filter_opa | anim_time | anim_speed | blend_mode | transform_width |
+    transform_height | translate_x | translate_y | transform_zoom |
+    transform_angle | transform_pivot_x | transform_pivot_y.
+-spec style_set_prop(style(), style_generic_prop(), integer() | atom() |
+    boolean() | lv:color()) -> async_return().
+style_set_prop(_Style, _Prop, _Value) -> error(no_nif).
 
 -spec textarea_create(object()) -> async_return(object()).
 textarea_create(_Parent) -> error(no_nif).

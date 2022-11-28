@@ -85,3 +85,11 @@ set_size(Obj, Size) ->
 -spec add_style(lv:object(), lv:style()) -> ok | lv:error().
 add_style(Obj, Style) ->
     ?async_void_wrapper(obj_add_style, Obj, Style).
+
+-spec get_size(lv:object()) -> {ok, lv:size()} | lv:error().
+get_size(Obj) ->
+    ?async_wrapper(obj_get_size, Obj).
+
+-spec get_pos(lv:object()) -> {ok, lv:point()} | lv:error().
+get_pos(Obj) ->
+    ?async_wrapper(obj_get_pos, Obj).

@@ -193,6 +193,7 @@ struct lvkevt {
 	LIST_ENTRY(lvkevt)	 lvke_obj_entry;
 
 	uint			 lvke_teardown;
+	uint			 lvke_custom_msg;
 
 	struct lvkhdl		*lvke_hdl;
 
@@ -201,6 +202,7 @@ struct lvkevt {
 
 	ErlNifEnv		*lvke_env;
 	ERL_NIF_TERM		 lvke_msgref;
+	ERL_NIF_TERM		 lvke_msg;
 	ErlNifPid		 lvke_owner;
 };
 

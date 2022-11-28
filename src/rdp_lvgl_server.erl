@@ -230,7 +230,6 @@ handle_event(#ts_inpevt_key{code = Code, flags = F, action = down}, Srv, S0 = #?
     #?MODULE{inst = Inst, modkeys = MK} = S0,
     Ext = lists:member(extended, F),
     S1 = S0#?MODULE{keydown = {Ext, Code}},
-    lager:debug("ts code = ~p, ext = ~p, mk = ~p", [Code, Ext, MK]),
     case ts_key_to_lv(Code, Ext, MK) of
         null -> {ok, S1};
         paste ->

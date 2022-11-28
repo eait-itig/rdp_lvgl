@@ -37,9 +37,22 @@
     scroll_end | scroll | gesture | key | focused | defocused | leave |
     value_changed | insert | refresh | ready | cancel.
 
--spec setup(lv:object(), type()) -> {ok, lv:event()} | lv:error().
+-spec setup(lv:object(), type()) -> {ok, lv:event(), reference()} | lv:error().
 setup(Obj, Filter) ->
     case rdp_lvgl_nif:setup_event(Obj, Filter) of
+        {async, Event, MsgRef} ->
+            receive
+                {MsgRef, ok} -> {ok, Event, MsgRef};
+                {MsgRef, error, Why} -> {error, Why};
+                {MsgRef, error, Num, Str} -> {error, Num, Str}
+            end;
+        Err -> Err
+    end.
+
+-spec setup(lv:object(), type(), term()) ->
+    {ok, lv:event(), reference()} | lv:error().
+setup(Obj, Filter, CustomMsg) ->
+    case rdp_lvgl_nif:setup_event(Obj, Filter, CustomMsg) of
         {async, Event, MsgRef} ->
             receive
                 {MsgRef, ok} -> {ok, Event, MsgRef};
