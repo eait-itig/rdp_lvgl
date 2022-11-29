@@ -814,6 +814,9 @@ lvkid_lv_phlush_ring(void *arg)
 	while (1) {
 		shm_consume_phlush(shm, &pd);
 
+		if (atomic_load(&shm->si_dead))
+			return (NULL);
+
 		pthread_mutex_lock(&lv_flush_mtx);
 
 		drv = (lv_disp_drv_t *)pd->pd_disp_drv;
@@ -914,6 +917,9 @@ lvkid_lv_cmd_ring(void *arg)
 
 	while (1) {
 		ncd = shm_consume_cmd(shm, cd, 8);
+
+		if (atomic_load(&shm->si_dead))
+			return (NULL);
 
 		switch (cd[0]->cd_op) {
 		case CMD_SETUP:
@@ -1579,6 +1585,10 @@ lvkid_erl_flush_ring(void *arg)
 		do_release = 0;
 
 		shm_consume_flush(shm, &fd);
+
+		if (atomic_load(&shm->si_dead))
+			return (NULL);
+
 		fbidx = fd->fd_fbidx_flag & FBIDX_IDX_MASK;
 		assert(fbidx < shm->si_nfbuf);
 		fb = &shm->si_fbuf[fbidx];
@@ -1681,6 +1691,10 @@ lvkid_erl_evt_ring(void *arg)
 
 	while (1) {
 		shm_consume_evt(shm, &ed);
+
+		if (atomic_load(&shm->si_dead))
+			return (NULL);
+
 		evt = (struct lvkevt *)ed->ed_udata;
 		assert(evt->lvke_kid == kid);
 
@@ -1838,6 +1852,10 @@ lvkid_erl_rsp_ring(void *arg)
 
 	while (1) {
 		nrd = shm_consume_rsp(shm, rd, 8);
+
+		if (atomic_load(&shm->si_dead))
+			return (NULL);
+
 		cmd = (struct lvkcmd *)rd[0]->rd_cookie;
 		assert(cmd->lvkc_kid == kid);
 		pthread_rwlock_wrlock(&kid->lvk_lock);
@@ -1948,14 +1966,19 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 		pthread_rwlock_wrlock(&lvkids_lock);
 		TAILQ_FOREACH(kid, &lvkids, lvk_entry) {
 			pthread_rwlock_wrlock(&kid->lvk_lock);
-			if (kid->lvk_busy < kid->lvk_shm->si_nfbuf) {
-				++kid->lvk_busy;
-				TAILQ_REMOVE(&lvkids, kid, lvk_entry);
-				TAILQ_INSERT_TAIL(&lvkids, kid, lvk_entry);
-				nkid = kid;
-				break;
+			if (atomic_load(&kid->lvk_shm->si_dead)) {
+				pthread_rwlock_unlock(&kid->lvk_lock);
+				continue;
 			}
-			pthread_rwlock_unlock(&kid->lvk_lock);
+			if (kid->lvk_busy >= kid->lvk_shm->si_nfbuf) {
+				pthread_rwlock_unlock(&kid->lvk_lock);
+				continue;
+			}
+			++kid->lvk_busy;
+			TAILQ_REMOVE(&lvkids, kid, lvk_entry);
+			TAILQ_INSERT_TAIL(&lvkids, kid, lvk_entry);
+			nkid = kid;
+			break;
 		}
 		if (nkid == NULL) {
 			lvkid_new();

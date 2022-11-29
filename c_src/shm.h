@@ -79,7 +79,10 @@ enum shmrole {
 struct shmintf {
 	enum shmrole	 si_role;
 
-	int		 si_pipe[2];
+	int		 si_down_pipe[2];
+	int		 si_up_pipe[2];
+	pid_t		 si_kid;
+	atomic_uint	 si_dead;
 	pthread_t	 si_pipewatch;
 
 	struct lockpg	*si_lockpg;
@@ -115,6 +118,7 @@ struct shmintf {
 
 struct lockpg {
 	pthread_mutex_t	lp_mtx;
+	uint		lp_dead;
 	uint		lp_erl_db;
 	pthread_cond_t	lp_erl_db_cond;
 	uint		lp_lv_db;

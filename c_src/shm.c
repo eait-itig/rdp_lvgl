@@ -34,8 +34,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <poll.h>
+#include <errno.h>
 
 #include <sys/mman.h>
+#include <sys/errno.h>
+#include <sys/wait.h>
 
 #include "shm.h"
 
@@ -51,6 +54,8 @@ alloc_shmintf(void)
 	shm = calloc(1, sizeof (*shm));
 	if (shm == NULL)
 		goto err;
+
+	atomic_store(&shm->si_dead, 0);
 
 	rc = pthread_mutex_init(&shm->si_cc_mtx, NULL);
 	if (rc)
@@ -211,6 +216,8 @@ shm_consume_cmd(struct shmintf *shm, struct cdesc **cmd, uint maxchain)
 	uint owner, db;
 	uint n = 0;
 	assert(shm->si_role == ROLE_LV);
+	if (atomic_load(&shm->si_dead))
+		return (0);
 	db = shm_read_doorbell(shm);
 	do {
 		iters = 0;
@@ -224,6 +231,8 @@ shm_consume_cmd(struct shmintf *shm, struct cdesc **cmd, uint maxchain)
 			shm_await_doorbell_v(shm, db);
 			owner = atomic_load(&shm->si_cmdr[shm->si_cc].cd_owner);
 			db = shm_read_doorbell(shm);
+			if (atomic_load(&shm->si_dead))
+				return (0);
 		}
 		cmd[n] = &shm->si_cmdr[shm->si_cc];
 		shm->si_cc++;
@@ -241,13 +250,18 @@ shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, uint n)
 	uint owner;
 	uint i = 0;
 	assert(shm->si_role == ROLE_LV);
+	if (atomic_load(&shm->si_dead))
+		return;
 	pthread_mutex_lock(&shm->si_rc_mtx);
 	while (i < n) {
 		do {
 			owner = atomic_load(
 			    &shm->si_respr[shm->si_rc].rd_owner);
-			if (owner != OWNER_ERL)
+			if (owner != OWNER_LV) {
 				shm_ring_doorbell(shm);
+				if (atomic_load(&shm->si_dead))
+					return;
+			}
 		} while (owner != OWNER_LV);
 		bcopy(&rsp[i].rd_chain, &shm->si_respr[shm->si_rc].rd_chain,
 		    sizeof(struct rdesc) - offsetof(struct rdesc, rd_chain));
@@ -266,13 +280,18 @@ shm_produce_cmd(struct shmintf *shm, const struct cdesc *rsp, uint n)
 	uint owner;
 	uint i = 0;
 	assert(shm->si_role == ROLE_ERL);
+	if (atomic_load(&shm->si_dead))
+		return;
 	pthread_mutex_lock(&shm->si_cc_mtx);
 	while (i < n) {
 		do {
 			owner = atomic_load(
 			    &shm->si_cmdr[shm->si_cc].cd_owner);
-			if (owner != OWNER_ERL)
+			if (owner != OWNER_ERL) {
 				shm_ring_doorbell(shm);
+				if (atomic_load(&shm->si_dead))
+					return;
+			}
 		} while (owner != OWNER_ERL);
 		bcopy(&rsp[i].cd_op, &shm->si_cmdr[shm->si_cc].cd_op,
 		    sizeof(struct cdesc) - offsetof(struct cdesc, cd_op));
@@ -290,12 +309,17 @@ shm_produce_evt(struct shmintf *shm, const struct edesc *esp)
 {
 	uint owner;
 	assert(shm->si_role == ROLE_LV);
+	if (atomic_load(&shm->si_dead))
+		return;
 	pthread_mutex_lock(&shm->si_ec_mtx);
 	do {
 		owner = atomic_load(
 		    &shm->si_evr[shm->si_ec].ed_owner);
-		if (owner != OWNER_LV)
+		if (owner != OWNER_LV) {
 			shm_ring_doorbell(shm);
+			if (atomic_load(&shm->si_dead))
+				return;
+		}
 	} while (owner != OWNER_LV);
 	bcopy(&esp->ed_code, &shm->si_evr[shm->si_ec].ed_code,
 	    sizeof(struct edesc) - offsetof(struct edesc, ed_code));
@@ -311,12 +335,17 @@ shm_produce_flush(struct shmintf *shm, const struct fdesc *fsp)
 {
 	uint owner;
 	assert(shm->si_role == ROLE_LV);
+	if (atomic_load(&shm->si_dead))
+		return;
 	pthread_mutex_lock(&shm->si_fc_mtx);
 	do {
 		owner = atomic_load(
 		    &shm->si_flr[shm->si_fc].fd_owner);
-		if (owner != OWNER_LV)
+		if (owner != OWNER_LV) {
 			shm_ring_doorbell(shm);
+			if (atomic_load(&shm->si_dead))
+				return;
+		}
 	} while (owner != OWNER_LV);
 	bcopy(&fsp->fd_fbidx_flag, &shm->si_flr[shm->si_fc].fd_fbidx_flag,
 	    sizeof(struct fdesc) - offsetof(struct fdesc, fd_fbidx_flag));
@@ -332,12 +361,17 @@ shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 {
 	uint owner;
 	assert(shm->si_role == ROLE_ERL);
+	if (atomic_load(&shm->si_dead))
+		return;
 	pthread_mutex_lock(&shm->si_pc_mtx);
 	do {
 		owner = atomic_load(
 		    &shm->si_phr[shm->si_pc].pd_owner);
-		if (owner != OWNER_ERL)
+		if (owner != OWNER_ERL) {
 			shm_ring_doorbell(shm);
+			if (atomic_load(&shm->si_dead))
+				return;
+		}
 	} while (owner != OWNER_ERL);
 	bcopy(&psp->pd_final, &shm->si_phr[shm->si_pc].pd_final,
 	    sizeof(struct pdesc) - offsetof(struct pdesc, pd_final));
@@ -355,6 +389,8 @@ shm_consume_rsp(struct shmintf *shm, struct rdesc **rsp, uint maxchain)
 	uint owner, db;
 	uint n = 0;
 	assert(shm->si_role == ROLE_ERL);
+	if (atomic_load(&shm->si_dead))
+		return (0);
 	db = shm_read_doorbell(shm);
 	do {
 		iters = 0;
@@ -370,6 +406,8 @@ shm_consume_rsp(struct shmintf *shm, struct rdesc **rsp, uint maxchain)
 			owner = atomic_load(
 			    &shm->si_respr[shm->si_rc].rd_owner);
 			db = shm_read_doorbell(shm);
+			if (atomic_load(&shm->si_dead))
+				return (0);
 		}
 		rsp[n] = &shm->si_respr[shm->si_rc];
 		shm->si_rc++;
@@ -387,6 +425,8 @@ shm_consume_evt(struct shmintf *shm, struct edesc **esp)
 	uint iters = 0;
 	uint owner, db;
 	assert(shm->si_role == ROLE_ERL);
+	if (atomic_load(&shm->si_dead))
+		return;
 	db = shm_read_doorbell(shm);
 	/* Attempt a busy-wait check first. */
 	do {
@@ -398,6 +438,8 @@ shm_consume_evt(struct shmintf *shm, struct edesc **esp)
 		shm_await_doorbell_v(shm, db);
 		owner = atomic_load(&shm->si_evr[shm->si_ec].ed_owner);
 		db = shm_read_doorbell(shm);
+		if (atomic_load(&shm->si_dead))
+			return;
 	}
 	*esp = &shm->si_evr[shm->si_ec];
 	shm->si_ec++;
@@ -472,7 +514,7 @@ shm_await_doorbell(struct shmintf *shm)
 	}
 	pthread_mutex_lock(&lp->lp_mtx);
 	orig = *db;
-	while (*db == orig)
+	while (*db == orig && !lp->lp_dead)
 		pthread_cond_wait(cond, &lp->lp_mtx);
 	pthread_mutex_unlock(&lp->lp_mtx);
 }
@@ -508,6 +550,8 @@ shm_consume_flush(struct shmintf *shm, struct fdesc **fsp)
 	uint iters = 0;
 	uint owner, db;
 	assert(shm->si_role == ROLE_ERL);
+	if (atomic_load(&shm->si_dead))
+		return;
 	db = shm_read_doorbell(shm);
 	/* Attempt a busy-wait check first. */
 	do {
@@ -519,6 +563,8 @@ shm_consume_flush(struct shmintf *shm, struct fdesc **fsp)
 		shm_await_doorbell_v(shm, db);
 		owner = atomic_load(&shm->si_flr[shm->si_fc].fd_owner);
 		db = shm_read_doorbell(shm);
+		if (atomic_load(&shm->si_dead))
+			return;
 	}
 	*fsp = &shm->si_flr[shm->si_fc];
 	shm->si_fc++;
@@ -532,6 +578,8 @@ shm_consume_phlush(struct shmintf *shm, struct pdesc **psp)
 	uint iters = 0;
 	uint owner, db;
 	assert(shm->si_role == ROLE_LV);
+	if (atomic_load(&shm->si_dead))
+		return;
 	db = shm_read_doorbell(shm);
 	/* Attempt a busy-wait check first. */
 	do {
@@ -543,6 +591,8 @@ shm_consume_phlush(struct shmintf *shm, struct pdesc **psp)
 		shm_await_doorbell_v(shm, db);
 		owner = atomic_load(&shm->si_phr[shm->si_pc].pd_owner);
 		db = shm_read_doorbell(shm);
+		if (atomic_load(&shm->si_dead))
+			return;
 	}
 	*psp = &shm->si_phr[shm->si_pc];
 	shm->si_pc++;
@@ -607,7 +657,7 @@ shm_pipewatch(void *arg)
 	struct pollfd pfd;
 	int ret;
 
-	pfd.fd = shm->si_pipe[0];
+	pfd.fd = shm->si_down_pipe[0];
 	pfd.events = POLLIN | POLLHUP;
 
 	while (1) {
@@ -619,39 +669,88 @@ shm_pipewatch(void *arg)
 	}
 }
 
+static void *
+shm_parent_pipewatch(void *arg)
+{
+	struct shmintf *shm = arg;
+	struct lockpg *lp = shm->si_lockpg;
+	struct pollfd pfd;
+	int ret;
+
+	pfd.fd = shm->si_up_pipe[0];
+	pfd.events = POLLIN | POLLHUP;
+
+	while (1) {
+		ret = poll(&pfd, 1, -1);
+		if (ret != 1)
+			continue;
+		if (read(pfd.fd, &ret, sizeof (ret)) == 0) {
+			fprintf(stderr, "%s: child %d died\r\n", __func__,
+			    shm->si_kid);
+			atomic_store(&shm->si_dead, 1);
+
+			pthread_mutex_lock(&lp->lp_mtx);
+			lp->lp_dead = 1;
+			++lp->lp_lv_db;
+			++lp->lp_erl_db;
+			pthread_cond_broadcast(&lp->lp_lv_db_cond);
+			pthread_cond_broadcast(&lp->lp_erl_db_cond);
+			pthread_mutex_unlock(&lp->lp_mtx);
+
+			waitpid(shm->si_kid, NULL, 0);
+			return (NULL);
+		}
+	}
+}
+
 pid_t
 shm_fork(struct shmintf *shm)
 {
 	pid_t kid;
-	int fd;
+	int fd, maxfd;
 
 	pthread_mutex_lock(&shm->si_cc_mtx);
 	assert(shm->si_role == ROLE_NONE);
 
-	if (pipe(shm->si_pipe)) {
+	if (pipe(shm->si_down_pipe)) {
+		pthread_mutex_unlock(&shm->si_cc_mtx);
+		return (-1);
+	}
+
+	if (pipe(shm->si_up_pipe)) {
 		pthread_mutex_unlock(&shm->si_cc_mtx);
 		return (-1);
 	}
 
 	kid = fork();
+	shm->si_kid = kid;
 	switch (kid) {
 	case -1:
 		break;
 	case 0:
 		shm->si_role = ROLE_LV;
-		close(shm->si_pipe[1]);
-		for (fd = 0; fd < shm->si_pipe[0]; ++fd) {
-			if (fd == STDERR_FILENO)
+		close(shm->si_down_pipe[1]);
+		close(shm->si_up_pipe[0]);
+		maxfd = shm->si_down_pipe[0];
+		if (shm->si_up_pipe[1] > maxfd)
+			maxfd = shm->si_up_pipe[1];
+		for (fd = 0; fd < maxfd; ++fd) {
+			if (fd == STDERR_FILENO || fd == shm->si_down_pipe[0] ||
+			    fd == shm->si_up_pipe[1])
 				continue;
 			close(fd);
 		}
-		closefrom(shm->si_pipe[0] + 1);
+		closefrom(maxfd + 1);
 		pthread_create(&shm->si_pipewatch, NULL, shm_pipewatch, shm);
 		pthread_setname_np(shm->si_pipewatch, "shm_pipewatch");
 		break;
 	default:
 		shm->si_role = ROLE_ERL;
-		close(shm->si_pipe[0]);
+		close(shm->si_down_pipe[0]);
+		close(shm->si_up_pipe[1]);
+		pthread_create(&shm->si_pipewatch, NULL, shm_parent_pipewatch,
+		    shm);
+		pthread_setname_np(shm->si_pipewatch, "shm_pipewatch");
 		break;
 	}
 	pthread_mutex_unlock(&shm->si_cc_mtx);
