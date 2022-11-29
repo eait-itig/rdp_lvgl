@@ -339,8 +339,8 @@ shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 		if (owner != OWNER_ERL)
 			shm_ring_doorbell(shm);
 	} while (owner != OWNER_ERL);
-	bcopy(&psp->pd_pad, &shm->si_phr[shm->si_pc].pd_pad,
-	    sizeof(struct pdesc) - offsetof(struct pdesc, pd_pad));
+	bcopy(&psp->pd_final, &shm->si_phr[shm->si_pc].pd_final,
+	    sizeof(struct pdesc) - offsetof(struct pdesc, pd_final));
 	atomic_store(&shm->si_phr[shm->si_pc].pd_owner, OWNER_LV);
 	shm->si_pc++;
 	if (shm->si_pc >= shm->si_nph)
