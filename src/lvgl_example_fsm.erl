@@ -123,8 +123,9 @@ make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
     if
         (W > H) ->
             ok = lv_obj:align(Logo, center, {-1 * LogoW div 2 - 10, 0}),
-            ok = lv_obj:set_size(Flex, {{percent, 30}, {percent, 100}}),
-            ok = lv_obj:align(Flex, center, {W div 6 + 10, 0});
+            FlexW = if (W div 3 < 500) -> 500; true -> W div 3 end,
+            ok = lv_obj:set_size(Flex, {FlexW, {percent, 100}}),
+            ok = lv_obj:align(Flex, center, {FlexW div 2 + 10, 0});
         true ->
             ok = lv_obj:align(Logo, top_mid, {0, H div 6}),
             ok = lv_obj:set_size(Flex, {{percent, 100}, {percent, 66}}),
