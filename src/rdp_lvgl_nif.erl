@@ -333,3 +333,12 @@ obj_get_state(_Obj) -> error(no_nif).
 
 -spec obj_add_style(object(), style(), lv_obj:selector()) -> async_return().
 obj_add_style(_Obj, _Sty, _Selector) -> error(no_nif).
+
+-spec checkbox_create(object()) -> async_return(object()).
+checkbox_create(_Parent) -> error(no_nif).
+
+-spec checkbox_set_text(object(), string()) -> async_return().
+checkbox_set_text(_Obj, _Str) -> error(no_nif).
+
+-spec checkbox_get_text(object()) -> async_return(string()).
+checkbox_get_text(_Obj) -> error(no_nif).
