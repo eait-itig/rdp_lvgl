@@ -65,6 +65,7 @@ handle_connect(_Cookie, _Protocols, _Srv, S0 = #?MODULE{}) ->
 init_ui({Srv, Inst}, S = #?MODULE{}) ->
     {W, H, _} = rdp_server:get_canvas(Srv),
     {ok, Pid} = lvgl_example_fsm:start_link(Srv, Inst, {W, H}),
+    lager:debug("ui fsm in ~p", [Pid]),
     {ok, S#?MODULE{fsm = Pid}}.
 
 handle_info(_Msg, _Srv, S0 = #?MODULE{}) ->

@@ -41,6 +41,7 @@
 #include <sys/wait.h>
 
 #include "shm.h"
+#include "log.h"
 
 struct shmintf *
 alloc_shmintf(void)
@@ -664,8 +665,10 @@ shm_pipewatch(void *arg)
 		ret = poll(&pfd, 1, -1);
 		if (ret != 1)
 			continue;
-		if (read(pfd.fd, &ret, sizeof (ret)) == 0)
+		if (read(pfd.fd, &ret, sizeof (ret)) == 0) {
+			log_debug("parent died; exiting");
 			exit(0);
+		}
 	}
 }
 
@@ -685,8 +688,7 @@ shm_parent_pipewatch(void *arg)
 		if (ret != 1)
 			continue;
 		if (read(pfd.fd, &ret, sizeof (ret)) == 0) {
-			fprintf(stderr, "%s: child %d died\r\n", __func__,
-			    shm->si_kid);
+			log_warn("child %d died", shm->si_kid);
 			atomic_store(&shm->si_dead, 1);
 
 			pthread_mutex_lock(&lp->lp_mtx);
@@ -729,6 +731,7 @@ shm_fork(struct shmintf *shm)
 		break;
 	case 0:
 		shm->si_role = ROLE_LV;
+		log_post_fork("lvkid", getpid());
 		close(shm->si_down_pipe[1]);
 		close(shm->si_up_pipe[0]);
 		maxfd = shm->si_down_pipe[0];

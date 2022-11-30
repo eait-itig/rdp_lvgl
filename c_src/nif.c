@@ -41,6 +41,7 @@
 #include "shm.h"
 #include "lvkid.h"
 #include "lvkutils.h"
+#include "log.h"
 
 #include "nif_enums.h"
 
@@ -178,6 +179,17 @@ out:
 	enif_send(NULL, &ncd->ncd_owner, env, msg);
 	enif_free_env(env);
 	free(ncd);
+}
+
+static ERL_NIF_TERM
+rlvgl_take_log_ownership(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	ErlNifPid self;
+	if (argc != 0)
+		return (enif_make_badarg(env));
+	enif_self(env, &self);
+	log_take_ownership(self);
+	return (enif_make_atom(env, "ok"));
 }
 
 static ERL_NIF_TERM
@@ -3560,6 +3572,7 @@ static int
 rlvgl_nif_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM info)
 {
 	lvk_open_resource_types(env);
+	log_setup();
 	return (0);
 }
 
@@ -3582,6 +3595,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "prefork",		1, rlvgl_prefork },
 	{ "read_framebuffer",	2, rlvgl_read_framebuffer },
 	{ "make_buffer",	2, rlvgl_make_buffer },
+	{ "take_log_ownership",	0, rlvgl_take_log_ownership },
 
 	/* lvgl APIs */
 	//{ "obj_clear_flags",		2, rlvgl_obj_clear_flags },

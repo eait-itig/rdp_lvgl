@@ -24,37 +24,51 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %% @private
--module(rdp_lvgl_sup).
+-module(rdp_lvgl_logger).
 
--behaviour(supervisor).
+-behaviour(gen_server).
 
--export([start_link/0]).
+-compile([{parse_transform, lager_transform}]).
 
--export([init/1]).
+-export([
+    start_link/0
+    ]).
 
--define(SERVER, ?MODULE).
+-export([
+    init/1,
+    terminate/2,
+    handle_call/3,
+    handle_cast/2,
+    handle_info/2
+    ]).
 
+-spec start_link() -> {ok, pid()} | {error, term()}.
 start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-%% sup_flags() = #{strategy => strategy(),         % optional
-%%                 intensity => non_neg_integer(), % optional
-%%                 period => pos_integer()}        % optional
-%% child_spec() = #{id => child_id(),       % mandatory
-%%                  start => mfargs(),      % mandatory
-%%                  restart => restart(),   % optional
-%%                  shutdown => shutdown(), % optional
-%%                  type => worker(),       % optional
-%%                  modules => modules()}   % optional
+-record(?MODULE, {}).
+
 init([]) ->
-    SupFlags = #{strategy => one_for_one,
-        intensity => 2,
-        period => 1},
-    ChildSpecs = [
-        #{id => rdp_lvgl_logger,
-          start => {rdp_lvgl_logger, start_link, []},
-          type => worker}
-    ],
-    {ok, {SupFlags, ChildSpecs}}.
+    ok = rdp_lvgl_nif:take_log_ownership(),
+    {ok, #?MODULE{}}.
 
-%% internal functions
+terminate(Why, #?MODULE{}) ->
+    ok.
+
+handle_call(Req, _From, S0 = #?MODULE{}) ->
+    lager:debug("unknown call: ~p", [Req]),
+    {noreply, S0}.
+
+handle_cast(Req, S0 = #?MODULE{}) ->
+    lager:debug("unknown cast: ~p", [Req]),
+    {noreply, S0}.
+
+handle_info({lv_nif_log, Level, Pid, Role, Func, File, Line, Msg}, S0 = #?MODULE{}) ->
+    Md = [
+        {pid, {Role, Pid}},
+        {module, File},
+        {function, Func},
+        {line, Line}
+    ],
+    lager:log(Level, Md, Msg),
+    {noreply, S0}.

@@ -32,6 +32,7 @@
 #include "lvkutils.h"
 #include "lvcall.h"
 #include "tick_time.h"
+#include "log.h"
 
 static pthread_rwlock_t lvkids_lock = PTHREAD_RWLOCK_INITIALIZER;
 static struct lvkid_list lvkids = TAILQ_HEAD_INITIALIZER(lvkids);
@@ -75,6 +76,13 @@ struct lvinst {
 	struct input_event_q	 lvi_kbd_q;
 	lv_obj_t		*lvi_cursor;
 };
+
+#define	lvi_debug(inst, fmt, ...) \
+    log_debug("%p: " fmt, (inst)->lvi_udata __VA_OPT__(,) __VA_ARGS__)
+#define	lvi_warn(inst, fmt, ...) \
+    log_warn("%p: " fmt, (inst)->lvi_udata __VA_OPT__(,) __VA_ARGS__)
+#define	lvi_error(inst, fmt, ...) \
+    log_error("%p: " fmt, (inst)->lvi_udata __VA_OPT__(,) __VA_ARGS__)
 
 ErlNifResourceType *lvkid_hdl_rsrc;
 ErlNifResourceType *lvkid_fbhdl_rsrc;
@@ -351,6 +359,7 @@ lvkid_lv_wait_cb(lv_disp_drv_t *disp_drv)
 	while (disp_drv->draw_buf->flushing) {
 		rc = pthread_cond_timedwait(&lv_flush_cond, &lv_flush_mtx, &ts);
 		if (rc) {
+			lvi_warn(inst, "stalling instance");
 			inst->lvi_stalled = 1;
 			lv_disp_flush_ready(disp_drv);
 			break;
@@ -564,7 +573,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_disp_drv.user_data = inst;
 
 	inst->lvi_disp = lv_disp_drv_register(&inst->lvi_disp_drv);
-	fprintf(stderr, "created disp_drv %p => %p\r\n", &inst->lvi_disp_drv,
+	lvi_debug(inst, "created disp_drv %p => %p", &inst->lvi_disp_drv,
 	    inst->lvi_disp);
 
 	inst->lvi_disp->theme = lv_theme_default_init(inst->lvi_disp,
@@ -579,7 +588,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_mouse_drv.disp = inst->lvi_disp;
 
 	inst->lvi_mouse = lv_indev_drv_register(&inst->lvi_mouse_drv);
-	fprintf(stderr, "created mouse_drv %p => %p\r\n", &inst->lvi_mouse_drv,
+	lvi_debug(inst, "created mouse_drv %p => %p", &inst->lvi_mouse_drv,
 	    inst->lvi_mouse);
 
 	lv_indev_drv_init(&inst->lvi_kbd_drv);
@@ -589,7 +598,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_kbd_drv.disp = inst->lvi_disp;
 
 	inst->lvi_kbd = lv_indev_drv_register(&inst->lvi_kbd_drv);
-	fprintf(stderr, "created kbd_drv %p => %p\r\n", &inst->lvi_kbd_drv,
+	lvi_debug(inst, "created kbd_drv %p => %p", &inst->lvi_kbd_drv,
 	    inst->lvi_kbd);
 
 	pthread_mutex_unlock(&lv_mtx);
@@ -627,10 +636,12 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	assert(inst->lvi_shm == shm);
 	assert(&inst->lvi_disp_drv == disp_drv);
 
-	fprintf(stderr, "processing teardown for %p\r\n", inst);
+	lvi_debug(inst, "processing teardown");
 
-	while (!inst->lvi_phinal)
+	while (!inst->lvi_phinal) {
+		lvi_debug(inst, "waiting for phinal phlush");
 		pthread_cond_wait(&lv_flush_cond, &lv_flush_mtx);
+	}
 
 	fb = inst->lvi_fbuf;
 	fb->fb_state = FBUF_FREE;
@@ -967,6 +978,12 @@ lvkid_lv_cmd_ring(void *arg)
 	return (NULL);
 }
 
+static void
+lvkid_log(const char *buf)
+{
+	log_debug("%s", buf);
+}
+
 static void *
 lvkid_lv_startup(void *arg)
 {
@@ -980,8 +997,9 @@ lvkid_lv_startup(void *arg)
 	pthread_mutex_init(&lv_flush_mtx, &mattr);
 	pthread_cond_init(&lv_flush_cond, NULL);
 
-	fprintf(stderr, "lvkid %p: starting up\r\n", kid);
+	log_debug("lvkid %p: starting up", kid);
 
+	lv_log_register_print_cb(lvkid_log);
 	lv_init();
 	LIST_INIT(&leus);
 
@@ -1618,7 +1636,7 @@ lvkid_erl_flush_ring(void *arg)
 			hdl->lvkh_fbuf = buf;
 		if (hdl->lvkh_fbuf != buf) {
 			pthread_rwlock_unlock(&inst->lvki_lock);
-			fprintf(stderr, "dropping due to wrong buf\r\n");
+			log_warn("dropping due to wrong buf");
 			goto next;
 		}
 
@@ -2029,7 +2047,10 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	};
 	lvk_cmd(kid, &cd, 1, lvk_inst_setup_cb, inst);
 
-	fprintf(stderr, "setting up inst %p in fbuf %u\r\n", inst, i);
+	log_debug("inst %p: fbuf = %u, kid = %p (pid %d), owner = %T, "
+	    "msgref = %T", inst, i, nkid, nkid->lvk_pid,
+	    enif_make_pid(inst->lvki_env, &owner),
+	    inst->lvki_msgref);
 
 	pthread_rwlock_unlock(&inst->lvki_lock);
 
@@ -2113,7 +2134,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkbuf *buf, *nbuf;
 
 	assert(nrd == 1);
-	fprintf(stderr, "inst %p teardown cb\r\n", inst);
+	log_debug("inst %p teardown cb", inst);
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
 	pthread_rwlock_wrlock(&inst->lvki_lock);
@@ -2190,7 +2211,7 @@ lvkinst_teardown(struct lvkinst *inst)
 		inst->lvki_fbhdl->lvkh_inst = NULL;
 		inst->lvki_fbhdl = NULL;
 	}
-	fprintf(stderr, "moving inst %p into drain\r\n", inst);
+	log_debug("moving inst %p into drain", inst);
 	/*
 	 * submit delete commands for all the input groups, since these don't
 	 * get deleted automatically in teardown, but they have a pointer to

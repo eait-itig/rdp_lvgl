@@ -95,6 +95,9 @@ setup_instance(_Size) -> error(no_nif).
 -type event_msg() ::
     {msgref(), event, lv_event:type(), Target :: lv:object(), CurTarget :: lv:object()}.
 
+-spec take_log_ownership() -> ok.
+take_log_ownership() -> error(no_nif).
+
 -spec setup_event(object(), lv_event:type()) -> {async, event(), msgref()} | lv:error().
 setup_event(_Obj, _Type) -> error(no_nif).
 

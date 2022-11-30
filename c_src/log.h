@@ -1,3 +1,4 @@
+/*
 %%
 %% RDP UI framework using LVGL
 %%
@@ -22,39 +23,34 @@
 %% THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
 
-%% @private
--module(rdp_lvgl_sup).
+#if !defined(_LOG_H)
+#define _LOG_H
 
--behaviour(supervisor).
+#include <unistd.h>
+#include <pthread.h>
 
--export([start_link/0]).
+#include "erl_nif.h"
 
--export([init/1]).
+void log_setup(void);
+void log_take_ownership(ErlNifPid owner);
+void log_post_fork(const char *role, pid_t newpid);
 
--define(SERVER, ?MODULE).
+enum log_level {
+	LOG_DEBUG,
+	LOG_WARN,
+	LOG_ERROR
+};
 
-start_link() ->
-    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
+void _log_write(enum log_level lvl, const char *func, const char *file,
+    uint line, const char *fmt, ...);
 
-%% sup_flags() = #{strategy => strategy(),         % optional
-%%                 intensity => non_neg_integer(), % optional
-%%                 period => pos_integer()}        % optional
-%% child_spec() = #{id => child_id(),       % mandatory
-%%                  start => mfargs(),      % mandatory
-%%                  restart => restart(),   % optional
-%%                  shutdown => shutdown(), % optional
-%%                  type => worker(),       % optional
-%%                  modules => modules()}   % optional
-init([]) ->
-    SupFlags = #{strategy => one_for_one,
-        intensity => 2,
-        period => 1},
-    ChildSpecs = [
-        #{id => rdp_lvgl_logger,
-          start => {rdp_lvgl_logger, start_link, []},
-          type => worker}
-    ],
-    {ok, {SupFlags, ChildSpecs}}.
+#define log_debug(fmt...)	\
+	_log_write(LOG_DEBUG, __func__, __FILE_NAME__, __LINE__, fmt)
+#define log_warn(fmt...)	\
+	_log_write(LOG_WARN,  __func__, __FILE_NAME__, __LINE__, fmt)
+#define log_error(fmt...) 	\
+	_log_write(LOG_ERROR, __func__, __FILE_NAME__, __LINE__, fmt)
 
-%% internal functions
+#endif /* !_LOG_H */
