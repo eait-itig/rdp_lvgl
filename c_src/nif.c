@@ -62,11 +62,103 @@ enif_make_badargc(ErlNifEnv *env, int argc)
 	    enif_make_int(env, argc))));
 }
 
+static void
+gen_enum(ErlNifEnv *env, const struct enum_spec *specs, bool multi,
+    int flags, ERL_NIF_TERM *pterm)
+{
+	ERL_NIF_TERM list, flag;
+	const struct enum_spec *es;
+	if (!multi) {
+		for (es = specs; es->es_str != NULL; ++es) {
+			if (es->es_val == flags)
+				break;
+		}
+		if (es->es_str == NULL) {
+			*pterm = enif_make_int(env, flags);
+			return;
+		}
+		*pterm = enif_make_atom(env, es->es_str);
+		return;
+	}
+	list = enif_make_list(env, 0);
+	for (es = specs; es->es_str != NULL; ++es) {
+		if ((flags & es->es_val) == es->es_val) {
+			flag = enif_make_atom(env, es->es_str);
+			list = enif_make_list_cell(env, flag, list);
+		}
+	}
+	*pterm = list;
+}
+
+static int
+parse_enum(ErlNifEnv *env, ERL_NIF_TERM term, const struct enum_spec *specs,
+    bool multi, int *pflags)
+{
+	ERL_NIF_TERM flag;
+	int flags = 0;
+	char atom[32];
+	const struct enum_spec *es;
+	if (enif_is_atom(env, term)) {
+		if (!enif_get_atom(env, term, atom, sizeof (atom),
+		    ERL_NIF_LATIN1)) {
+			enif_raise_exception(env, enif_make_tuple2(env,
+			    enif_make_atom(env, "bad_enum_value_atom"),
+			    flag));
+			return (EINVAL);
+		}
+		for (es = specs; es->es_str != NULL; ++es) {
+			if (strcmp(es->es_str, atom) == 0) {
+				flags = es->es_val;
+				break;
+			}
+		}
+		if (es->es_str == NULL) {
+			enif_raise_exception(env, enif_make_tuple2(env,
+			    enif_make_atom(env, "unknown_enum_value"),
+			    term));
+			return (EINVAL);
+		}
+		*pflags = flags;
+		return (0);
+	}
+	if (!multi) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "unknown_single_enum_value"),
+		    term));
+		return (EINVAL);
+	}
+	while (enif_get_list_cell(env, term, &flag, &term)) {
+		if (!enif_get_atom(env, flag, atom, sizeof (atom),
+		    ERL_NIF_LATIN1)) {
+			enif_raise_exception(env, enif_make_tuple2(env,
+			    enif_make_atom(env, "bad_enum_value_atom"),
+			    flag));
+			return (EINVAL);
+		}
+		for (es = specs; es->es_str != NULL; ++es) {
+			if (strcmp(es->es_str, atom) == 0) {
+				flags |= es->es_val;
+				break;
+			}
+		}
+		if (es->es_str == NULL) {
+			enif_raise_exception(env, enif_make_tuple2(env,
+			    enif_make_atom(env, "unknown_enum_value"),
+			    flag));
+			return (EINVAL);
+		}
+	}
+	*pflags = flags;
+	return (0);
+}
+
 struct nif_call_data {
 	ErlNifEnv		*ncd_env;
 	ERL_NIF_TERM		 ncd_msgref;
 	ErlNifPid		 ncd_owner;
 	void			*ncd_priv;
+	const struct enum_spec	*ncd_enum;
+	bool			 ncd_multi;
 };
 
 static void
@@ -138,14 +230,30 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		break;
 	case ARG_UINT32:
 		u32 = rv;
-		rterm = enif_make_uint(env, *u32);
+		if (ncd->ncd_enum != NULL) {
+			gen_enum(env, ncd->ncd_enum, ncd->ncd_multi, *u32,
+			    &rterm);
+		} else {
+			rterm = enif_make_uint(env, *u32);
+		}
 		break;
 	case ARG_UINT16:
 		u16 = rv;
-		rterm = enif_make_uint(env, *u16);
+		if (ncd->ncd_enum != NULL) {
+			gen_enum(env, ncd->ncd_enum, ncd->ncd_multi, *u16,
+			    &rterm);
+		} else {
+			rterm = enif_make_uint(env, *u16);
+		}
 		break;
 	case ARG_UINT8:
 		u8 = rv;
+		if (ncd->ncd_enum != NULL) {
+			gen_enum(env, ncd->ncd_enum, ncd->ncd_multi, *u8,
+			    &rterm);
+		} else {
+			rterm = enif_make_uint(env, *u8);
+		}
 		rterm = enif_make_uint(env, *u8);
 		break;
 	case ARG_POINT:
@@ -1535,6 +1643,150 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_obj_add_state(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	int flags;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = parse_enum(env, argv[1], obj_state_specs, true, &flags);
+	if (rc != 0)
+		return (make_errno(env, rc));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_obj_add_state,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT32, flags,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_obj_clear_state(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	int flags;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = parse_enum(env, argv[1], obj_state_specs, true, &flags);
+	if (rc != 0)
+		return (make_errno(env, rc));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_obj_clear_state,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT32, flags,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_obj_get_state(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	lv_state_t flags;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	ncd->ncd_enum = obj_state_specs;
+	ncd->ncd_multi = true;
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_UINT16, lv_obj_get_state,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_obj_add_style(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct lvkobj *obj;
@@ -1543,9 +1795,17 @@ rlvgl_obj_add_style(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	struct nif_call_data *ncd = NULL;
 	ERL_NIF_TERM msgref, rv;
 	int rc;
+	int style_sel = 0;
 
-	if (argc != 2)
+	if (argc != 2 && argc != 3)
 		return (enif_make_badarg(env));
+
+	if (argc == 3) {
+		rc = parse_enum(env, argv[2], style_selector_specs, true,
+		    &style_sel);
+		if (rc != 0)
+			return (make_errno(env, rc));
+	}
 
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
@@ -1583,7 +1843,7 @@ rlvgl_obj_add_style(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_obj_add_style,
 	    ARG_OBJPTR, obj,
 	    ARG_STYPTR, sty,
-	    ARG_UINT32, 0,
+	    ARG_UINT32, style_sel,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1948,68 +2208,6 @@ out:
 	leave_hdl(hdl);
 	free_ncd(ncd);
 	return (rv);
-}
-
-static int
-parse_enum(ErlNifEnv *env, ERL_NIF_TERM term, const struct enum_spec *specs,
-    bool multi, int *pflags)
-{
-	ERL_NIF_TERM flag;
-	int flags = 0;
-	char atom[32];
-	const struct enum_spec *es;
-	if (enif_is_atom(env, term)) {
-		if (!enif_get_atom(env, term, atom, sizeof (atom),
-		    ERL_NIF_LATIN1)) {
-			enif_raise_exception(env, enif_make_tuple2(env,
-			    enif_make_atom(env, "bad_enum_value_atom"),
-			    flag));
-			return (EINVAL);
-		}
-		for (es = specs; es->es_str != NULL; ++es) {
-			if (strcmp(es->es_str, atom) == 0) {
-				flags = es->es_val;
-				break;
-			}
-		}
-		if (es->es_str == NULL) {
-			enif_raise_exception(env, enif_make_tuple2(env,
-			    enif_make_atom(env, "unknown_enum_value"),
-			    term));
-			return (EINVAL);
-		}
-		*pflags = flags;
-		return (0);
-	}
-	if (!multi) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "unknown_single_enum_value"),
-		    term));
-		return (EINVAL);
-	}
-	while (enif_get_list_cell(env, term, &flag, &term)) {
-		if (!enif_get_atom(env, flag, atom, sizeof (atom),
-		    ERL_NIF_LATIN1)) {
-			enif_raise_exception(env, enif_make_tuple2(env,
-			    enif_make_atom(env, "bad_enum_value_atom"),
-			    flag));
-			return (EINVAL);
-		}
-		for (es = specs; es->es_str != NULL; ++es) {
-			if (strcmp(es->es_str, atom) == 0) {
-				flags |= es->es_val;
-				break;
-			}
-		}
-		if (es->es_str == NULL) {
-			enif_raise_exception(env, enif_make_tuple2(env,
-			    enif_make_atom(env, "unknown_enum_value"),
-			    flag));
-			return (EINVAL);
-		}
-	}
-	*pflags = flags;
-	return (0);
 }
 
 static ERL_NIF_TERM
@@ -3613,15 +3811,19 @@ static ErlNifFunc nif_funcs[] = {
 	{ "label_create",		1, rlvgl_label_create },
 	{ "label_set_text",		2, rlvgl_label_set_text },
 	{ "obj_add_flags",		2, rlvgl_obj_add_flags },
+	{ "obj_add_state",		2, rlvgl_obj_add_state },
 	{ "obj_add_style",		2, rlvgl_obj_add_style },
+	{ "obj_add_style",		3, rlvgl_obj_add_style },
 	{ "obj_align", 			2, rlvgl_obj_align },
 	{ "obj_align", 			3, rlvgl_obj_align },
 	{ "obj_align_to", 		3, rlvgl_obj_align_to },
 	{ "obj_align_to", 		4, rlvgl_obj_align_to },
 	{ "obj_center", 		1, rlvgl_obj_center },
+	{ "obj_clear_state",		2, rlvgl_obj_clear_state },
 	{ "obj_create", 		2, rlvgl_obj_create },
 	{ "obj_get_pos",		1, rlvgl_obj_get_pos },
 	{ "obj_get_size",		1, rlvgl_obj_get_size },
+	{ "obj_get_state",		1, rlvgl_obj_get_state },
 	{ "obj_set_size",		2, rlvgl_obj_set_size },
 	{ "scr_load", 			2, rlvgl_scr_load },
 	{ "scr_load_anim",		6, rlvgl_scr_load_anim },
@@ -3633,12 +3835,12 @@ static ErlNifFunc nif_funcs[] = {
 	{ "style_set_prop",		3, rlvgl_style_set_prop },
 	{ "textarea_create",		1, rlvgl_textarea_create },
 	{ "textarea_get_text",		1, rlvgl_textarea_get_text },
+	{ "textarea_set_accepted_chars", 2, rlvgl_textarea_set_accepted_chars },
 	{ "textarea_set_one_line",	2, rlvgl_textarea_set_one_line },
 	{ "textarea_set_password_mode",	2, rlvgl_textarea_set_password_mode },
 	{ "textarea_set_placeholder_text", 2, rlvgl_textarea_set_placeholder },
 	{ "textarea_set_text",		2, rlvgl_textarea_set_text },
 	{ "textarea_set_text_selection",	2, rlvgl_textarea_set_text_selection },
-	{ "textarea_set_accepted_chars", 2, rlvgl_textarea_set_accepted_chars },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

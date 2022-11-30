@@ -321,3 +321,15 @@ group_focus_obj(_Obj) -> error(no_nif).
 
 -spec group_focus_freeze(group(), boolean()) -> async_return().
 group_focus_freeze(_Group, _State) -> error(no_nif).
+
+-spec obj_add_state(object(), lv_obj:state() | [lv_obj:state()]) -> async_return().
+obj_add_state(_Obj, _State) -> error(no_nif).
+
+-spec obj_clear_state(object(), lv_obj:state() | [lv_obj:state()]) -> async_return().
+obj_clear_state(_Obj, _State) -> error(no_nif).
+
+-spec obj_get_state(object()) -> async_return([lv_obj:state()]).
+obj_get_state(_Obj) -> error(no_nif).
+
+-spec obj_add_style(object(), style(), lv_obj:selector()) -> async_return().
+obj_add_style(_Obj, _Sty, _Selector) -> error(no_nif).

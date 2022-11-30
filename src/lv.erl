@@ -32,8 +32,10 @@
 -export_type([
     object/0, instance/0, event/0, style/0, error/0, rect/0, point/0, size/0,
     color/0, buffer/0,
-    btn/0, label/0, scr/0, img/0, spinner/0, textarea/0,
-    flags/1, font/0
+    btn/0, label/0, scr/0, img/0, spinner/0, textarea/0, tabview/0, btnmatrix/0,
+    checkbox/0, dropdown/0, imgbtn/0, led/0, listview/0, menu/0, msgbox/0,
+    roller/0, slider/0, switch/0, table/0,
+    flags/1, font/0, group/0
 	]).
 
 -opaque object() :: rdp_lvgl_nif:object().
@@ -59,6 +61,18 @@
 -type spinner() :: object().
 -type textarea() :: object().
 -type tabview() :: object().
+-type btnmatrix() :: object().
+-type checkbox() :: object().
+-type dropdown() :: object().
+-type imgbtn() :: object().
+-type led() :: object().
+-type listview() :: object().
+-type menu() :: object().
+-type msgbox() :: object().
+-type roller() :: object().
+-type slider() :: object().
+-type switch() :: object().
+-type table() :: object().
 
 -type flags(T) :: T | [T].
 

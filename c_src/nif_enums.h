@@ -168,6 +168,61 @@ const static struct enum_spec anim_enable_specs[] = {
 	{ "on",			LV_ANIM_ON },
 	{ NULL, 0 }
 };
+const static struct enum_spec obj_state_specs[] = {
+	{ "default",		LV_STATE_DEFAULT },
+	{ "checked",		LV_STATE_CHECKED },
+	{ "focused",		LV_STATE_FOCUSED },
+	{ "focus_key",		LV_STATE_FOCUS_KEY },
+	{ "edited",		LV_STATE_EDITED },
+	{ "hovered",		LV_STATE_HOVERED },
+	{ "pressed",		LV_STATE_PRESSED },
+	{ "scrolled",		LV_STATE_SCROLLED },
+	{ "disabled",		LV_STATE_DISABLED },
+	{ "user_1",		LV_STATE_USER_1 },
+	{ "user_2",		LV_STATE_USER_2 },
+	{ "user_3",		LV_STATE_USER_3 },
+	{ "user_4",		LV_STATE_USER_4 },
+	{ "any",		LV_STATE_ANY },
+	{ NULL, 0 }
+};
+const static struct enum_spec obj_part_specs[] = {
+	{ "main",		LV_PART_MAIN },
+	{ "scrollbar",		LV_PART_SCROLLBAR },
+	{ "indicator",		LV_PART_INDICATOR },
+	{ "knob",		LV_PART_KNOB },
+	{ "selected",		LV_PART_SELECTED },
+	{ "items",		LV_PART_ITEMS },
+	{ "ticks",		LV_PART_TICKS },
+	{ "cursor",		LV_PART_CURSOR },
+	{ "any",		LV_PART_ANY },
+	{ NULL, 0 }
+};
+const static struct enum_spec style_selector_specs[] = {
+	{ "default",		LV_STATE_DEFAULT },
+	{ "checked",		LV_STATE_CHECKED },
+	{ "focused",		LV_STATE_FOCUSED },
+	{ "focus_key",		LV_STATE_FOCUS_KEY },
+	{ "edited",		LV_STATE_EDITED },
+	{ "hovered",		LV_STATE_HOVERED },
+	{ "pressed",		LV_STATE_PRESSED },
+	{ "scrolled",		LV_STATE_SCROLLED },
+	{ "disabled",		LV_STATE_DISABLED },
+	{ "user_1",		LV_STATE_USER_1 },
+	{ "user_2",		LV_STATE_USER_2 },
+	{ "user_3",		LV_STATE_USER_3 },
+	{ "user_4",		LV_STATE_USER_4 },
+	{ "main",		LV_PART_MAIN },
+	{ "scrollbar",		LV_PART_SCROLLBAR },
+	{ "indicator",		LV_PART_INDICATOR },
+	{ "knob",		LV_PART_KNOB },
+	{ "selected",		LV_PART_SELECTED },
+	{ "items",		LV_PART_ITEMS },
+	{ "ticks",		LV_PART_TICKS },
+	{ "cursor",		LV_PART_CURSOR },
+	{ "any_part",		LV_PART_ANY },
+	{ "any_state",		LV_STATE_ANY },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

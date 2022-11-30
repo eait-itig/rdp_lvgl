@@ -31,7 +31,8 @@
 -include("async_wrappers.hrl").
 
 -export_type([
-    flag/0, align_spec/0, dir_spec/0, size_spec/0
+    flag/0, align_spec/0, dir_spec/0, size_spec/0, state/0, part/0,
+    selector/0
     ]).
 
 -type flag() :: hidden | clickable | click_focusable | checkable |
@@ -39,6 +40,14 @@
     scroll_chain_hor | scroll_chain_ver | scroll_on_focus | scroll_with_arrow |
     snappable | press_lock | event_bubble | gesture_bubble | adv_hittest |
     ignore_layout | floating | overflow_visible | flex_in_new_track.
+
+-type state() :: checked | focused | focus_key | edited | hovered | pressed |
+    scrolled | disabled | user_1 | user_2 | user_3 | user_4.
+
+-type part() :: main | scrollbar | indicator | knob | selected | items |
+    ticks | cursor.
+
+-type selector() :: [state() | part() | any_state | any_part].
 
 -type align_spec() :: out_top_left | out_top_mid | out_top_right |
     out_right_top | out_right_mid | out_right_bottom | out_bottom_right |
@@ -55,6 +64,27 @@ add_flags(Obj, Flags) ->
 -spec clear_flags(lv:object(), [flag()]) -> ok | lv:error().
 clear_flags(Obj, Flags) ->
     ?async_void_wrapper(obj_clear_flags, Obj, Flags).
+
+-spec add_state(lv:object(), state() | [state()]) -> ok | lv:error().
+add_state(Obj, State) ->
+    ?async_void_wrapper(obj_add_state, Obj, State).
+
+-spec clear_state(lv:object(), state() | [state()]) -> ok | lv:error().
+clear_state(Obj, State) ->
+    ?async_void_wrapper(obj_clear_state, Obj, State).
+
+-spec get_state(lv:object()) -> {ok, [state()]} | lv:error().
+get_state(Obj) ->
+    ?async_wrapper(obj_get_state, Obj).
+
+-spec has_state(lv:object(), state()) -> {ok, boolean()} | lv:error().
+has_state(Obj, State) ->
+    case get_state(Obj) of
+        {ok, States} ->
+            {ok, lists:member(State, States)};
+        Err ->
+            Err
+    end.
 
 -spec center(lv:object()) -> ok | lv:error().
 center(Obj) ->
@@ -91,6 +121,10 @@ set_size(Obj, Size) ->
 -spec add_style(lv:object(), lv:style()) -> ok | lv:error().
 add_style(Obj, Style) ->
     ?async_void_wrapper(obj_add_style, Obj, Style).
+
+-spec add_style(lv:object(), lv:style(), selector()) -> ok | lv:error().
+add_style(Obj, Style, Selector) ->
+    ?async_void_wrapper(obj_add_style, Obj, Style, Selector).
 
 -spec get_size(lv:object()) -> {ok, lv:size()} | lv:error().
 get_size(Obj) ->
