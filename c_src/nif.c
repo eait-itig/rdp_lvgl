@@ -289,6 +289,17 @@ out:
 	free(ncd);
 }
 
+enum nif_arg_type {
+	NIF_ARG_NONE = 0,
+
+};
+
+struct binding_nif_info {
+	void			*bni_func;
+	enum nif_arg_type	 bni_arg_types[8];
+	const struct enum_spec	*bni_enums[8];
+};
+
 static ERL_NIF_TERM
 rlvgl_take_log_ownership(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
@@ -856,10 +867,20 @@ GENERATE_WIDGET_CREATE(checkbox)
 GENERATE_WIDGET_CREATE(textarea)
 GENERATE_WIDGET_CREATE(img)
 GENERATE_WIDGET_CREATE(label)
+GENERATE_WIDGET_CREATE(btnmatrix)
+GENERATE_WIDGET_CREATE(dropdown)
+GENERATE_WIDGET_CREATE(imgbtn)
+GENERATE_WIDGET_CREATE(led)
+GENERATE_WIDGET_CREATE(list)
+GENERATE_WIDGET_CREATE(menu)
+GENERATE_WIDGET_CREATE(roller)
+GENERATE_WIDGET_CREATE(slider)
+GENERATE_WIDGET_CREATE(switch)
+GENERATE_WIDGET_CREATE(table)
 
-#define GENERATE_WIDGET_SET_TEXT_EXTRA(widget, extra) \
+#define GENERATE_WIDGET_SET_TEXT_EXTRA(widget, suffix) \
 static ERL_NIF_TERM \
-rlvgl_ ## widget ## _set ## extra ## text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) \
+rlvgl_ ## widget ## _set ## suffix (ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]) \
 { \
 	struct lvkobj *obj; \
 	struct lvkhdl *hdl = NULL; \
@@ -892,7 +913,7 @@ rlvgl_ ## widget ## _set ## extra ## text(ErlNifEnv *env, int argc, const ERL_NI
 	} \
 \
 	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd, \
-	    ARG_NONE, lv_ ## widget ## _set ## extra ## text, \
+	    ARG_NONE, lv_ ## widget ## _set ## suffix, \
 	    ARG_OBJPTR, obj, \
 	    ARG_INLINE_BUF, bin.data, bin.size, \
 	    ARG_NONE); \
@@ -911,12 +932,166 @@ out: \
 	return (rv); \
 }
 #define GENERATE_WIDGET_SET_TEXT(widget) \
-	GENERATE_WIDGET_SET_TEXT_EXTRA(widget, _)
+	GENERATE_WIDGET_SET_TEXT_EXTRA(widget, _text)
 
 GENERATE_WIDGET_SET_TEXT(label)
 GENERATE_WIDGET_SET_TEXT(textarea)
 GENERATE_WIDGET_SET_TEXT(checkbox)
-GENERATE_WIDGET_SET_TEXT_EXTRA(textarea, _placeholder_)
+GENERATE_WIDGET_SET_TEXT_EXTRA(textarea, _placeholder_text)
+GENERATE_WIDGET_SET_TEXT_EXTRA(dropdown, _options)
+
+static ERL_NIF_TERM
+rlvgl_dropdown_add_option(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	ErlNifBinary bin;
+	int index;
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
+		return (enif_make_badarg(env));
+	if (!enif_get_int(env, argv[2], &index))
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_dropdown_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_dropdown_add_option,
+	    ARG_OBJPTR, obj,
+	    ARG_INLINE_BUF, bin.data, bin.size,
+	    ARG_UINT32, index,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_dropdown_get_selected(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_dropdown_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_UINT32, lv_dropdown_get_selected,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_dropdown_get_selected_str(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkobj *obj;
+	struct lvkhdl *hdl = NULL;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_obj_hdl(env, argv[0], &hdl, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_dropdown_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
+	    ARG_INLINE_STR, lv_dropdown_get_selected_str,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;	/* rlvgl_call_cb owns it now */
+	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
+
+out:
+	leave_hdl(hdl);
+	free_ncd(ncd);
+	return (rv);
+}
 
 static ERL_NIF_TERM
 rlvgl_group_create(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
@@ -3583,18 +3758,24 @@ static ErlNifFunc nif_funcs[] = {
 	//{ "obj_has_any_flags",		2, rlvgl_obj_has_any_flags },
 	//{ "style_set_layout",		2, rlvgl_style_set_layout },
 	{ "btn_create",			1, rlvgl_btn_create },
+	{ "btnmatrix_create",		1, rlvgl_btnmatrix_create },
 	{ "checkbox_create",		1, rlvgl_checkbox_create },
-	{ "checkbox_set_text",		2, rlvgl_checkbox_set_text },
 	{ "checkbox_get_text",		1, rlvgl_checkbox_get_text },
+	{ "checkbox_set_text",		2, rlvgl_checkbox_set_text },
 	{ "disp_get_layer_sys", 	1, rlvgl_disp_get_layer_sys },
 	{ "disp_set_bg_color", 		2, rlvgl_disp_set_bg_color },
+	{ "dropdown_create",		1, rlvgl_dropdown_create },
 	{ "group_add_obj",		2, rlvgl_group_add_obj },
 	{ "group_create",		1, rlvgl_group_create },
 	{ "img_create", 		1, rlvgl_img_create },
 	{ "img_set_offset", 		2, rlvgl_img_set_offset },
 	{ "img_set_src", 		2, rlvgl_img_set_src },
+	{ "imgbtn_create",		1, rlvgl_imgbtn_create },
 	{ "label_create",		1, rlvgl_label_create },
 	{ "label_set_text",		2, rlvgl_label_set_text },
+	{ "led_create",			1, rlvgl_led_create },
+	{ "list_create",		1, rlvgl_list_create },
+	{ "menu_create",		1, rlvgl_menu_create },
 	{ "obj_add_flags",		2, rlvgl_obj_add_flags },
 	{ "obj_add_state",		2, rlvgl_obj_add_state },
 	{ "obj_add_style",		2, rlvgl_obj_add_style },
@@ -3610,14 +3791,18 @@ static ErlNifFunc nif_funcs[] = {
 	{ "obj_get_size",		1, rlvgl_obj_get_size },
 	{ "obj_get_state",		1, rlvgl_obj_get_state },
 	{ "obj_set_size",		2, rlvgl_obj_set_size },
+	{ "roller_create",		1, rlvgl_roller_create },
 	{ "scr_load", 			2, rlvgl_scr_load },
 	{ "scr_load_anim",		6, rlvgl_scr_load_anim },
 	{ "set_mouse_cursor", 		2, rlvgl_set_mouse_cursor },
+	{ "slider_create",		1, rlvgl_slider_create },
 	{ "spinner_create", 		3, rlvgl_spinner_create },
 	{ "style_create",		1, rlvgl_style_create },
 	{ "style_set_flex_align",	4, rlvgl_style_set_flex_align },
 	{ "style_set_flex_flow",	2, rlvgl_style_set_flex_flow },
 	{ "style_set_prop",		3, rlvgl_style_set_prop },
+	{ "switch_create",		1, rlvgl_switch_create },
+	{ "table_create",		1, rlvgl_table_create },
 	{ "textarea_create",		1, rlvgl_textarea_create },
 	{ "textarea_get_text",		1, rlvgl_textarea_get_text },
 	{ "textarea_set_accepted_chars", 2, rlvgl_textarea_set_accepted_chars },

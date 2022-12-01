@@ -30,6 +30,38 @@
 
 -include("async_wrappers.hrl").
 
+-export_type([
+    ctrl/0
+    ]).
+
 -spec create(lv:object()) -> {ok, lv:btnmatrix()} | lv:error().
 create(Parent) ->
     ?async_wrapper(btnmatrix_create, Parent).
+
+-spec set_map(lv:btnmatrix(), [string()]) -> ok | lv:error().
+set_map(Widget, Map) ->
+    ?async_void_wrapper(btnmatrix_set_map, Widget, Map).
+
+-type ctrl() :: hidden | no_repeat | disabled | checkable | checked |
+    click_trig | popover | recolor.
+-type index() :: integer().
+
+-spec set_ctrl_map(lv:btnmatrix(), [ctrl()]) -> ok | lv:error().
+set_ctrl_map(Widget, Map) ->
+    ?async_void_wrapper(btnmatrix_set_ctrl_map, Widget, Map).
+
+-spec set_btn_ctrl(lv:btnmatrix(), index(), ctrl()) -> ok | lv:error().
+set_btn_ctrl(Widget, Index, Ctrl) ->
+    ?async_void_wrapper(btnmatrix_set_btn_ctrl, Widget, Index, Ctrl).
+
+-spec clear_btn_ctrl(lv:btnmatrix(), index(), ctrl()) -> ok | lv:error().
+clear_btn_ctrl(Widget, Index, Ctrl) ->
+    ?async_void_wrapper(btnmatrix_clear_btn_ctrl, Widget, Index, Ctrl).
+
+-spec set_selected_btn(lv:btnmatrix(), index()) -> ok | lv:error().
+set_selected_btn(Widget, Index) ->
+    ?async_void_wrapper(btnmatrix_set_selected_btn, Widget, Index).
+
+-spec get_selected_btn(lv:btnmatrix()) -> {ok, index()} | lv:error().
+get_selected_btn(Widget) ->
+    ?async_wrapper(btnmatrix_get_selected_btn, Widget).

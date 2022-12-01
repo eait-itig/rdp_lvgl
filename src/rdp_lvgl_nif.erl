@@ -342,3 +342,51 @@ checkbox_set_text(_Obj, _Str) -> error(no_nif).
 
 -spec checkbox_get_text(object()) -> async_return(string()).
 checkbox_get_text(_Obj) -> error(no_nif).
+
+-spec btnmatrix_create(object()) -> async_return(object()).
+btnmatrix_create(_Parent) -> error(no_nif).
+
+-spec dropdown_create(object()) -> async_return(object()).
+dropdown_create(_Parent) -> error(no_nif).
+
+-spec dropdown_set_options(object(), iolist()) -> async_return().
+dropdown_set_options(_Obj, _Opts) -> error(no_nif).
+
+-spec dropdown_add_option(object(), string(), integer()) -> async_return().
+dropdown_add_option(_Obj, _Str, _Index) -> error(no_nif).
+
+-spec dropdown_get_selected(object()) -> async_return(integer()).
+dropdown_get_selected(_Obj) -> error(no_nif).
+
+-spec dropdown_get_selected_str(object()) -> async_return(string()).
+dropdown_get_selected_str(_Obj) -> error(no_nif).
+
+-spec dropdown_set_selected(object(), integer()) -> async_return().
+dropdown_set_selected(_Obj, _Index) -> error(no_nif).
+
+-spec dropdown_clear_options(object()) -> async_return().
+dropdown_clear_options(_Obj) -> error(no_nif).
+
+-spec imgbtn_create(object()) -> async_return(object()).
+imgbtn_create(_Parent) -> error(no_nif).
+
+-spec led_create(object()) -> async_return(object()).
+led_create(_Parent) -> error(no_nif).
+
+-spec list_create(object()) -> async_return(object()).
+list_create(_Parent) -> error(no_nif).
+
+-spec menu_create(object()) -> async_return(object()).
+menu_create(_Parent) -> error(no_nif).
+
+-spec roller_create(object()) -> async_return(object()).
+roller_create(_Parent) -> error(no_nif).
+
+-spec slider_create(object()) -> async_return(object()).
+slider_create(_Parent) -> error(no_nif).
+
+-spec switch_create(object()) -> async_return(object()).
+switch_create(_Parent) -> error(no_nif).
+
+-spec table_create(object()) -> async_return(object()).
+table_create(_Parent) -> error(no_nif).
