@@ -156,10 +156,6 @@ obj_align(_Obj, _AlignSpec) -> error(no_nif).
     async_return().
 obj_align_to(_Obj, _RefObj, _AlignSpec, _Offset) -> error(no_nif).
 
--spec obj_align_to(object(), object(), lv_obj:align_spec()) ->
-    async_return().
-obj_align_to(_Obj, _RefObj, _AlignSpec) -> error(no_nif).
-
 -spec scr_load(instance(), object()) -> async_return().
 scr_load(_Inst, _Screen) -> error(no_nif).
 
@@ -216,14 +212,11 @@ style_set_flex_align(_Style, _Main, _Cross, _Tracks) -> error(no_nif).
 -spec style_set_layout(style(), lv_style:layout()) -> async_return().
 style_set_layout(_Style, _Layout) -> error(no_nif).
 
--spec obj_add_style(object(), style()) -> async_return().
-obj_add_style(_Obj, _Style) -> error(no_nif).
+-spec obj_add_flag(object(), [lv_obj:flag()]) -> async_return().
+obj_add_flag(_Obj, _Flags) -> error(no_nif).
 
--spec obj_add_flags(object(), [lv_obj:flag()]) -> async_return().
-obj_add_flags(_Obj, _Flags) -> error(no_nif).
-
--spec obj_clear_flags(object(), [lv_obj:flag()]) -> async_return().
-obj_clear_flags(_Obj, _Flags) -> error(no_nif).
+-spec obj_clear_flag(object(), [lv_obj:flag()]) -> async_return().
+obj_clear_flag(_Obj, _Flags) -> error(no_nif).
 
 -spec obj_has_all_flags(object(), [lv_obj:flag()]) -> async_return(boolean()).
 obj_has_all_flags(_Obj, _Flags) -> error(no_nif).

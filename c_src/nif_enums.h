@@ -25,58 +25,6 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-struct scr_load_anim {
-	const char		*sla_str;
-	lv_scr_load_anim_t	 sla_val;
-};
-const static struct scr_load_anim scr_load_anims[] = {
-	{ "none",		LV_SCR_LOAD_ANIM_NONE },
-	{ "fade_in",		LV_SCR_LOAD_ANIM_FADE_IN },
-	{ "fade_out",		LV_SCR_LOAD_ANIM_FADE_OUT },
-	{ "over_left",		LV_SCR_LOAD_ANIM_OVER_LEFT },
-	{ "over_right",		LV_SCR_LOAD_ANIM_OVER_RIGHT },
-	{ "over_top",		LV_SCR_LOAD_ANIM_OVER_TOP },
-	{ "over_bottom",	LV_SCR_LOAD_ANIM_OVER_BOTTOM },
-	{ "move_left",		LV_SCR_LOAD_ANIM_MOVE_LEFT },
-	{ "move_right",		LV_SCR_LOAD_ANIM_MOVE_RIGHT },
-	{ "move_top",		LV_SCR_LOAD_ANIM_MOVE_TOP },
-	{ "move_bottom",	LV_SCR_LOAD_ANIM_MOVE_BOTTOM },
-	{ "out_left",		LV_SCR_LOAD_ANIM_OUT_LEFT },
-	{ "out_right",		LV_SCR_LOAD_ANIM_OUT_RIGHT },
-	{ "out_top",		LV_SCR_LOAD_ANIM_OUT_TOP },
-	{ "out_bottom",		LV_SCR_LOAD_ANIM_OUT_BOTTOM },
-	{ NULL, 0 }
-};
-
-struct obj_flag {
-	const char	*of_str;
-	lv_obj_flag_t	 of_val;
-};
-const static struct obj_flag obj_flags[] = {
-	{ "hidden",		LV_OBJ_FLAG_HIDDEN },
-	{ "clickable",		LV_OBJ_FLAG_CLICKABLE },
-	{ "click_focusable",	LV_OBJ_FLAG_CLICK_FOCUSABLE },
-	{ "checkable",		LV_OBJ_FLAG_CHECKABLE },
-	{ "flex_in_new_track",	LV_OBJ_FLAG_FLEX_IN_NEW_TRACK },
-	{ "scrollable",		LV_OBJ_FLAG_SCROLLABLE },
-	{ "scroll_elastic",	LV_OBJ_FLAG_SCROLL_ELASTIC },
-	{ "scroll_momentum",	LV_OBJ_FLAG_SCROLL_MOMENTUM },
-	{ "scroll_one",		LV_OBJ_FLAG_SCROLL_ONE },
-	{ "scroll_chain_hor",	LV_OBJ_FLAG_SCROLL_CHAIN_HOR },
-	{ "scroll_chain_ver",	LV_OBJ_FLAG_SCROLL_CHAIN_VER },
-	{ "scroll_on_focus",	LV_OBJ_FLAG_SCROLL_ON_FOCUS },
-	{ "scroll_with_arrow",	LV_OBJ_FLAG_SCROLL_WITH_ARROW },
-	{ "snappable",		LV_OBJ_FLAG_SNAPPABLE },
-	{ "press_lock",		LV_OBJ_FLAG_PRESS_LOCK },
-	{ "event_bubble",	LV_OBJ_FLAG_EVENT_BUBBLE },
-	{ "gesture_bubble",	LV_OBJ_FLAG_GESTURE_BUBBLE },
-	{ "adv_hittest",	LV_OBJ_FLAG_ADV_HITTEST },
-	{ "ignore_layout",	LV_OBJ_FLAG_IGNORE_LAYOUT },
-	{ "floating",		LV_OBJ_FLAG_FLOATING },
-	{ "overflow_visible",	LV_OBJ_FLAG_OVERFLOW_VISIBLE },
-	{ NULL, 0 }
-};
-
 struct enum_spec {
 	const char 	*es_str;
 	uint32_t	 es_val;
@@ -221,6 +169,68 @@ const static struct enum_spec style_selector_specs[] = {
 	{ "cursor",		LV_PART_CURSOR },
 	{ "any_part",		LV_PART_ANY },
 	{ "any_state",		LV_STATE_ANY },
+	{ NULL, 0 }
+};
+const static struct enum_spec obj_flags[] = {
+	{ "hidden",		LV_OBJ_FLAG_HIDDEN },
+	{ "clickable",		LV_OBJ_FLAG_CLICKABLE },
+	{ "click_focusable",	LV_OBJ_FLAG_CLICK_FOCUSABLE },
+	{ "checkable",		LV_OBJ_FLAG_CHECKABLE },
+	{ "flex_in_new_track",	LV_OBJ_FLAG_FLEX_IN_NEW_TRACK },
+	{ "scrollable",		LV_OBJ_FLAG_SCROLLABLE },
+	{ "scroll_elastic",	LV_OBJ_FLAG_SCROLL_ELASTIC },
+	{ "scroll_momentum",	LV_OBJ_FLAG_SCROLL_MOMENTUM },
+	{ "scroll_one",		LV_OBJ_FLAG_SCROLL_ONE },
+	{ "scroll_chain_hor",	LV_OBJ_FLAG_SCROLL_CHAIN_HOR },
+	{ "scroll_chain_ver",	LV_OBJ_FLAG_SCROLL_CHAIN_VER },
+	{ "scroll_on_focus",	LV_OBJ_FLAG_SCROLL_ON_FOCUS },
+	{ "scroll_with_arrow",	LV_OBJ_FLAG_SCROLL_WITH_ARROW },
+	{ "snappable",		LV_OBJ_FLAG_SNAPPABLE },
+	{ "press_lock",		LV_OBJ_FLAG_PRESS_LOCK },
+	{ "event_bubble",	LV_OBJ_FLAG_EVENT_BUBBLE },
+	{ "gesture_bubble",	LV_OBJ_FLAG_GESTURE_BUBBLE },
+	{ "adv_hittest",	LV_OBJ_FLAG_ADV_HITTEST },
+	{ "ignore_layout",	LV_OBJ_FLAG_IGNORE_LAYOUT },
+	{ "floating",		LV_OBJ_FLAG_FLOATING },
+	{ "overflow_visible",	LV_OBJ_FLAG_OVERFLOW_VISIBLE },
+	{ NULL, 0 }
+};
+const static struct enum_spec flex_align[] = {
+	{ "start",		LV_FLEX_ALIGN_START },
+	{ "end",		LV_FLEX_ALIGN_END },
+	{ "center",		LV_FLEX_ALIGN_CENTER },
+	{ "space_evenly",	LV_FLEX_ALIGN_SPACE_EVENLY },
+	{ "space_around",	LV_FLEX_ALIGN_SPACE_AROUND },
+	{ "space_between",	LV_FLEX_ALIGN_SPACE_BETWEEN },
+	{ NULL, 0 }
+};
+const static struct enum_spec flex_flow[] = {
+	{ "row",		LV_FLEX_FLOW_ROW },
+	{ "column",		LV_FLEX_FLOW_COLUMN },
+	{ "row_wrap",		LV_FLEX_FLOW_ROW_WRAP },
+	{ "row_reverse",	LV_FLEX_FLOW_ROW_REVERSE },
+	{ "row_wrap_reverse",	LV_FLEX_FLOW_ROW_WRAP_REVERSE },
+	{ "column_wrap",	LV_FLEX_FLOW_COLUMN_WRAP },
+	{ "column_reverse",	LV_FLEX_FLOW_COLUMN_REVERSE },
+	{ "column_wrap_reverse", LV_FLEX_FLOW_COLUMN_WRAP_REVERSE },
+	{ NULL, 0 }
+};
+const static struct enum_spec scr_load_anims[] = {
+	{ "none",		LV_SCR_LOAD_ANIM_NONE },
+	{ "fade_in",		LV_SCR_LOAD_ANIM_FADE_IN },
+	{ "fade_out",		LV_SCR_LOAD_ANIM_FADE_OUT },
+	{ "over_left",		LV_SCR_LOAD_ANIM_OVER_LEFT },
+	{ "over_right",		LV_SCR_LOAD_ANIM_OVER_RIGHT },
+	{ "over_top",		LV_SCR_LOAD_ANIM_OVER_TOP },
+	{ "over_bottom",	LV_SCR_LOAD_ANIM_OVER_BOTTOM },
+	{ "move_left",		LV_SCR_LOAD_ANIM_MOVE_LEFT },
+	{ "move_right",		LV_SCR_LOAD_ANIM_MOVE_RIGHT },
+	{ "move_top",		LV_SCR_LOAD_ANIM_MOVE_TOP },
+	{ "move_bottom",	LV_SCR_LOAD_ANIM_MOVE_BOTTOM },
+	{ "out_left",		LV_SCR_LOAD_ANIM_OUT_LEFT },
+	{ "out_right",		LV_SCR_LOAD_ANIM_OUT_RIGHT },
+	{ "out_top",		LV_SCR_LOAD_ANIM_OUT_TOP },
+	{ "out_bottom",		LV_SCR_LOAD_ANIM_OUT_BOTTOM },
 	{ NULL, 0 }
 };
 

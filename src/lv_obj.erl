@@ -59,11 +59,11 @@
 
 -spec add_flags(lv:object(), [flag()]) -> ok | lv:error().
 add_flags(Obj, Flags) ->
-    ?async_void_wrapper(obj_add_flags, Obj, Flags).
+    ?async_void_wrapper(obj_add_flag, Obj, Flags).
 
 -spec clear_flags(lv:object(), [flag()]) -> ok | lv:error().
 clear_flags(Obj, Flags) ->
-    ?async_void_wrapper(obj_clear_flags, Obj, Flags).
+    ?async_void_wrapper(obj_clear_flag, Obj, Flags).
 
 -spec add_state(lv:object(), state() | [state()]) -> ok | lv:error().
 add_state(Obj, State) ->
@@ -108,7 +108,7 @@ align_to(Obj, RefObj, Spec, Offset) ->
 
 -spec align_to(lv:object(), lv:object(), align_spec()) -> ok | lv:error().
 align_to(Obj, RefObj, Spec) ->
-    ?async_void_wrapper(obj_align_to, Obj, RefObj, Spec).
+    ?async_void_wrapper(obj_align_to, Obj, RefObj, Spec, {0, 0}).
 
 -type px() :: integer().
 -type size_dim_spec() :: content | {percent, integer()} | px().
@@ -120,7 +120,7 @@ set_size(Obj, Size) ->
 
 -spec add_style(lv:object(), lv:style()) -> ok | lv:error().
 add_style(Obj, Style) ->
-    ?async_void_wrapper(obj_add_style, Obj, Style).
+    ?async_void_wrapper(obj_add_style, Obj, Style, []).
 
 -spec add_style(lv:object(), lv:style(), selector()) -> ok | lv:error().
 add_style(Obj, Style, Selector) ->
