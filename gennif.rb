@@ -265,6 +265,27 @@ class UInt8 < UIntBase
   def arg_type; 'ARG_UINT8'; end
 end
 
+class AnimEnable < Int32
+  def declare
+    @func.if_not_flag('atom_decl') do
+      write "char atom[32];"
+    end
+    write "int #{@name};"
+  end
+  def parse
+    write "if (!enif_get_atom(env, argv[#{@idx}], atom, sizeof (atom), ERL_NIF_LATIN1)) {"
+    write parse_error
+    write "}"
+    write "if (strcmp(atom, \"on\") == 0) {"
+    write "\t#{@name} = LV_ANIM_ON;"
+    write "} else if (strcmp(atom, \"off\") == 0) {"
+    write "\t#{@name} = LV_ANIM_OFF;"
+    write "} else {"
+    write parse_error
+    write "}"
+  end
+end
+
 class EnumBase < IntBase
   def parse
     write "if ((rc = parse_enum(env, argv[#{@idx}], #{enum}, #{multi}, &#{@name}))) {"
@@ -319,6 +340,10 @@ class ScrLoadAnim < Enum32
   def enum; 'scr_load_anims'; end
   def multi; false; end
 end
+class BarMode < Enum8
+  def enum; 'bar_mode'; end
+  def multi; false; end
+end
 
 class Func
   attr_reader :flags
@@ -341,6 +366,11 @@ class Func
 
   def self.print_all()
     @funcs.each { |f| f.print }
+  end
+
+  def self.print_all_nif_defs()
+    defs = @funcs.map { |f| f.get_nif_def }
+    puts defs.join(", \\\n")
   end
 
   def if_not_flag(flag, &blk)
@@ -370,43 +400,48 @@ class Func
     puts "rlvgl_#{@name}#{@args.size}(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])"
     puts "{"
     declare
-    puts "\t"
+    puts ""
     puts "\tbzero(&nls, sizeof (nls));"
-    puts "\t"
+    puts ""
     puts "\tif (argc != #{@args.size})"
     puts "\t\treturn (enif_make_badarg(env));"
-    puts "\t"
+    puts ""
     parse
-    puts "\t"
+    puts ""
     puts "\trc = make_ncd(env, &msgref, &ncd);"
     puts "\tif (rc != 0) {"
     puts "\t\trv = make_errno(env, rc);"
     puts "\t\tgoto out;"
     puts "\t}"
-    puts "\t"
+    puts ""
     precall
-    puts "\t"
+    puts ""
     puts "\trc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,"
     puts "\t    #{@rtype.arg_type}, #{@call},"
     @args.each { |a| a.call }
     puts "\t    ARG_NONE);"
-    puts "\t"
+    puts ""
     puts "\tif (rc != 0) {"
     puts "\t\trv = make_errno(env, rc);"
     puts "\t\tgoto out;"
     puts "\t}"
-    puts "\t"
+    puts ""
     puts "\tncd = NULL;"
     puts "\trv = enif_make_tuple2(env,"
     puts "\t    enif_make_atom(env, \"async\"),"
     puts "\t    msgref);"
-    puts "\t"
+    puts ""
     puts "out:"
     puts "\tleave_nif(&nls);"
     puts "\tfree_ncd(ncd);"
     puts "\treturn (rv);"
     puts "}"
     puts
+  end
+
+  def get_nif_def
+    tabs = "\t" * (5 - ((@name.size + 5) / 8))
+    "{ \"#{@name}\",#{tabs}#{@args.size}, rlvgl_#{@name}#{@args.size} }"
   end
 end
 
@@ -446,13 +481,20 @@ class WidgetFunc < Func
 
   def parse
     super
-    puts "\t"
+    puts ""
     puts "\tif (obj->lvko_class != &lv_#{@widget}_class) {"
     puts "\t\trv = make_errno(env, EINVAL);"
     puts "\t\tgoto out;"
     puts "\t}"
   end
 end
+
+WidgetCreateFunc.new('bar')
+WidgetFunc.new('bar', 'set_value', Void, Int32.new('value'), AnimEnable.new('anim'))
+WidgetFunc.new('bar', 'set_start_value', Void, Int32.new('value'), AnimEnable.new('anim'))
+WidgetFunc.new('bar', 'set_range', Void, Int32.new('min'), Int32.new('max'))
+WidgetFunc.new('bar', 'set_mode', Void, BarMode.new('mode'))
+WidgetFunc.new('bar', 'get_value', Int32)
 
 WidgetCreateFunc.new('btn')
 
@@ -548,3 +590,6 @@ Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void,
   LvObject.new('cursor'))
 
 Func.print_all
+
+puts "#define AUTOGEN_NIFS \\"
+Func.print_all_nif_defs

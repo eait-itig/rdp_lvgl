@@ -233,6 +233,12 @@ const static struct enum_spec scr_load_anims[] = {
 	{ "out_bottom",		LV_SCR_LOAD_ANIM_OUT_BOTTOM },
 	{ NULL, 0 }
 };
+const static struct enum_spec bar_mode[] = {
+	{ "normal",		LV_BAR_MODE_NORMAL },
+	{ "symmetrical",	LV_BAR_MODE_SYMMETRICAL },
+	{ "range",		LV_BAR_MODE_RANGE },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

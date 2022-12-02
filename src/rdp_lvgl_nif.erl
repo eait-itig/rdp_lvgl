@@ -383,3 +383,21 @@ switch_create(_Parent) -> error(no_nif).
 
 -spec table_create(object()) -> async_return(object()).
 table_create(_Parent) -> error(no_nif).
+
+-spec bar_create(object()) -> async_return(object()).
+bar_create(_Parent) -> error(no_nif).
+
+-spec bar_set_value(object(), integer(), lv_anim:enable()) -> async_return().
+bar_set_value(_Obj, _Val, _Anim) -> error(no_nif).
+
+-spec bar_set_start_value(object(), integer(), lv_anim:enable()) -> async_return().
+bar_set_start_value(_Obj, _Val, _Anim) -> error(no_nif).
+
+-spec bar_set_range(object(), integer(), integer()) -> async_return().
+bar_set_range(_Obj, _LowVal, _HighVal) -> error(no_nif).
+
+-spec bar_set_mode(object(), lv_bar:mode()) -> async_return().
+bar_set_mode(_Obj, _Mode) -> error(no_nif).
+
+-spec bar_get_value(object()) -> async_return(integer()).
+bar_get_value(_Obj) -> error(no_nif).

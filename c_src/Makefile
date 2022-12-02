@@ -76,10 +76,10 @@ V ?= 0
 
 # Verbosity.
 
-c_verbose_0 = @echo " C     " $(?F);
+c_verbose_0 = @echo " C     " $(<F);
 c_verbose = $(c_verbose_$(V))
 
-cpp_verbose_0 = @echo " CPP   " $(?F);
+cpp_verbose_0 = @echo " CPP   " $(<F);
 cpp_verbose = $(cpp_verbose_$(V))
 
 link_verbose_0 = @echo " LD    " $(@F);
@@ -95,7 +95,8 @@ $(C_SRC_OUTPUT): $(OBJECTS)
 	@mkdir -p $(BASEDIR)/priv/
 	$(link_verbose) $(CC) $(OBJECTS) $(LDFLAGS) $(LDLIBS) -o $(C_SRC_OUTPUT)
 
-%.o: %.c
+.SECONDEXPANSION:
+%.o: %.c $$(wildcard %.h) $$(wildcard %_*.h)
 	$(COMPILE_C) $(OUTPUT_OPTION) $<
 
 %.o: %.cc

@@ -647,17 +647,17 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	fb->fb_state = FBUF_FREE;
 	fb->fb_priv = NULL;
 
-	if (inst->lvi_kbd != NULL)
-		lv_indev_delete(inst->lvi_kbd);
-	if (inst->lvi_mouse != NULL)
-		lv_indev_delete(inst->lvi_mouse);
-
 	/* lv_disp_remove doesn't free this memory :( */
 	disp_drv->draw_ctx_deinit(disp_drv, disp_drv->draw_ctx);
 	lv_mem_free(disp_drv->draw_ctx);
 	disp_drv->draw_ctx = NULL;
 
 	lv_disp_remove(inst->lvi_disp);
+
+	if (inst->lvi_kbd != NULL)
+		lv_indev_delete(inst->lvi_kbd);
+	if (inst->lvi_mouse != NULL)
+		lv_indev_delete(inst->lvi_mouse);
 
 	free(inst);
 

@@ -34,7 +34,7 @@
     color/0, buffer/0,
     btn/0, label/0, scr/0, img/0, spinner/0, textarea/0, tabview/0, btnmatrix/0,
     checkbox/0, dropdown/0, imgbtn/0, led/0, listview/0, menu/0, msgbox/0,
-    roller/0, slider/0, switch/0, table/0,
+    roller/0, slider/0, switch/0, table/0, bar/0,
     flags/1, font/0, group/0
 	]).
 
@@ -73,6 +73,7 @@
 -type slider() :: object().
 -type switch() :: object().
 -type table() :: object().
+-type bar() :: object().
 
 -type flags(T) :: T | [T].
 
