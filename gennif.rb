@@ -363,6 +363,14 @@ class BarMode < Enum8
   def enum; 'bar_mode'; end
   def multi; false; end
 end
+class MenuModeRootBackBtn < Enum8
+  def enum; 'menu_mode_root_back_btn'; end
+  def multi; false; end
+end
+class MenuModeHeader < Enum8
+  def enum; 'menu_mode_header'; end
+  def multi; false; end
+end
 
 class Func
   attr_reader :flags
@@ -565,6 +573,16 @@ WidgetFunc.new('list', 'add_btn', LvObject, ImgSrc.new('icon'),
 WidgetFunc.new('list', 'get_btn_text', InlineStr, LvObject.new('btn'))
 
 WidgetCreateFunc.new('menu')
+WidgetFunc.new('menu', 'page_create', LvObject, InlineStr.new('title'))
+LvFunc.new('menu_cont_create', LvObject, LvObject.new('parent'))
+LvFunc.new('menu_section_create', LvObject, LvObject.new('parent'))
+LvFunc.new('menu_separator_create', LvObject, LvObject.new('parent'))
+WidgetFunc.new('menu', 'set_page', Void, LvObject.new('page'))
+LvFunc.new('menu_set_page_title', Void, LvObject.new('page'), InlineStr.new('title'))
+WidgetFunc.new('menu', 'set_sidebar_page', Void, LvObject.new('page'))
+WidgetFunc.new('menu', 'set_mode_root_back_btn', Void, MenuModeRootBackBtn.new('mode'))
+WidgetFunc.new('menu', 'set_mode_header', Void, MenuModeHeader.new('mode'))
+WidgetFunc.new('menu', 'set_load_page_event', Void, LvObject.new('btn'), LvObject.new('page'))
 
 WidgetCreateFunc.new('roller')
 

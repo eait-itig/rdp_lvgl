@@ -239,6 +239,17 @@ const static struct enum_spec bar_mode[] = {
 	{ "range",		LV_BAR_MODE_RANGE },
 	{ NULL, 0 }
 };
+const static struct enum_spec menu_mode_root_back_btn[] = {
+	{ "disabled",		LV_MENU_ROOT_BACK_BTN_DISABLED },
+	{ "enabled", 		LV_MENU_ROOT_BACK_BTN_ENABLED },
+	{ NULL, 0 }
+};
+const static struct enum_spec menu_mode_header[] = {
+	{ "top_fixed",		LV_MENU_HEADER_TOP_FIXED },
+	{ "top_unfixed",	LV_MENU_HEADER_TOP_UNFIXED },
+	{ "bottom_fixed",	LV_MENU_HEADER_BOTTOM_FIXED },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

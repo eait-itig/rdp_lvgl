@@ -428,3 +428,34 @@ list_add_btn(_Obj, _Icon, _Text) -> error(no_nif).
 
 -spec list_get_btn_text(object(), object()) -> async_return(string()).
 list_get_btn_text(_Obj, _Btn) -> error(no_nif).
+
+-spec menu_page_create(object(), string()) -> async_return(object()).
+menu_page_create(_Menu, _Title) -> error(no_nif).
+
+-spec menu_cont_create(object()) -> async_return(object()).
+menu_cont_create(_Parent) -> error(no_nif).
+
+-spec menu_section_create(object()) -> async_return(object()).
+menu_section_create(_Parent) -> error(no_nif).
+
+-spec menu_separator_create(object()) -> async_return(object()).
+menu_separator_create(_Parent) -> error(no_nif).
+
+-spec menu_set_page(object(), object()) -> async_return().
+menu_set_page(_Menu, _Page) -> error(no_nif).
+
+-spec menu_set_page_title(object(), string()) -> async_return().
+menu_set_page_title(_Page, _Title) -> error(no_nif).
+
+-spec menu_set_sidebar_page(object(), object()) -> async_return().
+menu_set_sidebar_page(_Menu, _Page) -> error(no_nif).
+
+-spec menu_set_mode_root_back_btn(object(), lv_menu:root_back_btn_mode()) ->
+    async_return().
+menu_set_mode_root_back_btn(_Menu, _Mode) -> error(no_nif).
+
+-spec menu_set_mode_header(object(), lv_menu:header_mode()) -> async_return().
+menu_set_mode_header(_Menu, _Mode) -> error(no_nif).
+
+-spec menu_set_load_page_event(object(), object(), object()) -> async_return().
+menu_set_load_page_event(_Menu, _Btn, _Page) -> error(no_nif).
