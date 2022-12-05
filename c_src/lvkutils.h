@@ -57,6 +57,8 @@ lv_point_t lv_obj_get_pos(lv_obj_t *obj);
 void lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
     lv_anim_enable_t anim);
 
+bool lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base);
+
 struct cdinline;
 #define	FOFFSET_CALL		(offsetof(struct cdesc_call, cdc_ibuf))
 #define FOFFSET_COPYBUF		(offsetof(struct cdesc_copybuf, cdcs_data))

@@ -28,8 +28,34 @@
 -compile(export_all).
 -compile(nowarn_export_all).
 
+-type value() :: integer().
+-type mode() :: normal | symmetrical | range.
+
 -include("async_wrappers.hrl").
 
 -spec create(lv:object()) -> {ok, lv:slider()} | lv:error().
 create(Parent) ->
     ?async_wrapper(slider_create, Parent).
+
+% These functions are all inlines in C that call the lv_bar_* versions
+% We can't invoke inlines via the NIF interface, so just map it here.
+
+-spec set_value(lv:slider(), value(), lv_anim:enable()) -> ok | lv:error().
+set_value(Bar, Val, AnimEna) ->
+    ?async_void_wrapper(bar_set_value, Bar, Val, AnimEna).
+
+-spec set_start_value(lv:slider(), value(), lv_anim:enable()) -> ok | lv:error().
+set_start_value(Bar, Val, AnimEna) ->
+    ?async_void_wrapper(bar_set_start_value, Bar, Val, AnimEna).
+
+-spec set_range(lv:slider(), value(), value()) -> ok | lv:error().
+set_range(Bar, LowVal, HighVal) ->
+    ?async_void_wrapper(bar_set_range, Bar, LowVal, HighVal).
+
+-spec set_mode(lv:slider(), mode()) -> ok | lv:error().
+set_mode(Bar, Mode) ->
+    ?async_void_wrapper(bar_set_mode, Bar, Mode).
+
+-spec get_value(lv:slider()) -> {ok, value()} | lv:error().
+get_value(Bar) ->
+    ?async_wrapper(bar_get_value, Bar).

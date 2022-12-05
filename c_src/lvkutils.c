@@ -309,3 +309,14 @@ cdi_put(struct cdinline *cdi, const uint8_t *buf, size_t len)
 		len -= take;
 	}
 }
+
+bool
+lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base)
+{
+	while (class) {
+		if (class == base)
+			return (true);
+		class = class->base_class;
+	}
+	return (false);
+}

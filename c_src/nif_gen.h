@@ -85,7 +85,7 @@ rlvgl_bar_set_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_bar_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_bar_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -159,7 +159,7 @@ rlvgl_bar_set_start_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_bar_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_bar_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -224,7 +224,7 @@ rlvgl_bar_set_range3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_bar_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_bar_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -284,7 +284,7 @@ rlvgl_bar_set_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_bar_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_bar_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -338,7 +338,7 @@ rlvgl_bar_get_value1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_bar_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_bar_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -492,7 +492,7 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_checkbox_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_checkbox_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -546,7 +546,7 @@ rlvgl_checkbox_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_checkbox_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_checkbox_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -652,7 +652,7 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -706,7 +706,7 @@ rlvgl_textarea_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -764,7 +764,7 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -832,7 +832,7 @@ rlvgl_textarea_set_text_selection2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -900,7 +900,7 @@ rlvgl_textarea_set_password_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -968,7 +968,7 @@ rlvgl_textarea_set_one_line2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1028,7 +1028,7 @@ rlvgl_textarea_set_accepted_chars2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_textarea_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1149,7 +1149,7 @@ rlvgl_img_set_offset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_img_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_img_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1212,7 +1212,7 @@ rlvgl_img_set_src2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_img_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_img_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1319,7 +1319,7 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_label_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_label_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1474,7 +1474,7 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_dropdown_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1538,7 +1538,7 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_dropdown_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1593,7 +1593,7 @@ rlvgl_dropdown_get_selected1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_dropdown_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1651,7 +1651,7 @@ rlvgl_dropdown_set_selected2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_dropdown_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1705,7 +1705,7 @@ rlvgl_dropdown_clear_options1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_dropdown_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1758,7 +1758,7 @@ rlvgl_dropdown_get_selected_str1(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_dropdown_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1912,7 +1912,7 @@ rlvgl_led_set_color2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_led_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -1971,7 +1971,7 @@ rlvgl_led_set_brightness2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_led_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2025,7 +2025,7 @@ rlvgl_led_on1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_led_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2078,7 +2078,7 @@ rlvgl_led_off1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_led_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2131,7 +2131,7 @@ rlvgl_led_toggle1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_led_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2184,7 +2184,7 @@ rlvgl_led_get_brightness1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_led_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2290,7 +2290,7 @@ rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_list_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_list_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2358,7 +2358,7 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_list_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_list_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2419,7 +2419,7 @@ rlvgl_list_get_btn_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_list_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_list_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2526,7 +2526,7 @@ rlvgl_menu_page_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_menu_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2730,7 +2730,7 @@ rlvgl_menu_set_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_menu_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2790,7 +2790,7 @@ rlvgl_menu_set_sidebar_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_menu_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2849,7 +2849,7 @@ rlvgl_menu_set_mode_root_back_btn2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_menu_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2908,7 +2908,7 @@ rlvgl_menu_set_mode_header2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_menu_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}
@@ -2974,7 +2974,7 @@ rlvgl_menu_set_load_page_event3(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 		goto out;
 	}
 
-	if (obj->lvko_class != &lv_menu_class) {
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
 		goto out;
 	}

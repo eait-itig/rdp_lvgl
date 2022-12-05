@@ -537,7 +537,7 @@ class WidgetFunc < Func
   def parse
     super
     puts ""
-    puts "\tif (obj->lvko_class != &lv_#{@widget}_class) {"
+    puts "\tif (!lv_obj_class_has_base(obj->lvko_class, &lv_#{@widget}_class)) {"
     puts "\t\trv = make_errno(env, EINVAL);"
     puts "\t\tgoto out;"
     puts "\t}"
