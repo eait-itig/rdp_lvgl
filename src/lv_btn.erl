@@ -25,11 +25,15 @@
 
 -module(lv_btn).
 
--compile(export_all).
--compile(nowarn_export_all).
+-export([
+    create/1
+    ]).
 
 -include("async_wrappers.hrl").
 
+%% @doc Creates a new lv_btn widget.
+%%
+%% See [https://docs.lvgl.io/master/widgets/btn.html]
 -spec create(lv:object()) -> {ok, lv:btn()} | lv:error().
 create(Parent) ->
     ?async_wrapper(btn_create, Parent).

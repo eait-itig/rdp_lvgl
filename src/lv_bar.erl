@@ -25,8 +25,14 @@
 
 -module(lv_bar).
 
--compile(export_all).
--compile(nowarn_export_all).
+-export([
+    create/1,
+    set_value/3,
+    set_start_value/3,
+    set_range/3,
+    set_mode/2,
+    get_value/1
+    ]).
 
 -export_type([
     mode/0
