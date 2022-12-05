@@ -175,11 +175,9 @@ struct cdesc_call {
 	uint64_t		cdc_func;
 	uint64_t		cdc_arg[8];
 	uint8_t			cdc_argtype[8];
-	uint8_t			cdc_rettype;
 	uint16_t		cdc_rbuflen;
-	uint8_t			cdc_ibuf_len;
-	uint8_t			cdc_ibuf_idx;
-	uint8_t			cdc_ibuf[27];
+	uint8_t			cdc_rettype;
+	uint8_t			cdc_ibuf[29];
 };
 
 struct cdesc_setudata {

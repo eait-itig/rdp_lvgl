@@ -507,7 +507,7 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_checkbox_set_text,
 	    ARG_OBJPTR, obj,
-	    ARG_INLINE_BUF, text.data, text.size,
+	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -667,7 +667,7 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_text,
 	    ARG_OBJPTR, obj,
-	    ARG_INLINE_BUF, text.data, text.size,
+	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -779,7 +779,7 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_placeholder_text,
 	    ARG_OBJPTR, obj,
-	    ARG_INLINE_BUF, text.data, text.size,
+	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1184,6 +1184,69 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_img_set_src2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	ErlNifBinary src_bin;
+	enum arg_type src_type;
+	void *src;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = parse_img_src(env, argv[1], &src_bin, &src_type,
+	    &src);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_img_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_img_set_src,
+	    ARG_OBJPTR, obj,
+	    src_type, src,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_label_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -1271,7 +1334,7 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_label_set_text,
 	    ARG_OBJPTR, obj,
-	    ARG_INLINE_BUF, text.data, text.size,
+	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1426,7 +1489,7 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_dropdown_set_options,
 	    ARG_OBJPTR, obj,
-	    ARG_INLINE_BUF, opts.data, opts.size,
+	    ARG_INLINE_BUF, &opts,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1490,7 +1553,7 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_dropdown_add_option,
 	    ARG_OBJPTR, obj,
-	    ARG_INLINE_BUF, text.data, text.size,
+	    ARG_INLINE_BUF, &text,
 	    ARG_UINT32, index,
 	    ARG_NONE);
 
@@ -1825,6 +1888,336 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_led_set_color2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	lv_color_t color;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[1], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[1]);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_led_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_led_set_color,
+	    ARG_OBJPTR, obj,
+	    ARG_COLOR, &color,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_led_set_brightness2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint bright;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &bright)) {
+		rv = enif_make_badarg2(env, "bright", argv[1]);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_led_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_led_set_brightness,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT8, bright,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_led_on1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_led_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_led_on,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_led_off1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_led_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_led_off,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_led_toggle1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_led_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_led_toggle,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_led_get_brightness1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_led_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_UINT8, lv_led_get_brightness,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_list_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -1854,6 +2247,194 @@ rlvgl_list_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_OBJPTR, lv_list_create,
 	    ARG_OBJPTR, parent,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	ErlNifBinary text;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
+		rv = enif_make_badarg2(env, "text", argv[1]);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_list_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_list_add_text,
+	    ARG_OBJPTR, obj,
+	    ARG_INLINE_BUF, &text,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	ErlNifBinary icon_bin;
+	enum arg_type icon_type;
+	void *icon;
+	ErlNifBinary text;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = parse_img_src(env, argv[1], &icon_bin, &icon_type,
+	    &icon);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_inspect_iolist_as_binary(env, argv[2], &text)) {
+		rv = enif_make_badarg2(env, "text", argv[2]);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_list_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_list_add_btn,
+	    ARG_OBJPTR, obj,
+	    icon_type, icon,
+	    ARG_INLINE_BUF, &text,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_list_get_btn_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkobj *btn;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_obj_hdl(env, argv[1], &nls, &btn, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (obj->lvko_class != &lv_list_class) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_INLINE_STR, lv_list_get_btn_text,
+	    ARG_OBJPTR, obj,
+	    ARG_OBJPTR, btn,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3568,6 +4149,7 @@ out:
 { "textarea_set_accepted_chars",	2, rlvgl_textarea_set_accepted_chars2 }, \
 { "img_create",				1, rlvgl_img_create1 }, \
 { "img_set_offset",			2, rlvgl_img_set_offset2 }, \
+{ "img_set_src",			2, rlvgl_img_set_src2 }, \
 { "label_create",			1, rlvgl_label_create1 }, \
 { "label_set_text",			2, rlvgl_label_set_text2 }, \
 { "btnmatrix_create",			1, rlvgl_btnmatrix_create1 }, \
@@ -3580,7 +4162,16 @@ out:
 { "dropdown_get_selected_str",		1, rlvgl_dropdown_get_selected_str1 }, \
 { "imgbtn_create",			1, rlvgl_imgbtn_create1 }, \
 { "led_create",				1, rlvgl_led_create1 }, \
+{ "led_set_color",			2, rlvgl_led_set_color2 }, \
+{ "led_set_brightness",			2, rlvgl_led_set_brightness2 }, \
+{ "led_on",				1, rlvgl_led_on1 }, \
+{ "led_off",				1, rlvgl_led_off1 }, \
+{ "led_toggle",				1, rlvgl_led_toggle1 }, \
+{ "led_get_brightness",			1, rlvgl_led_get_brightness1 }, \
 { "list_create",			1, rlvgl_list_create1 }, \
+{ "list_add_text",			2, rlvgl_list_add_text2 }, \
+{ "list_add_btn",			3, rlvgl_list_add_btn3 }, \
+{ "list_get_btn_text",			2, rlvgl_list_get_btn_text2 }, \
 { "menu_create",			1, rlvgl_menu_create1 }, \
 { "roller_create",			1, rlvgl_roller_create1 }, \
 { "slider_create",			1, rlvgl_slider_create1 }, \

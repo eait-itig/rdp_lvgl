@@ -35,8 +35,15 @@
 -include("async_wrappers.hrl").
 
 -type file_path() :: string().
--type symbol() :: gps.
--type src() :: file_path() | symbol().
+-type symbol() :: bullet | audio | video | list | ok | close | power |
+    settings | home | download | drive | refresh | mute | volume_mid |
+    volume_max | image | tint | prev | play | pause | stop | next | eject |
+    left | right | plus | minus | eye_open | eye_close | warning | shuffle |
+    up | down | loop | directory | upload | call | cut | copy | save | bars |
+    envelope | charge | paste | bell | keyboard | gps | file | wifi |
+    battery_full | battery_3 | battery_2 | battery_1 | battery_empty |
+    usb | bluetooth | trash | edit | backspace | sd_card | new_line | dummy.
+-type src() :: file_path() | symbol() | none.
 
 -spec create(lv:object()) -> {ok, lv:img()} | lv:error().
 create(Parent) ->

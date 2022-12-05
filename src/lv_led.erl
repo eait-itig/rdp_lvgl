@@ -30,6 +30,32 @@
 
 -include("async_wrappers.hrl").
 
+-type brightness() :: integer().
+
 -spec create(lv:object()) -> {ok, lv:led()} | lv:error().
 create(Parent) ->
     ?async_wrapper(led_create, Parent).
+
+-spec set_color(lv:led(), lv:color()) -> ok | lv:error().
+set_color(Widget, Color) ->
+    ?async_void_wrapper(led_set_color, Widget, Color).
+
+-spec set_brightness(lv:led(), brightness()) -> ok | lv:error().
+set_brightness(Widget, Bright) ->
+    ?async_void_wrapper(led_set_brightness, Widget, Bright).
+
+-spec on(lv:led()) -> ok | lv:error().
+on(Widget) ->
+    ?async_void_wrapper(led_on, Widget).
+
+-spec off(lv:led()) -> ok | lv:error().
+off(Widget) ->
+    ?async_void_wrapper(led_off, Widget).
+
+-spec toggle(lv:led()) -> ok | lv:error().
+toggle(Widget) ->
+    ?async_void_wrapper(led_toggle, Widget).
+
+-spec get_brightness(lv:led()) -> {ok, brightness()} | lv:error().
+get_brightness(Widget) ->
+    ?async_wrapper(led_get_brightness, Widget).

@@ -401,3 +401,30 @@ bar_set_mode(_Obj, _Mode) -> error(no_nif).
 
 -spec bar_get_value(object()) -> async_return(integer()).
 bar_get_value(_Obj) -> error(no_nif).
+
+-spec led_set_color(object(), lv:color()) -> async_return().
+led_set_color(_Obj, _Color) -> error(no_nif).
+
+-spec led_set_brightness(object(), integer()) -> async_return().
+led_set_brightness(_Obj, _Brightness) -> error(no_nif).
+
+-spec led_on(object()) -> async_return().
+led_on(_Obj) -> error(no_nif).
+
+-spec led_off(object()) -> async_return().
+led_off(_Obj) -> error(no_nif).
+
+-spec led_toggle(object()) -> async_return().
+led_toggle(_Obj) -> error(no_nif).
+
+-spec led_get_brightness(object()) -> async_return(integer()).
+led_get_brightness(_Obj) -> error(no_nif).
+
+-spec list_add_text(object(), string()) -> async_return(object()).
+list_add_text(_Obj, _Str) -> error(no_nif).
+
+-spec list_add_btn(object(), lv_img:src(), string()) -> async_return(object()).
+list_add_btn(_Obj, _Icon, _Text) -> error(no_nif).
+
+-spec list_get_btn_text(object(), object()) -> async_return(string()).
+list_get_btn_text(_Obj, _Btn) -> error(no_nif).

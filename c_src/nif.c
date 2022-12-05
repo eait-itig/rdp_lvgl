@@ -1062,84 +1062,49 @@ out:
 	return (rv);
 }
 
-static ERL_NIF_TERM
-rlvgl_img_set_src2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+static int
+parse_img_src(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary *bin,
+    enum arg_type *patype, void **parg)
 {
-	struct lvkobj *obj;
-	struct nif_lock_state nls;
-	struct nif_call_data *ncd = NULL;
-	ERL_NIF_TERM msgref, rv;
-	int rc;
-	char atom[24];
-	ErlNifBinary bin;
-	enum arg_type atype;
+	char atom[32];
 	const struct symbol_src *ss;
-	void *arg;
 
-	bzero(&nls, sizeof (nls));
-
-	if (argc != 2)
-		return (enif_make_badarg(env));
-
-	if (enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1)) {
-		atype = ARG_PTR;
+	if (enif_get_atom(env, term, atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		*patype = ARG_PTR;
+		if (strcmp(atom, "none") == 0) {
+			*parg = 0;
+			return (0);
+		}
 		for (ss = symbol_srcs; ss->ss_atom != NULL; ++ss) {
 			if (strcmp(atom, ss->ss_atom) == 0)
 				break;
 		}
-		if (ss->ss_atom == NULL)
-			return (enif_make_badarg(env));
-		arg = (void *)ss->ss_value;
-	} else if (enif_inspect_iolist_as_binary(env, argv[1], &bin)) {
-		atype = ARG_INLINE_BUF;
-		if (bin.size > UINT8_MAX)
-			return (enif_make_badarg(env));
-	} else {
-		return (enif_make_badarg(env));
+		if (ss->ss_atom == NULL) {
+			enif_raise_exception(env, enif_make_tuple2(env,
+			    enif_make_atom(env, "invalid_symbol_atom"),
+			    term));
+			return (EINVAL);
+		}
+		*parg = (void *)ss->ss_value;
+		return (0);
 	}
 
-	rc = make_ncd(env, &msgref, &ncd);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
+	if (enif_inspect_iolist_as_binary(env, term, bin)) {
+		*patype = ARG_INLINE_BUF;
+		if (bin->size > UINT8_MAX) {
+			enif_raise_exception(env, enif_make_tuple2(env,
+			    enif_make_atom(env, "inline_str_too_long"),
+			    term));
+			return (E2BIG);
+		}
+		*parg = bin;
+		return (0);
 	}
 
-	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-	if (obj->lvko_class != &lv_img_class) {
-		rv = make_errno(env, EINVAL);
-		goto out;
-	}
-
-	if (atype == ARG_PTR) {
-		rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
-		    ARG_NONE, lv_img_set_src,
-		    ARG_OBJPTR, obj,
-		    ARG_PTR, arg,
-		    ARG_NONE);
-	} else if (atype == ARG_INLINE_BUF) {
-		rc = lvk_icall(obj->lvko_inst, rlvgl_call_cb, ncd,
-		    ARG_NONE, lv_img_set_src,
-		    ARG_OBJPTR, obj,
-		    ARG_INLINE_BUF, bin.data, bin.size,
-		    ARG_NONE);
-	}
-
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-	ncd = NULL;	/* rlvgl_call_cb owns it now */
-	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
-
-out:
-	leave_nif(&nls);
-	free_ncd(ncd);
-	return (rv);
+	enif_raise_exception(env, enif_make_tuple2(env,
+	    enif_make_atom(env, "invalid_img_src"),
+	    term));
+	return (EINVAL);
 }
 
 static void
@@ -1625,7 +1590,7 @@ rlvgl_send_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_indev_send_text,
 	    ARG_PTR, inst->lvki_kbd,
-	    ARG_INLINE_BUF, bin.data, bin.size,
+	    ARG_INLINE_BUF, &bin,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1823,7 +1788,6 @@ static ErlNifFunc nif_funcs[] = {
 	AUTOGEN_NIFS,
 	{ "obj_create", 		2, rlvgl_obj_create2 },
 	{ "style_set_prop",		3, rlvgl_style_set_prop3 },
-	{ "img_set_src", 		2, rlvgl_img_set_src2 }
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

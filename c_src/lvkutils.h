@@ -57,4 +57,13 @@ lv_point_t lv_obj_get_pos(lv_obj_t *obj);
 void lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
     lv_anim_enable_t anim);
 
+struct cdinline;
+#define	FOFFSET_CALL		(offsetof(struct cdesc_call, cdc_ibuf))
+#define FOFFSET_COPYBUF		(offsetof(struct cdesc_copybuf, cdcs_data))
+struct cdinline *cdi_init(struct cdesc **cd, uint ncd, size_t foffset);
+void cdi_free(struct cdinline *cdi);
+uint cdi_ncd(struct cdinline *cdi);
+void cdi_get(struct cdinline *cdi, uint8_t *buf, size_t len);
+void cdi_put(struct cdinline *cdi, const uint8_t *buf, size_t len);
+
 #endif /* _LVK_UTILS_H */

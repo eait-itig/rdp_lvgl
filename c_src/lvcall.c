@@ -25,7 +25,19 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "log.h"
 #include "lvcall.h"
+#include "lvkutils.h"
+
+struct ibuf {
+	uint8_t	ib_buf[256];
+	size_t	ib_len;
+	uint	ib_idx;
+};
+
+static struct ibuf ibuf[8];
+
+#define	LVCALL_DEBUG	0
 
 void
 lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
@@ -35,56 +47,69 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	uint64_t rv;
 	lv_obj_t *obj;
 	lv_group_t *grp;
-	char ibuf[256];
-	uint i;
+	struct cdinline *inl;
+	uint ib = 0, i;
 	size_t rem, off, take;
 	uint8_t *data;
 	enum arg_type rt = cdc->cdc_rettype;
 
-	if (cdc->cdc_ibuf_len > 0) {
-		bzero(ibuf, sizeof (ibuf));
-		rem = cdc->cdc_ibuf_len;
-		off = 0;
+#if LVCALL_DEBUG == 1
+	log_debug("call to %p", (void *)cdc->cdc_func);
+	log_debug("rtype = %u", cdc->cdc_rettype);
+#endif
 
-		take = sizeof (cdc->cdc_ibuf);
-		if (take > rem)
-			take = rem;
+	inl = cdi_init(cd, ncd, FOFFSET_CALL);
+	assert(inl != NULL);
 
-		bcopy(cdc->cdc_ibuf, ibuf, take);
-		off += take;
-		rem -= take;
+	for (i = 0; i < 8; ++i) {
+		if (cdc->cdc_argtype[i] != ARG_INLINE_BUF &&
+		    cdc->cdc_argtype[i] != ARG_INLINE_STR)
+			continue;
 
-		for (i = 1; i < ncd; ++i) {
-			take = sizeof (cd[i]->cd_data);
-			if (take > rem)
-				take = rem;
-			bcopy(cd[i]->cd_data, &ibuf[off], take);
-			off += take;
-			rem -= take;
+		if (cdc->cdc_arg[i] == 0) {
+			cdc->cdc_argtype[i] = ARG_PTR;
+			continue;
 		}
-		assert(rem == 0);
 
-		assert(cdc->cdc_argtype[cdc->cdc_ibuf_idx] == ARG_INLINE_BUF ||
-		    cdc->cdc_argtype[cdc->cdc_ibuf_idx] == ARG_INLINE_STR);
-		cdc->cdc_argtype[cdc->cdc_ibuf_idx] = ARG_PTR;
-		cdc->cdc_arg[cdc->cdc_ibuf_idx] = (uint64_t)ibuf;
+#if LVCALL_DEBUG == 1
+		log_debug("inline buf in arg%d: %lu bytes", i, cdc->cdc_arg[i]);
+#endif
+
+		ibuf[ib].ib_len = cdc->cdc_arg[i];
+		ibuf[ib].ib_idx = i;
+		bzero(ibuf[ib].ib_buf, sizeof (ibuf[ib].ib_buf));
+
+		cdi_get(inl, ibuf[ib].ib_buf, ibuf[ib].ib_len);
+
+		cdc->cdc_argtype[i] = ARG_PTR;
+		cdc->cdc_arg[i] = (uint64_t)ibuf[ib].ib_buf;
+
+#if LVCALL_DEBUG == 1
+		log_debug("=> inlined as ib %d", ib);
+#endif
+
+		++ib;
 	}
+
+	cdi_free(inl);
 
 	if (rt == ARG_INLINE_BUF || rt == ARG_INLINE_STR)
 		cdc->cdc_rettype = ARG_BUFPTR;
 
-	/*fprintf(stderr, "call to %p\r\n", (void *)cdc->cdc_func);
-	fprintf(stderr, "rtype = %u\r\n", cdc->cdc_rettype);
+#if LVCALL_DEBUG == 1
 	for (i = 0; i < 8; ++i) {
-		fprintf(stderr, "arg%u type = %u, val = %lx\r\n",
+		log_debug("arg%u type = %u, val = %lx",
 		    i, cdc->cdc_argtype[i], cdc->cdc_arg[i]);
 		if (cdc->cdc_argtype[i] == ARG_NONE)
 			break;
-	}*/
+	}
+#endif
 
 	rv = lv_do_real_call(cdc);
 
-	/*fprintf(stderr, "rv = %lx\r\n", rv);*/
+#if LVCALL_DEBUG == 1
+	log_debug("rv = %lx", rv);
+#endif
 
 	switch (rt) {
 	case ARG_INLINE_STR:

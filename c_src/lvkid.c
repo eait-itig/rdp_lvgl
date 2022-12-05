@@ -1328,86 +1328,107 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	struct lvkgroup *grp;
 	struct lvkbuf *buf;
 	struct cdesc cd[8];
+	struct cdesc *pcd[8];
 	uint ncd;
-	uint8_t argtype[8] = { ARG_NONE };
-	uint64_t arg[8] = { 0 };
+	uint8_t argtype;
 	lv_color_t *col;
 	lv_point_t *pt;
 	lv_style_value_t *stv;
 	uint i;
-	uint8_t *ibuf = NULL;
-	size_t ibuflen = 0;
-	uint ibufidx = UINT8_MAX;
-	size_t rem, off, take;
+	const char *str;
+	ErlNifBinary *bin = NULL;
+	struct cdinline *inl;
 
 	if (inst == NULL)
 		assert(rt != ARG_OBJPTR);
 
+	cd[0] = (struct cdesc){
+		.cd_op = CMD_CALL,
+		.cd_chain = 0,
+		.cd_call = (struct cdesc_call){
+			.cdc_func = (uint64_t)f,
+			.cdc_rettype = rt,
+			.cdc_rbuflen = rtblen,
+		},
+	};
+
+	for (i = 0; i < 8; ++i)
+		pcd[i] = &cd[i];
+
+	inl = cdi_init(pcd, 8, FOFFSET_CALL);
+	assert(inl != NULL);
+
 	for (i = 0; i < 8; ++i) {
-		argtype[i] = va_arg(ap, enum arg_type);
-		if (argtype[i] == ARG_NONE)
+		argtype = va_arg(ap, enum arg_type);
+		if (argtype == ARG_NONE)
 			break;
-		switch (argtype[i]) {
+		cd[0].cd_call.cdc_argtype[i] = argtype;
+		switch (argtype) {
 		case ARG_BUFPTR:
 			buf = va_arg(ap, struct lvkbuf *);
-			if (buf != NULL)
-				arg[i] = buf->lvkb_ptr;
+			if (buf == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = buf->lvkb_ptr;
 			break;
 		case ARG_OBJPTR:
 			obj = va_arg(ap, struct lvkobj *);
-			if (obj != NULL)
-				arg[i] = obj->lvko_ptr;
+			if (obj == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = obj->lvko_ptr;
 			break;
 		case ARG_STYPTR:
 			sty = va_arg(ap, struct lvkstyle *);
-			if (sty != NULL)
-				arg[i] = sty->lvks_ptr;
+			if (sty == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = sty->lvks_ptr;
 			break;
 		case ARG_GRPPTR:
 			grp = va_arg(ap, struct lvkgroup *);
-			if (grp != NULL)
-				arg[i] = grp->lvkg_ptr;
+			if (grp == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = grp->lvkg_ptr;
 			break;
 		case ARG_PTR:
-			arg[i] = va_arg(ap, uintptr_t);
+			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uintptr_t);
 			break;
 		case ARG_UINT64:
-			arg[i] = va_arg(ap, uint64_t);
+			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uint64_t);
 			break;
 		case ARG_UINT32:
-			arg[i] = va_arg(ap, uint32_t);
+			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uint32_t);
 			break;
 		case ARG_UINT16:
-			arg[i] = va_arg(ap, int);
-			assert(arg[i] < UINT16_MAX);
+			cd[0].cd_call.cdc_arg[i] = va_arg(ap, int);
+			assert(cd[0].cd_call.cdc_arg[i] < UINT16_MAX);
 			break;
 		case ARG_UINT8:
-			arg[i] = va_arg(ap, int);
-			assert(arg[i] < UINT8_MAX);
+			cd[0].cd_call.cdc_arg[i] = va_arg(ap, int);
+			assert(cd[0].cd_call.cdc_arg[i] < UINT8_MAX);
 			break;
 		case ARG_COLOR:
 			col = va_arg(ap, lv_color_t *);
-			arg[i] = col->full;
+			cd[0].cd_call.cdc_arg[i] = col->full;
 			break;
 		case ARG_POINT:
 			pt = va_arg(ap, lv_point_t *);
 			assert(sizeof (*pt) <= sizeof (uint64_t));
-			bcopy(pt, &arg[i], sizeof (*pt));
+			bcopy(pt, &cd[0].cd_call.cdc_arg[i], sizeof (*pt));
 			break;
 		case ARG_STYLEVAL:
 			stv = va_arg(ap, lv_style_value_t *);
 			assert(sizeof (*stv) <= sizeof (uint64_t));
-			bcopy(stv, &arg[i], sizeof (*stv));
+			bcopy(stv, &cd[0].cd_call.cdc_arg[i], sizeof (*stv));
 			break;
 		case ARG_INLINE_BUF:
-			ibuf = va_arg(ap, uint8_t *);
-			ibuflen = va_arg(ap, size_t);
-			ibufidx = i;
+			bin = va_arg(ap, ErlNifBinary *);
+			cd[0].cd_call.cdc_arg[i] = bin->size;
+			cdi_put(inl, bin->data, bin->size);
 			break;
 		case ARG_INLINE_STR:
-			ibuf = va_arg(ap, uint8_t *);
-			ibuflen = strlen((const char *)ibuf);
-			ibufidx = i;
+			str = va_arg(ap, const char *);
+			cd[0].cd_call.cdc_arg[i] = strlen(str);
+			cdi_put(inl, (const uint8_t *)str,
+			    cd[0].cd_call.cdc_arg[i]);
 			break;
 		}
 	}
@@ -1419,49 +1440,8 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	call->lvkc_rt = rt;
 	call->lvkc_inst = inst;
 
-	cd[0] = (struct cdesc){
-		.cd_op = CMD_CALL,
-		.cd_chain = 0,
-		.cd_call = (struct cdesc_call){
-			.cdc_func = (uint64_t)f,
-			.cdc_rettype = rt,
-			.cdc_rbuflen = rtblen,
-			.cdc_ibuf_len = ibuflen,
-			.cdc_ibuf_idx = ibufidx,
-		},
-	};
-	for (i = 0; i < 8; ++i) {
-		cd[0].cd_call.cdc_argtype[i] = argtype[i];
-		cd[0].cd_call.cdc_arg[i] = arg[i];
-	}
-
-	rem = ibuflen;
-	off = 0;
-
-	if (rem > 0) {
-		take = sizeof (cd[0].cd_call.cdc_ibuf);
-		if (take > rem)
-			take = rem;
-		bcopy(&ibuf[off], cd[0].cd_call.cdc_ibuf, take);
-		rem -= take;
-		off += take;
-	}
-
-	ncd = 1;
-	while (ncd < 8 && rem > 0) {
-		cd[ncd - 1].cd_chain = 1;
-		cd[ncd] = (struct cdesc){
-			.cd_op = CMD_CALL,
-			.cd_chain = 0,
-		};
-		take = sizeof (cd[ncd].cd_data);
-		if (take > rem)
-			take = rem;
-		bcopy(&ibuf[off], cd[ncd].cd_data, take);
-		rem -= take;
-		off += take;
-		++ncd;
-	}
+	ncd = cdi_ncd(inl);
+	cdi_free(inl);
 
 	lvk_cmd(kid, cd, ncd, lvk_call_cb, call);
 }

@@ -30,6 +30,21 @@
 
 -include("async_wrappers.hrl").
 
+-type text() :: lv:object().
+-type btn() :: lv:object().
+
 -spec create(lv:object()) -> {ok, lv:listview()} | lv:error().
 create(Parent) ->
     ?async_wrapper(list_create, Parent).
+
+-spec add_text(lv:listview(), string()) -> {ok, text()} | lv:error().
+add_text(Widget, Text) ->
+    ?async_wrapper(list_add_text, Widget, Text).
+
+-spec add_btn(lv:listview(), lv_img:src(), string()) -> {ok, btn()} | lv:error().
+add_btn(Widget, Icon, Text) ->
+    ?async_wrapper(list_add_btn, Widget, Icon, Text).
+
+-spec get_btn_text(lv:listview(), btn()) -> {ok, string()} | lv:error().
+get_btn_text(Widget, Btn) ->
+    ?async_wrapper(list_get_btn_text, Widget, Btn).

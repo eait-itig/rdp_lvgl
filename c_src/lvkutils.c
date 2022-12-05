@@ -199,3 +199,113 @@ lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
 	if (target != NULL)
 		lv_obj_scroll_by_bounded(target, 0, dy, anim);
 }
+
+struct cdinline {
+	struct cdesc	**cdi_cd;
+	uint		  cdi_ncd;
+	size_t		  cdi_foff;
+
+	uint		  cdi_i;
+	size_t		  cdi_off;
+};
+
+struct cdinline *
+cdi_init(struct cdesc **cd, uint ncd, size_t foffset)
+{
+	struct cdinline *cdi;
+
+	cdi = calloc(1, sizeof (struct cdinline));
+	assert(cdi != NULL);
+	cdi->cdi_cd = cd;
+	cdi->cdi_ncd = ncd;
+	cdi->cdi_foff = foffset;
+
+	return (cdi);
+}
+
+uint
+cdi_ncd(struct cdinline *cdi)
+{
+	uint ncd = cdi->cdi_i;
+	if (cdi->cdi_off > 0)
+		++ncd;
+	if (ncd == 0)
+		ncd = 1;
+	return (ncd);
+}
+
+void
+cdi_free(struct cdinline *cdi)
+{
+	free(cdi);
+}
+
+void
+cdi_get(struct cdinline *cdi, uint8_t *buf, size_t len)
+{
+	size_t take, doff = 0;
+	struct cdesc *cd;
+	uint8_t *src;
+
+	while (len > 0) {
+		assert(cdi->cdi_i < cdi->cdi_ncd);
+		cd = cdi->cdi_cd[cdi->cdi_i];
+		if (cdi->cdi_i == 0) {
+			src = &cd->cd_data[cdi->cdi_foff + cdi->cdi_off];
+			take = sizeof (cd->cd_data) - cdi->cdi_foff -
+			    cdi->cdi_off;
+		} else {
+			src = &cd->cd_data[cdi->cdi_off];
+			take = sizeof (cd->cd_data) - cdi->cdi_off;
+		}
+		if (take > len) {
+			take = len;
+			cdi->cdi_off += take;
+		} else {
+			cdi->cdi_i++;
+			cdi->cdi_off = 0;
+		}
+		if (take > 0)
+			bcopy(src, &buf[doff], take);
+		doff += take;
+		len -= take;
+	}
+}
+
+void
+cdi_put(struct cdinline *cdi, const uint8_t *buf, size_t len)
+{
+	size_t take, doff = 0;
+	struct cdesc *cd;
+	uint8_t *dst;
+
+	while (len > 0) {
+		assert(cdi->cdi_i < cdi->cdi_ncd);
+		cd = cdi->cdi_cd[cdi->cdi_i];
+		if (cdi->cdi_i > 0 && cdi->cdi_off == 0) {
+			struct cdesc *pcd = cdi->cdi_cd[cdi->cdi_i - 1];
+			pcd->cd_chain = 1;
+			bzero(cd, sizeof (*cd));
+			cd->cd_op = pcd->cd_op;
+			cd->cd_cookie = pcd->cd_cookie;
+		}
+		if (cdi->cdi_i == 0) {
+			dst = &cd->cd_data[cdi->cdi_foff + cdi->cdi_off];
+			take = sizeof (cd->cd_data) - cdi->cdi_foff -
+			    cdi->cdi_off;
+		} else {
+			dst = &cd->cd_data[cdi->cdi_off];
+			take = sizeof (cd->cd_data) - cdi->cdi_off;
+		}
+		if (take > len) {
+			take = len;
+			cdi->cdi_off += take;
+		} else {
+			cdi->cdi_i++;
+			cdi->cdi_off = 0;
+		}
+		bcopy(&buf[doff], dst, take);
+		doff += take;
+		len -= take;
+	}
+}

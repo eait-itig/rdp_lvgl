@@ -140,7 +140,26 @@ class InlineStr < Arg
     write "}"
   end
   def call
-    write "    ARG_INLINE_BUF, #{@name}.data, #{@name}.size,"
+    write "    ARG_INLINE_BUF, &#{@name},"
+  end
+end
+
+class ImgSrc < Arg
+  def arg_type; 'ARG_INLINE_STR'; end
+  def declare
+    write "ErlNifBinary #{@name}_bin;"
+    write "enum arg_type #{@name}_type;"
+    write "void *#{@name};"
+  end
+  def parse
+    write "rc = parse_img_src(env, argv[#{@idx}], &#{@name}_bin, &#{@name}_type,"
+    write "    &#{@name});"
+    write "if (rc != 0) {"
+    write parse_error_rc
+    write "}"
+  end
+  def call
+    write "    #{@name}_type, #{@name},"
   end
 end
 
@@ -513,6 +532,7 @@ WidgetFunc.new('textarea', 'set_accepted_chars', Void, Buffer.new('buf'))
 
 WidgetCreateFunc.new('img')
 WidgetFunc.new('img', 'set_offset', Void, Point.new('pt'))
+WidgetFunc.new('img', 'set_src', Void, ImgSrc.new('src'))
 
 WidgetCreateFunc.new('label')
 WidgetFunc.new('label', 'set_text', Void, InlineStr.new('text'))
@@ -531,8 +551,18 @@ WidgetFunc.new('dropdown', 'get_selected_str', InlineStr)
 WidgetCreateFunc.new('imgbtn')
 
 WidgetCreateFunc.new('led')
+WidgetFunc.new('led', 'set_color', Void, Color.new('color'))
+WidgetFunc.new('led', 'set_brightness', Void, UInt8.new('bright'))
+WidgetFunc.new('led', 'on', Void)
+WidgetFunc.new('led', 'off', Void)
+WidgetFunc.new('led', 'toggle', Void)
+WidgetFunc.new('led', 'get_brightness', UInt8)
 
 WidgetCreateFunc.new('list')
+WidgetFunc.new('list', 'add_text', LvObject, InlineStr.new('text'))
+WidgetFunc.new('list', 'add_btn', LvObject, ImgSrc.new('icon'),
+  InlineStr.new('text'))
+WidgetFunc.new('list', 'get_btn_text', InlineStr, LvObject.new('btn'))
 
 WidgetCreateFunc.new('menu')
 
