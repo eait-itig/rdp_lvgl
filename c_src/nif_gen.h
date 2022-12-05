@@ -2765,60 +2765,6 @@ out:
 }
 
 static ERL_NIF_TERM
-rlvgl_menu_set_page_title2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
-{
-	struct nif_lock_state nls;
-	struct nif_call_data *ncd = NULL;
-	ERL_NIF_TERM msgref, rv;
-	int rc;
-	struct lvkobj *page;
-	ErlNifBinary title;
-
-	bzero(&nls, sizeof (nls));
-
-	if (argc != 2)
-		return (enif_make_badarg(env));
-
-	rc = enter_obj_hdl(env, argv[0], &nls, &page, 0);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-	if (!enif_inspect_iolist_as_binary(env, argv[1], &title)) {
-		rv = enif_make_badarg2(env, "title", argv[1]);
-		goto out;
-	}
-
-	rc = make_ncd(env, &msgref, &ncd);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-
-	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_NONE, lv_menu_set_page_title,
-	    ARG_OBJPTR, page,
-	    ARG_INLINE_BUF, &title,
-	    ARG_NONE);
-
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-	ncd = NULL;
-	rv = enif_make_tuple2(env,
-	    enif_make_atom(env, "async"),
-	    msgref);
-
-out:
-	leave_nif(&nls);
-	free_ncd(ncd);
-	return (rv);
-}
-
-static ERL_NIF_TERM
 rlvgl_menu_set_sidebar_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -4067,6 +4013,70 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_obj_set_local_style_prop4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	lv_style_value_t sty_val;
+	lv_style_prop_t sty_prop;
+	int sel;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 4)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = parse_style_prop_val(env, argv[1], argv[2],
+	    &sty_prop, &sty_val);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[3], style_selector_specs, true, &sel))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_obj_set_local_style_prop,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT32, sty_prop,
+	    ARG_STYLEVAL, &sty_val,
+	    ARG_UINT32, sel,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_group_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -4317,6 +4327,64 @@ rlvgl_style_set_flex_flow2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_style_set_flex_flow,
 	    ARG_STYPTR, style,
 	    ARG_UINT32, flow,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_style_set_prop3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkstyle *style;
+	lv_style_value_t sty_val;
+	lv_style_prop_t sty_prop;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_sty_hdl(env, argv[0], &nls, &style, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = parse_style_prop_val(env, argv[1], argv[2],
+	    &sty_prop, &sty_val);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_style_set_prop,
+	    ARG_STYPTR, style,
+	    ARG_UINT32, sty_prop,
+	    ARG_STYLEVAL, &sty_val,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4740,7 +4808,6 @@ out:
 { "menu_section_create",		1, rlvgl_menu_section_create1 }, \
 { "menu_separator_create",		1, rlvgl_menu_separator_create1 }, \
 { "menu_set_page",			2, rlvgl_menu_set_page2 }, \
-{ "menu_set_page_title",		2, rlvgl_menu_set_page_title2 }, \
 { "menu_set_sidebar_page",		2, rlvgl_menu_set_sidebar_page2 }, \
 { "menu_set_mode_root_back_btn",	2, rlvgl_menu_set_mode_root_back_btn2 }, \
 { "menu_set_mode_header",		2, rlvgl_menu_set_mode_header2 }, \
@@ -4763,11 +4830,13 @@ out:
 { "obj_get_pos",			1, rlvgl_obj_get_pos1 }, \
 { "obj_get_size",			1, rlvgl_obj_get_size1 }, \
 { "obj_set_size",			2, rlvgl_obj_set_size2 }, \
+{ "obj_set_local_style_prop",		4, rlvgl_obj_set_local_style_prop4 }, \
 { "group_create",			1, rlvgl_group_create1 }, \
 { "group_add_obj",			2, rlvgl_group_add_obj2 }, \
 { "style_create",			1, rlvgl_style_create1 }, \
 { "style_set_flex_align",		4, rlvgl_style_set_flex_align4 }, \
 { "style_set_flex_flow",		2, rlvgl_style_set_flex_flow2 }, \
+{ "style_set_prop",			3, rlvgl_style_set_prop3 }, \
 { "disp_set_bg_color",			2, rlvgl_disp_set_bg_color2 }, \
 { "disp_get_layer_sys",			1, rlvgl_disp_get_layer_sys1 }, \
 { "set_kbd_group",			2, rlvgl_set_kbd_group2 }, \

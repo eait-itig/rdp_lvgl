@@ -67,10 +67,6 @@ set_page(Menu, Page) ->
 set_sidebar_page(Menu, Page) ->
     ?async_void_wrapper(menu_set_sidebar_page, Menu, Page).
 
--spec set_page_title(page(), string()) -> ok | lv:error().
-set_page_title(Page, Title) ->
-    ?async_void_wrapper(menu_set_page_title, Menu, Item, Page).
-
 -spec set_mode_root_back_btn(lv:menu(), root_back_btn_mode()) -> ok | lv:error().
 set_mode_root_back_btn(Menu, Mode) ->
     ?async_void_wrapper(menu_set_mode_root_back_btn, Menu, Mode).

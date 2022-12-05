@@ -249,6 +249,10 @@ obj_get_size(_Obj) -> error(no_nif).
     boolean() | lv:color()) -> async_return().
 style_set_prop(_Style, _Prop, _Value) -> error(no_nif).
 
+-spec obj_set_local_style_prop(object(), style_generic_prop(), integer() |
+    atom() | boolean() | lv:color(), lv_obj:selector()) -> async_return().
+obj_set_local_style_prop(_Object, _Prop, _Value, _Sel) -> error(no_nif).
+
 -spec textarea_create(object()) -> async_return(object()).
 textarea_create(_Parent) -> error(no_nif).
 
@@ -443,9 +447,6 @@ menu_separator_create(_Parent) -> error(no_nif).
 
 -spec menu_set_page(object(), object()) -> async_return().
 menu_set_page(_Menu, _Page) -> error(no_nif).
-
--spec menu_set_page_title(object(), string()) -> async_return().
-menu_set_page_title(_Page, _Title) -> error(no_nif).
 
 -spec menu_set_sidebar_page(object(), object()) -> async_return().
 menu_set_sidebar_page(_Menu, _Page) -> error(no_nif).

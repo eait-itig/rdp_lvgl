@@ -51,6 +51,34 @@ class Void < Arg
   end
 end
 
+class StylePropVal < Arg
+  def arg_type; 'ARG_STYLEVAL'; end
+  def declare
+    write "lv_style_value_t #{@name}_val;"
+    write "lv_style_prop_t #{@name}_prop;"
+  end
+  def parse
+    write "rc = parse_style_prop_val(env, argv[#{@idx}], argv[#{@idx + 1}],"
+    write "    &#{@name}_prop, &#{@name}_val);"
+    write "if (rc != 0) {"
+    write parse_error_rc
+    write "}"
+  end
+  def call
+    write "    ARG_UINT32, #{@name}_prop,"
+    write "    ARG_STYLEVAL, &#{@name}_val,"
+  end
+end
+
+class Dummy < Arg
+  def declare
+  end
+  def parse
+  end
+  def call
+  end
+end
+
 class LvObject < Arg
   def arg_type; 'ARG_OBJPTR'; end
   def declare
@@ -578,7 +606,6 @@ LvFunc.new('menu_cont_create', LvObject, LvObject.new('parent'))
 LvFunc.new('menu_section_create', LvObject, LvObject.new('parent'))
 LvFunc.new('menu_separator_create', LvObject, LvObject.new('parent'))
 WidgetFunc.new('menu', 'set_page', Void, LvObject.new('page'))
-LvFunc.new('menu_set_page_title', Void, LvObject.new('page'), InlineStr.new('title'))
 WidgetFunc.new('menu', 'set_sidebar_page', Void, LvObject.new('page'))
 WidgetFunc.new('menu', 'set_mode_root_back_btn', Void, MenuModeRootBackBtn.new('mode'))
 WidgetFunc.new('menu', 'set_mode_header', Void, MenuModeHeader.new('mode'))
@@ -609,6 +636,7 @@ ObjFunc.new('align_to', Void, LvObject.new('tobj'), AlignSpec.new('align'),
 ObjFunc.new('get_pos', Point)
 ObjFunc.new('get_size', Point)
 ObjFunc.new('set_size', Void, SplitPoint.new('size'))
+ObjFunc.new('set_local_style_prop', Void, StylePropVal.new('sty'), Dummy.new('val'), StyleSelector.new('sel'))
 
 LvFunc.new('group_create', Group, Inst.new('inst'))
 LvFunc.new('group_add_obj', Void, Group.new('group'),
@@ -618,6 +646,7 @@ Func.new('style_create', 'lv_style_alloc', Style, Inst.new('inst'))
 StyleFunc.new('set_flex_align', Void, FlexAlign.new('main'),
   FlexAlign.new('cross'), FlexAlign.new('tracks'))
 StyleFunc.new('set_flex_flow', Void, FlexFlow.new('flow'))
+StyleFunc.new('set_prop', Void, StylePropVal.new('sty'), Dummy.new('val'))
 
 LvFunc.new('disp_set_bg_color', Void, InstMember.new('inst', 'lvki_disp'),
   Color.new('color'))

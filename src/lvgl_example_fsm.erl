@@ -57,9 +57,7 @@ start_link(Srv, Inst, Res) ->
     res :: lv:point(),
     inst :: lv:instance(),
     flowsty :: lv:style(),
-    errsty :: lv:style(),
     apsty :: lv:style(),
-    hdsty :: lv:style(),
     rlsty :: lv:style(),
     chars :: lv:buffer(),
     evs = [] :: [lv:event()],
@@ -80,12 +78,6 @@ init([Srv, Inst, {W, H}]) ->
     ok = lv_style:set_bg_opacity(APStyle, 10),
     ok = lv_style:set_border_opacity(APStyle, 0),
 
-    {ok, HdStyle} = lv_style:create(Inst),
-    ok = lv_style:set_text_font(HdStyle, {"roboto", bold, 24}),
-
-    {ok, ErrMsgStyle} = lv_style:create(Inst),
-    ok = lv_style:set_text_color(ErrMsgStyle, lv_color:make(16#FF6060)),
-
     {ok, RLStyle} = lv_style:create(Inst),
     ok = lv_style:set_border_side(RLStyle, [left]),
     ok = lv_style:set_border_color(RLStyle, lv_color:make(16#FFFFFF)),
@@ -97,8 +89,8 @@ init([Srv, Inst, {W, H}]) ->
 
     {ok, Chars} = lv:make_buffer(Inst, "0123456789"),
 
-    S0 = #?MODULE{srv = Srv, inst = Inst, flowsty = FlowStyle, hdsty = HdStyle,
-                  apsty = APStyle, errsty = ErrMsgStyle, res = {W, H},
+    S0 = #?MODULE{srv = Srv, inst = Inst, flowsty = FlowStyle,
+                  apsty = APStyle, res = {W, H},
                   chars = Chars, rlsty = RLStyle},
 
     {ok, loading, S0}.
@@ -162,14 +154,13 @@ make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
     InnerFlex.
 
 
-login(enter, _PrevState, S0 = #?MODULE{inst = Inst, hdsty = HdStyle,
-                                       errsty = ErrStyle, chars = Chars}) ->
+login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {Screen, Flex} = make_flex(S0),
     {ok, Group} = lv_group:create(Inst),
 
     {ok, Lbl} = lv_label:create(Flex),
     ok = lv_label:set_text(Lbl, "Faculty of EAIT"),
-    ok = lv_obj:add_style(Lbl, HdStyle),
+    ok = lv_obj:set_style_text_font(Lbl, {"roboto", bold, 24}),
 
     {ok, Lbl2} = lv_label:create(Flex),
     ok = lv_label:set_text(Lbl2, "Staff Remote Access"),
@@ -223,7 +214,7 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, hdsty = HdStyle,
         ErrMsg ->
             {ok, ErrLbl} = lv_label:create(Flex),
             ok = lv_label:set_text(ErrLbl, ErrMsg),
-            ok = lv_obj:add_style(ErrLbl, ErrStyle)
+            ok = lv_obj:set_style_text_color(ErrLbl, lv_color:make(16#FF6060))
     end,
 
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),

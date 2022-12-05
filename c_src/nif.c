@@ -962,104 +962,79 @@ bad:
 	return (EINVAL);
 }
 
-static ERL_NIF_TERM
-rlvgl_style_set_prop3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+static int
+parse_style_prop_val(ErlNifEnv *env, ERL_NIF_TERM kterm, ERL_NIF_TERM vterm,
+    lv_style_prop_t *pprop, lv_style_value_t *pval)
 {
-	struct lvkstyle *sty;
-	struct nif_lock_state nls;
-	struct nif_call_data *ncd;
-	ERL_NIF_TERM msgref, rv;
-	int rc;
-	lv_style_value_t v;
-	lv_style_prop_t prop;
+	char atom[32];
 	lv_color_t col;
 	const lv_font_t *font;
 	const struct style_prop *sp;
-	char atom[32];
 	int intval;
+	int rc;
 
-	bzero(&nls, sizeof (nls));
-
-	if (argc != 3)
-		return (enif_make_badargc(env, argc));
-
-	if (!enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1))
-		return (enif_make_badarg2(env, "style_prop", argv[1]));
+	if (!enif_get_atom(env, kterm, atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "invalid_style_prop"),
+		    kterm));
+		return (EINVAL);
+	}
 	for (sp = style_props; sp->sp_str != NULL; ++sp) {
 		if (strcmp(sp->sp_str, atom) == 0)
 			break;
 	}
-	if (sp->sp_str == NULL)
-		return (enif_make_badarg2(env, "style_prop", argv[1]));
+	if (sp->sp_str == NULL) {
+		enif_raise_exception(env, enif_make_tuple2(env,
+		    enif_make_atom(env, "unsupported_style_prop"),
+		    kterm));
+		return (EINVAL);
+	}
 
-	prop = sp->sp_prop;
+	*pprop = sp->sp_prop;
 
 	switch (sp->sp_type) {
 	case SPT_INT32:
-		if (!enif_get_int(env, argv[2], &intval)) {
-			return (enif_make_badarg2(env, "number", argv[2]));
+		if (!enif_get_int(env, vterm, &intval)) {
+			enif_raise_exception(env, enif_make_tuple3(env,
+			    enif_make_atom(env, "bad_number"),
+			    kterm, vterm));
+			return (EINVAL);
 		}
-		v = (lv_style_value_t){ .num = intval };
+		*pval = (lv_style_value_t){ .num = intval };
 		break;
 	case SPT_COLOR:
-		if (!enif_get_color(env, argv[2], &col))
-			return (enif_make_badarg2(env, "color", argv[2]));
-		v = (lv_style_value_t){ .color = col };
+		if (!enif_get_color(env, vterm, &col)) {
+			enif_raise_exception(env, enif_make_tuple3(env,
+			    enif_make_atom(env, "bad_color"),
+			    kterm, vterm));
+			return (EINVAL);
+		}
+		*pval = (lv_style_value_t){ .color = col };
 		break;
 	case SPT_ENUM:
-		rc = parse_enum(env, argv[2], sp->sp_enum, false, &intval);
+		rc = parse_enum(env, vterm, sp->sp_enum, false, &intval);
 		if (rc)
-			return (make_errno(env, rc));
-		v = (lv_style_value_t){ .num = intval };
+			return (rc);
+		*pval = (lv_style_value_t){ .num = intval };
 		break;
 	case SPT_MULTI_ENUM:
-		rc = parse_enum(env, argv[2], sp->sp_enum, true, &intval);
+		rc = parse_enum(env, vterm, sp->sp_enum, true, &intval);
 		if (rc)
-			return (make_errno(env, rc));
-		v = (lv_style_value_t){ .num = intval };
+			return (rc);
+		*pval = (lv_style_value_t){ .num = intval };
 		break;
 	case SPT_FONT:
-		rc = parse_font_spec(env, argv[2], &font);
+		rc = parse_font_spec(env, vterm, &font);
 		if (rc)
-			return (make_errno(env, rc));
-		v = (lv_style_value_t){ .ptr = font };
+			return (rc);
+		*pval = (lv_style_value_t){ .ptr = font };
 		break;
 	default:
 		assert(0);
-		return (enif_make_badarg(env));
+		return (EINVAL);
 	}
 
-	rc = make_ncd(env, &msgref, &ncd);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-	rc = enter_sty_hdl(env, argv[0], &nls, &sty, 0);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-	rc = lvk_icall(sty->lvks_inst, rlvgl_call_cb, ncd,
-	    ARG_NONE, lv_style_set_prop,
-	    ARG_STYPTR, sty,
-	    ARG_UINT32, prop,
-	    ARG_STYLEVAL, &v,
-	    ARG_NONE);
-
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-	ncd = NULL;	/* rlvgl_call_cb owns it now */
-	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
-
-out:
-	leave_nif(&nls);
-	free_ncd(ncd);
-	return (rv);
+	return (0);
 }
 
 static int
@@ -1787,7 +1762,6 @@ static ErlNifFunc nif_funcs[] = {
 	/* lvgl APIs */
 	AUTOGEN_NIFS,
 	{ "obj_create", 		2, rlvgl_obj_create2 },
-	{ "style_set_prop",		3, rlvgl_style_set_prop3 },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

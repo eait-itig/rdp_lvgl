@@ -29,7 +29,8 @@
 -compile(nowarn_export_all).
 
 -export_type([
-    layout/0, flex_flow/0, flex_align/0
+    layout/0, flex_flow/0, flex_align/0,
+    border_side/0, text_align/0
     ]).
 
 -include("async_wrappers.hrl").

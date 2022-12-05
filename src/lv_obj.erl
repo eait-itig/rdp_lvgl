@@ -133,3 +133,118 @@ get_size(Obj) ->
 -spec get_pos(lv:object()) -> {ok, lv:point()} | lv:error().
 get_pos(Obj) ->
     ?async_wrapper(obj_get_pos, Obj).
+
+-spec set_style_bg_opacity(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_style_bg_opacity(Style, Opacity) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, bg_opa, Opacity, []).
+
+-spec set_style_border_opacity(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_style_border_opacity(Style, Opacity) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_opa, Opacity, []).
+
+-spec set_style_outline_opacity(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_style_outline_opacity(Style, Opacity) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, outline_opa, Opacity, []).
+
+-spec set_style_text_color(lv:style(), lv:color()) -> ok | lv:error().
+set_style_text_color(Style, Color) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, text_color, Color, []).
+
+-spec set_style_border_side(lv:style(), lv_style:border_side() | [lv_style:border_side()]) ->
+    ok | lv:error().
+set_style_border_side(Style, Sides) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_side, Sides, []).
+
+-spec set_style_border_color(lv:style(), lv:color()) -> ok | lv:error().
+set_style_border_color(Style, Color) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_color, Color, []).
+
+-spec set_style_border_post(lv:style(), boolean()) -> ok | lv:error().
+set_style_border_post(Style, State) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_post, State, []).
+
+-spec set_style_radius(lv:style(), px()) -> ok | lv:error().
+set_style_radius(Style, Radius) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, radius, Radius, []).
+
+-spec set_style_pad_top(lv:style(), px()) -> ok | lv:error().
+set_style_pad_top(Style, Radius) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_top, Radius, []).
+
+-spec set_style_pad_bottom(lv:style(), px()) -> ok | lv:error().
+set_style_pad_bottom(Style, Radius) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_bottom, Radius, []).
+
+-spec set_style_pad_left(lv:style(), px()) -> ok | lv:error().
+set_style_pad_left(Style, Radius) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_left, Radius, []).
+
+-spec set_style_pad_right(lv:style(), px()) -> ok | lv:error().
+set_style_pad_right(Style, Radius) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_right, Radius, []).
+
+-spec set_style_text_align(lv:style(), lv_style:text_align()) -> ok | lv:error().
+set_style_text_align(Style, Align) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, text_align, Align, []).
+
+-spec set_style_text_font(lv:style(), lv:font()) -> ok | lv:error().
+set_style_text_font(Style, Font) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, text_font, Font, []).
+
+
+-spec set_style_bg_opacity(lv:style(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_bg_opacity(Style, Opacity, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, bg_opa, Opacity, Sel).
+
+-spec set_style_border_opacity(lv:style(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_border_opacity(Style, Opacity, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_opa, Opacity, Sel).
+
+-spec set_style_outline_opacity(lv:style(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_outline_opacity(Style, Opacity, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, outline_opa, Opacity, Sel).
+
+-spec set_style_text_color(lv:style(), lv:color(), selector()) -> ok | lv:error().
+set_style_text_color(Style, Color, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, text_color, Color, Sel).
+
+-spec set_style_border_side(lv:style(), lv_style:border_side() | [lv_style:border_side()], selector()) ->
+    ok | lv:error().
+set_style_border_side(Style, Sides, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_side, Sides, Sel).
+
+-spec set_style_border_color(lv:style(), lv:color(), selector()) -> ok | lv:error().
+set_style_border_color(Style, Color, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_color, Color, Sel).
+
+-spec set_style_border_post(lv:style(), boolean(), selector()) -> ok | lv:error().
+set_style_border_post(Style, State, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, border_post, State, Sel).
+
+-spec set_style_radius(lv:style(), px(), selector()) -> ok | lv:error().
+set_style_radius(Style, Radius, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, radius, Radius, Sel).
+
+-spec set_style_pad_top(lv:style(), px(), selector()) -> ok | lv:error().
+set_style_pad_top(Style, Radius, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_top, Radius, Sel).
+
+-spec set_style_pad_bottom(lv:style(), px(), selector()) -> ok | lv:error().
+set_style_pad_bottom(Style, Radius, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_bottom, Radius, Sel).
+
+-spec set_style_pad_left(lv:style(), px(), selector()) -> ok | lv:error().
+set_style_pad_left(Style, Radius, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_left, Radius, Sel).
+
+-spec set_style_pad_right(lv:style(), px(), selector()) -> ok | lv:error().
+set_style_pad_right(Style, Radius, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, pad_right, Radius, Sel).
+
+-spec set_style_text_align(lv:style(), lv_style:text_align(), selector()) -> ok | lv:error().
+set_style_text_align(Style, Align, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, text_align, Align, Sel).
+
+-spec set_style_text_font(lv:style(), lv:font(), selector()) -> ok | lv:error().
+set_style_text_font(Style, Font, Sel) ->
+    ?async_void_wrapper(obj_set_local_style_prop, Style, text_font, Font, Sel).
