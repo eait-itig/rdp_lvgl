@@ -320,3 +320,16 @@ lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base)
 	}
 	return (false);
 }
+
+lv_point_t
+lv_table_get_selected_cell_pt(lv_obj_t *obj)
+{
+	lv_point_t pt;
+	uint16_t row, col;
+
+	lv_table_get_selected_cell(obj, &row, &col);
+	pt.x = col;
+	pt.y = row;
+
+	return (pt);
+}

@@ -33,3 +33,15 @@
 -spec create(lv:object()) -> {ok, lv:switch()} | lv:error().
 create(Parent) ->
     ?async_wrapper(switch_create, Parent).
+
+-spec on(lv:switch()) -> ok | lv:error().
+on(Switch) ->
+    lv_obj:add_state(Switch, checked).
+
+-spec off(lv:switch()) -> ok | lv:error().
+off(Switch) ->
+    lv_obj:clear_state(Switch, checked).
+
+-spec is_on(lv:switch()) -> {ok, boolean()} | lv:error().
+is_on(Switch) ->
+    lv_obj:has_state(Switch, checked).

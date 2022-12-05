@@ -42,6 +42,14 @@ set_text(Checkbox, Text) ->
 get_text(Checkbox) ->
     ?async_wrapper(checkbox_get_text, Checkbox).
 
+-spec check(lv:checkbox()) -> ok | lv:error().
+check(Checkbox) ->
+    lv_obj:add_state(Checkbox, checked).
+
+-spec uncheck(lv:checkbox()) -> ok | lv:error().
+uncheck(Checkbox) ->
+    lv_obj:clear_state(Checkbox, checked).
+
 -spec is_checked(lv:checkbox()) -> {ok, boolean()} | lv:error().
 is_checked(Checkbox) ->
     lv_obj:has_state(Checkbox, checked).

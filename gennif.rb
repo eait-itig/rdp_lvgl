@@ -249,6 +249,18 @@ class Point < Arg
   end
 end
 
+class Coord < Arg
+  def arg_type; 'ARG_UINT32'; end
+  def declare
+    write "lv_coord_t #{@name};"
+  end
+  def parse
+    write "if ((rc = parse_coord(env, argv[#{@idx}], &#{@name}))) {"
+    write parse_error_rc
+    write "}"
+  end
+end
+
 class SplitPoint < Point
   def call
     write "    ARG_UINT32, #{@name}.x,"
@@ -397,6 +409,10 @@ class MenuModeRootBackBtn < Enum8
 end
 class MenuModeHeader < Enum8
   def enum; 'menu_mode_header'; end
+  def multi; false; end
+end
+class TableCellCtrl < Enum8
+  def enum; 'table_cell_ctrls'; end
   def multi; false; end
 end
 
@@ -618,6 +634,13 @@ WidgetCreateFunc.new('slider')
 WidgetCreateFunc.new('switch')
 
 WidgetCreateFunc.new('table')
+WidgetFunc.new('table', 'set_row_cnt', Void, UInt16.new('rows'))
+WidgetFunc.new('table', 'set_col_cnt', Void, UInt16.new('cols'))
+WidgetFunc.new('table', 'set_col_width', Void, UInt16.new('col_idx'), Coord.new('width'))
+WidgetFunc.new('table', 'set_cell_value', Void, UInt16.new('row'), UInt16.new('col'), InlineStr.new('text'))
+WidgetFunc.new('table', 'add_cell_ctrl', Void, UInt16.new('row'), UInt16.new('col'), TableCellCtrl.new('ctrl'))
+WidgetFunc.new('table', 'clear_cell_ctrl', Void, UInt16.new('row'), UInt16.new('col'), TableCellCtrl.new('ctrl'))
+WidgetFunc.new('table', 'get_selected_cell_pt', Point)
 
 WidgetCreateFunc.new('spinner', UInt32.new('time'), UInt32.new('arclen'))
 

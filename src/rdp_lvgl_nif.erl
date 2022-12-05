@@ -460,3 +460,24 @@ menu_set_mode_header(_Menu, _Mode) -> error(no_nif).
 
 -spec menu_set_load_page_event(object(), object(), object()) -> async_return().
 menu_set_load_page_event(_Menu, _Btn, _Page) -> error(no_nif).
+
+-spec table_set_row_cnt(object(), integer()) -> async_return().
+table_set_row_cnt(_Table, _Rows) -> error(no_nif).
+
+-spec table_set_col_cnt(object(), integer()) -> async_return().
+table_set_col_cnt(_Table, _Cols) -> error(no_nif).
+
+-spec table_set_col_width(object(), integer(), integer()) -> async_return().
+table_set_col_width(_Table, _ColIdx, _Width) -> error(no_nif).
+
+-spec table_set_cell_value(object(), integer(), integer(), string()) -> async_return().
+table_set_cell_value(_Table, _Row, _Col, _Text) -> error(no_nif).
+
+-spec table_add_cell_ctrl(object(), integer(), integer(), lv_table:ctrl() | [lv_table:ctrl()]) -> async_return().
+table_add_cell_ctrl(_Table, _Row, _Col, _Ctrls) -> error(no_nif).
+
+-spec table_clear_cell_ctrl(object(), integer(), integer(), lv_table:ctrl() | [lv_table:ctrl()]) -> async_return().
+table_clear_cell_ctrl(_Table, _Row, _Col, _Ctrls) -> error(no_nif).
+
+-spec table_get_selected_cell_pt(object()) -> async_return(lv:point()).
+table_get_selected_cell_pt(_Table) -> error(no_nif).

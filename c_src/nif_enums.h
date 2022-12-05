@@ -250,6 +250,15 @@ const static struct enum_spec menu_mode_header[] = {
 	{ "bottom_fixed",	LV_MENU_HEADER_BOTTOM_FIXED },
 	{ NULL, 0 }
 };
+const static struct enum_spec table_cell_ctrls[] = {
+	{ "merge_right",	LV_TABLE_CELL_CTRL_MERGE_RIGHT },
+	{ "text_crop",		LV_TABLE_CELL_CTRL_TEXT_CROP },
+	{ "custom_1",		LV_TABLE_CELL_CTRL_CUSTOM_1 },
+	{ "custom_2",		LV_TABLE_CELL_CTRL_CUSTOM_2 },
+	{ "custom_3",		LV_TABLE_CELL_CTRL_CUSTOM_3 },
+	{ "custom_4",		LV_TABLE_CELL_CTRL_CUSTOM_4 },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

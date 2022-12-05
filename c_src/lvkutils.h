@@ -56,6 +56,7 @@ lv_point_t lv_obj_get_size(lv_obj_t *obj);
 lv_point_t lv_obj_get_pos(lv_obj_t *obj);
 void lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
     lv_anim_enable_t anim);
+lv_point_t lv_table_get_selected_cell_pt(lv_obj_t *obj);
 
 bool lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base);
 
