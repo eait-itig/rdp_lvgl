@@ -199,6 +199,10 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		goto out;
 	case ARG_OBJPTR:
 		obj = rv;
+		if (obj == NULL) {
+			rterm = enif_make_atom(env, "null");
+			break;
+		}
 		pthread_rwlock_wrlock(&obj->lvko_inst->lvki_lock);
 		hdl = lvkid_make_hdl(LVK_OBJ, obj, &do_release);
 		pthread_rwlock_unlock(&obj->lvko_inst->lvki_lock);
@@ -466,6 +470,25 @@ enter_obj_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 		assert(nls->nls_wrlock == wrlock);
 
 	if (!enif_get_resource(env, term, lvkid_hdl_rsrc, (void **)&hdl)) {
+		if (nls->nls_first_hdl != NULL && enif_is_atom(env, term)) {
+			char atom[32];
+			if (!enif_get_atom(env, term, atom, sizeof (atom),
+			    ERL_NIF_LATIN1)) {
+				enif_raise_exception(env, enif_make_tuple2(env,
+				    enif_make_atom(env, "bad_lvgl_handle"),
+				    term));
+				return (EINVAL);
+			}
+			if (strcmp(atom, "none") != 0 &&
+			    strcmp(atom, "null") != 0) {
+				enif_raise_exception(env, enif_make_tuple2(env,
+				    enif_make_atom(env, "bad_lvgl_handle"),
+				    term));
+				return (EINVAL);
+			}
+			*pobj = NULL;
+			return (0);
+		}
 		enif_raise_exception(env, enif_make_tuple2(env,
 		    enif_make_atom(env, "bad_lvgl_handle"), term));
 		return (EINVAL);
@@ -700,70 +723,82 @@ enif_get_color(ErlNifEnv *env, ERL_NIF_TERM term, lv_color_t *pcol)
 }
 
 static ERL_NIF_TERM
-rlvgl_obj_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+rlvgl_obj_get_class1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
-	struct lvkinst *inst;
-	struct lvkobj *parent;
-	struct nif_call_data *ncd = NULL;
 	struct nif_lock_state nls;
-	char atm[8];
+	ERL_NIF_TERM rv;
 	int rc;
-	ERL_NIF_TERM msgref, rv;
+	struct lvkobj *obj;
+	const struct class_spec *cs;
+	const char *name;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	for (cs = class_specs; cs->cs_name != NULL; ++cs) {
+		if (cs->cs_class == obj->lvko_class)
+			break;
+	}
+	name = cs->cs_name;
+	if (name == NULL)
+		name = "unknown";
+
+	rv = enif_make_atom(env, name);
+
+out:
+	leave_nif(&nls);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_obj_has_class2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	ERL_NIF_TERM rv;
+	int rc;
+	struct lvkobj *obj;
+	const struct class_spec *cs;
+	char atom[32];
 
 	bzero(&nls, sizeof (nls));
 
 	if (argc != 2)
 		return (enif_make_badarg(env));
 
-	rc = make_ncd(env, &msgref, &ncd);
+	if (!enif_get_atom(env, argv[1], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
 	}
 
-	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
+	for (cs = class_specs; cs->cs_name != NULL; ++cs) {
+		if (strcmp(cs->cs_name, atom) == 0)
+			break;
+	}
+	if (cs->cs_name == NULL) {
+		rv = enif_make_badarg(env);
 		goto out;
 	}
 
-	if (enif_is_atom(env, argv[1])) {
-		if (!enif_get_atom(env, argv[1], atm, sizeof (atm),
-		    ERL_NIF_LATIN1)) {
-			rv = enif_make_badarg(env);
-			goto out;
-		}
-		if (strcmp(atm, "none") != 0) {
-			rv = enif_make_badarg(env);
-			goto out;
-		}
-		parent = NULL;
+	if (lv_obj_class_has_base(obj->lvko_class, cs->cs_class)) {
+		rv = enif_make_atom(env, "true");
 	} else {
-		rc = enter_obj_hdl(env, argv[1], &nls, &parent, 0);
-		if (rc != 0) {
-			rv = make_errno(env, rc);
-			goto out;
-		}
+		rv = enif_make_atom(env, "false");
 	}
-
-	rc = lvk_icall(inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_disp_obj_create,
-	    ARG_PTR, inst->lvki_disp,
-	    ARG_OBJPTR, parent,
-	    ARG_NONE);
-
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-
-	ncd = NULL;	/* rlvgl_call_cb owns it now */
-	rv = enif_make_tuple2(env, enif_make_atom(env, "async"), msgref);
 
 out:
 	leave_nif(&nls);
-	/* same parent and kid, so leave_hdl will release the locks for both */
-	free_ncd(ncd);
 	return (rv);
 }
 
@@ -1767,7 +1802,8 @@ static ErlNifFunc nif_funcs[] = {
 
 	/* lvgl APIs */
 	AUTOGEN_NIFS,
-	{ "obj_create", 		2, rlvgl_obj_create2 },
+	{ "obj_get_class",		1, rlvgl_obj_get_class1 },
+	{ "obj_has_class",		2, rlvgl_obj_has_class2 },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

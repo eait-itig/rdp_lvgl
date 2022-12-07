@@ -38,6 +38,8 @@
     add_state/2,
     clear_state/2,
     get_state/1,
+    get_class/1,
+    has_class/2,
     has_state/2,
     center/1,
     create/2,
@@ -289,6 +291,34 @@ add_state(Obj, State) ->
 -spec clear_state(lv:object(), state() | [state()]) -> ok | lv:error().
 clear_state(Obj, State) ->
     ?async_void_wrapper(obj_clear_state, Obj, State).
+
+-type class() :: lv_animimg | lv_arc | lv_bar | lv_btn | lv_btnmatrix |
+    lv_calendar | lv_calendar_header_arrow | lv_calendar_header_dropdown |
+    lv_canvas | lv_chart | lv_checkbox | lv_colorwheel | lv_dropdown |
+    lv_dropdownlist | lv_ffmpeg_player | lv_gif | lv_ime_pinyin | lv_img |
+    lv_imgbtn | lv_keyboard | lv_label | lv_led | lv_line | lv_list_btn |
+    lv_list | lv_list_text | lv_menu | lv_menu_cont | lv_menu_main_cont |
+    lv_menu_main_header_cont | lv_menu_page | lv_menu_section |
+    lv_menu_separator | lv_menu_sidebar_cont | lv_menu_sidebar_header_cont |
+    lv_meter | lv_msgbox_backdrop | lv_msgbox | lv_msgbox_content | lv_obj |
+    lv_qrcode | lv_rlottie | lv_roller | lv_roller_label | lv_slider |
+    lv_spangroup | lv_spinbox | lv_spinner | lv_switch | lv_table |
+    lv_tabview | lv_templ | lv_textarea | lv_tileview | lv_tileview_tile|
+    lv_win.
+
+%% @doc Identifies the class of an object.
+%%
+%% @see class()
+-spec get_class(lv:object()) -> class() | unknown.
+get_class(Obj) ->
+    rdp_lvgl_nif:obj_get_class(Obj).
+
+%% @doc Detects whether an object is based on the given class or a subclass.
+%%
+%% @see class()
+-spec has_class(lv:object(), class()) -> boolean().
+has_class(Obj, Class) ->
+    rdp_lvgl_nif:obj_has_class(Obj, Class).
 
 %% @doc Retrieves the list of all state flags on an object.
 %%

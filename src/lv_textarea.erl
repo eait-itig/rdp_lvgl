@@ -30,6 +30,9 @@
 
 -include("async_wrappers.hrl").
 
+-type msec() :: integer().
+%% Number of milliseconds.
+
 -spec create(lv:object()) -> {ok, lv:textarea()} | lv:error().
 create(Parent) ->
     ?async_wrapper(textarea_create, Parent).
@@ -37,6 +40,13 @@ create(Parent) ->
 -spec set_text(lv:textarea(), string()) -> ok | lv:error().
 set_text(Obj, Text) ->
     ?async_void_wrapper(textarea_set_text, Obj, Text).
+
+%% @doc Retrieves the label part of the text area.
+%%
+%% @see lv_label
+-spec get_label(lv:textarea()) -> {ok, lv:label()} | lv:error().
+get_label(Obj) ->
+    ?async_wrapper(textarea_get_label, Obj).
 
 -spec set_password_mode(lv:textarea(), boolean()) -> ok | lv:error().
 set_password_mode(Obj, State) ->
@@ -69,6 +79,10 @@ set_max_length(Obj, MaxLen) ->
 -spec set_text_selection(lv:textarea(), boolean()) -> ok | lv:error().
 set_text_selection(Obj, State) ->
     ?async_void_wrapper(textarea_set_text_selection, Obj, State).
+
+-spec set_password_show_time(lv:textarea(), msec()) -> ok | lv:error().
+set_password_show_time(Obj, Time) ->
+    ?async_void_wrapper(textarea_set_password_show_time, Obj, Time).
 
 -spec get_text(lv:textarea()) -> {ok, binary()} | lv:error().
 get_text(Obj) ->

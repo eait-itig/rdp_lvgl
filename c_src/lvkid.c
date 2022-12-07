@@ -1226,14 +1226,17 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 
 	if (call->lvkc_rt == ARG_OBJPTR) {
 		assert(inst != NULL);
-		cls = (const lv_obj_class_t *)rdr->rdr_class;
-		obj = (struct lvkobj *)rdr->rdr_udata;
-		if (obj == NULL) {
-			pthread_rwlock_wrlock(&inst->lvki_lock);
-			obj = lvk_make_obj(kid, inst, rdr->rdr_val, cls);
-			pthread_rwlock_unlock(&inst->lvki_lock);
+		if (rdr->rdr_val != 0) {
+			cls = (const lv_obj_class_t *)rdr->rdr_class;
+			obj = (struct lvkobj *)rdr->rdr_udata;
+			if (obj == NULL) {
+				pthread_rwlock_wrlock(&inst->lvki_lock);
+				obj = lvk_make_obj(kid, inst, rdr->rdr_val, cls);
+				pthread_rwlock_unlock(&inst->lvki_lock);
+			}
+		} else {
+			obj = NULL;
 		}
-
 		(*call->lvkc_cb)(kid, 0, ARG_OBJPTR, obj, call->lvkc_priv);
 
 		free(call);

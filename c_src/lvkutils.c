@@ -106,6 +106,22 @@ lv_indev_send_text(lv_indev_t *indev, const char *text)
 	lv_group_send_text(group, text);
 }
 
+lv_obj_t *
+lv_indev_get_focused(lv_indev_t *indev)
+{
+	lv_group_t *group;
+	lv_obj_t *act;
+	group = indev->group;
+	if (group == NULL)
+		return (NULL);
+	act = lv_group_get_focused(group);
+	if (act == NULL)
+		return (NULL);
+	if (lv_obj_has_state(act, LV_STATE_DISABLED))
+		return (NULL);
+	return (act);
+}
+
 void
 lv_img_set_offset(lv_obj_t *obj, lv_point_t pt)
 {

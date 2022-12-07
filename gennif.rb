@@ -633,20 +633,24 @@ WidgetFunc.new('textarea', 'set_text_selection', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_password_mode', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_one_line', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_accepted_chars', Void, Buffer.new('buf'))
+WidgetFunc.new('textarea', 'get_label', LvObject)
+WidgetFunc.new('textarea', 'set_password_show_time', Void, UInt16.new('time'))
 
 WidgetCreateFunc.new('img')
 WidgetFunc.new('img', 'set_offset', Void, Point.new('pt'))
 WidgetFunc.new('img', 'set_src', Void, ImgSrc.new('src'))
 
 WidgetCreateFunc.new('label')
+WidgetFunc.new('label', 'get_text', InlineStr)
 WidgetFunc.new('label', 'set_text', Void, InlineStr.new('text'))
+WidgetFunc.new('label', 'set_text_sel_start', Void, UInt32.new('index'))
+WidgetFunc.new('label', 'set_text_sel_end', Void, UInt32.new('index'))
 
 WidgetCreateFunc.new('btnmatrix')
 
 WidgetCreateFunc.new('dropdown')
 WidgetFunc.new('dropdown', 'set_options', Void, InlineStr.new('opts'))
-WidgetFunc.new('dropdown', 'add_option', Void, InlineStr.new('text'),
-  Int32.new('index'))
+WidgetFunc.new('dropdown', 'add_option', Void, InlineStr.new('text'), Int32.new('index'))
 WidgetFunc.new('dropdown', 'get_selected', Int32)
 WidgetFunc.new('dropdown', 'set_selected', Void, Int32.new('index'))
 WidgetFunc.new('dropdown', 'clear_options', Void)
@@ -664,8 +668,7 @@ WidgetFunc.new('led', 'get_brightness', UInt8)
 
 WidgetCreateFunc.new('list')
 WidgetFunc.new('list', 'add_text', LvObject, InlineStr.new('text'))
-WidgetFunc.new('list', 'add_btn', LvObject, ImgSrc.new('icon'),
-  InlineStr.new('text'))
+WidgetFunc.new('list', 'add_btn', LvObject, ImgSrc.new('icon'), InlineStr.new('text'))
 WidgetFunc.new('list', 'get_btn_text', InlineStr, LvObject.new('btn'))
 
 WidgetCreateFunc.new('menu')
@@ -696,6 +699,7 @@ WidgetFunc.new('table', 'get_selected_cell_pt', Point)
 
 WidgetCreateFunc.new('spinner', UInt32.new('time'), UInt32.new('arclen'))
 
+Func.new('obj_create', 'lv_disp_obj_create', LvObject, InstMember.new('inst', 'lvki_disp'), LvObject.new('parent'))
 ObjFunc.new('center', Void)
 ObjFunc.new('add_flag', Void, ObjFlags.new('flags'))
 ObjFunc.new('clear_flag', Void, ObjFlags.new('flags'))
@@ -706,51 +710,36 @@ ObjFunc.new('clear_state', Void, ObjStates.new('states'))
 ObjFunc.new('get_state', ObjStates)
 ObjFunc.new('add_style', Void, Style.new('style'), StyleSelector.new('sel'))
 ObjFunc.new('align', Void, AlignSpec.new('align'), SplitPoint.new('offset'))
-Func.new('obj_align', 'lv_obj_set_align', Void, LvObject.new('obj'),
-  AlignSpec.new('align'))
-ObjFunc.new('align_to', Void, LvObject.new('tobj'), AlignSpec.new('align'),
-  SplitPoint.new('offset'))
+Func.new('obj_align', 'lv_obj_set_align', Void, LvObject.new('obj'), AlignSpec.new('align'))
+ObjFunc.new('align_to', Void, LvObject.new('tobj'), AlignSpec.new('align'), SplitPoint.new('offset'))
 ObjFunc.new('get_pos', Point)
 ObjFunc.new('get_size', Point)
 ObjFunc.new('set_size', Void, SplitPoint.new('size'))
 ObjFunc.new('set_local_style_prop', Void, StylePropVal.new('sty'), Dummy.new('val'), StyleSelector.new('sel'))
 
 LvFunc.new('group_create', Group, Inst.new('inst'))
-LvFunc.new('group_add_obj', Void, Group.new('group'),
-  LvObject.new('obj'))
+LvFunc.new('group_add_obj', Void, Group.new('group'), LvObject.new('obj'))
 
 Func.new('style_create', 'lv_style_alloc', Style, Inst.new('inst'))
-StyleFunc.new('set_flex_align', Void, FlexAlign.new('main'),
-  FlexAlign.new('cross'), FlexAlign.new('tracks'))
+StyleFunc.new('set_flex_align', Void, FlexAlign.new('main'), FlexAlign.new('cross'), FlexAlign.new('tracks'))
 StyleFunc.new('set_flex_flow', Void, FlexFlow.new('flow'))
 StyleFunc.new('set_prop', Void, StylePropVal.new('sty'), Dummy.new('val'))
 
-LvFunc.new('disp_set_bg_color', Void, InstMember.new('inst', 'lvki_disp'),
-  Color.new('color'))
-LvFunc.new('disp_set_bg_image', Void, InstMember.new('inst', 'lvki_disp'),
-  ImgSrc.new('src'))
-LvFunc.new('disp_set_bg_opa', Void, InstMember.new('inst', 'lvki_disp'),
-  UInt8.new('opacity'))
+LvFunc.new('disp_set_bg_color', Void, InstMember.new('inst', 'lvki_disp'), Color.new('color'))
+LvFunc.new('disp_set_bg_image', Void, InstMember.new('inst', 'lvki_disp'), ImgSrc.new('src'))
+LvFunc.new('disp_set_bg_opa', Void, InstMember.new('inst', 'lvki_disp'), UInt8.new('opacity'))
 LvFunc.new('disp_get_inactive_time', UInt32, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_trig_activity', Void, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_get_layer_sys', LvObject, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_get_layer_top', LvObject, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_get_scr_act', LvObject, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_get_scr_prev', LvObject, InstMember.new('inst', 'lvki_disp'))
-Func.new('set_kbd_group', 'lv_indev_set_group', Void,
-  InstMember.new('inst', 'lvki_kbd'), Group.new('group'))
-Func.new('scr_load', 'lv_disp_scr_load', Void,
-  InstMember.new('inst', 'lvki_disp'), LvObject.new('screen'))
-Func.new('scr_load_anim', 'lv_disp_scr_load_anim', Void,
-  InstMember.new('inst', 'lvki_disp'),
-  LvObject.new('screen'),
-  ScrLoadAnim.new('anim'),
-  UInt32.new('time'),
-  UInt32.new('delay'),
-  Bool8.new('autodel'))
-Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void,
-  InstMember.new('inst', 'lvki_mouse'),
-  LvObject.new('cursor'))
+Func.new('set_kbd_group', 'lv_indev_set_group', Void, InstMember.new('inst', 'lvki_kbd'), Group.new('group'))
+Func.new('scr_load', 'lv_disp_scr_load', Void, InstMember.new('inst', 'lvki_disp'), LvObject.new('screen'))
+Func.new('scr_load_anim', 'lv_disp_scr_load_anim', Void, InstMember.new('inst', 'lvki_disp'), LvObject.new('screen'), ScrLoadAnim.new('anim'), UInt32.new('time'), UInt32.new('delay'), Bool8.new('autodel'))
+Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void, InstMember.new('inst', 'lvki_mouse'), LvObject.new('cursor'))
+
+LvFunc.new('indev_get_focused', LvObject, InstMember.new('inst', 'lvki_kbd'))
 
 $stdout.reopen('c_src/nif_gen.h', 'w')
 Func.print_all

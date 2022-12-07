@@ -34,6 +34,10 @@ textarea_set_password_mode(_Obj, _State) -> error(no_nif).
 textarea_set_one_line(_Obj, _State) -> error(no_nif).
 -spec textarea_set_accepted_chars(object(), buffer()) -> async_return().
 textarea_set_accepted_chars(_Obj, _Buf) -> error(no_nif).
+-spec textarea_get_label(object()) -> async_return(object()).
+textarea_get_label(_Obj) -> error(no_nif).
+-spec textarea_set_password_show_time(object(), integer()) -> async_return().
+textarea_set_password_show_time(_Obj, _Time) -> error(no_nif).
 -spec img_create(object()) -> async_return(object()).
 img_create(_Parent) -> error(no_nif).
 -spec img_set_offset(object(), lv:point()) -> async_return().
@@ -42,8 +46,14 @@ img_set_offset(_Obj, _Pt) -> error(no_nif).
 img_set_src(_Obj, _Src) -> error(no_nif).
 -spec label_create(object()) -> async_return(object()).
 label_create(_Parent) -> error(no_nif).
+-spec label_get_text(object()) -> async_return(iolist()).
+label_get_text(_Obj) -> error(no_nif).
 -spec label_set_text(object(), iolist()) -> async_return().
 label_set_text(_Obj, _Text) -> error(no_nif).
+-spec label_set_text_sel_start(object(), integer()) -> async_return().
+label_set_text_sel_start(_Obj, _Index) -> error(no_nif).
+-spec label_set_text_sel_end(object(), integer()) -> async_return().
+label_set_text_sel_end(_Obj, _Index) -> error(no_nif).
 -spec btnmatrix_create(object()) -> async_return(object()).
 btnmatrix_create(_Parent) -> error(no_nif).
 -spec dropdown_create(object()) -> async_return(object()).
@@ -128,6 +138,8 @@ table_clear_cell_ctrl(_Obj, _Row, _Col, _Ctrl) -> error(no_nif).
 table_get_selected_cell_pt(_Obj) -> error(no_nif).
 -spec spinner_create(object(), integer(), integer()) -> async_return(object()).
 spinner_create(_Parent, _Time, _Arclen) -> error(no_nif).
+-spec obj_create(instance(), object()) -> async_return(object()).
+obj_create(_Inst, _Parent) -> error(no_nif).
 -spec obj_center(object()) -> async_return().
 obj_center(_Obj) -> error(no_nif).
 -spec obj_add_flag(object(), lv:flags(lv_obj:flag())) -> async_return().
@@ -198,3 +210,5 @@ scr_load(_Inst, _Screen) -> error(no_nif).
 scr_load_anim(_Inst, _Screen, _Anim, _Time, _Delay, _Autodel) -> error(no_nif).
 -spec set_mouse_cursor(instance(), object()) -> async_return().
 set_mouse_cursor(_Inst, _Cursor) -> error(no_nif).
+-spec indev_get_focused(instance()) -> async_return(object()).
+indev_get_focused(_Inst) -> error(no_nif).

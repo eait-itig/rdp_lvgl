@@ -185,7 +185,7 @@ find_image_path(Name) ->
 setup_cursor(Inst) ->
     {ok, SysLayer} = lv_disp:get_layer_sys(Inst),
     {ok, Parent} = lv_img:create(SysLayer),
-    ok = lv_obj:add_flags(Parent, [overflow_visible, ignore_layout]),
+    ok = lv_obj:add_flag(Parent, [overflow_visible, ignore_layout]),
     {ok, Img} = lv_img:create(Parent),
     ok = lv_img:set_src(Img, find_image_path("mouse_cursor.png")),
     ok = lv_obj:align(Img, top_left, {-4, -4}),
@@ -238,8 +238,24 @@ paste_proc(Srv, Inst) ->
 handle_copy(_Srv, S = #?MODULE{}) ->
     {ok, S}.
 
-handle_select_all(_Srv, S = #?MODULE{}) ->
-    {ok, S}.
+handle_select_all(_Srv, S = #?MODULE{inst = Inst}) ->
+    case lv_indev:get_focused(Inst, keyboard) of
+        {ok, null} ->
+            {ok, S};
+        {ok, Widget} ->
+            case lv_obj:has_class(Widget, lv_textarea) of
+                true ->
+                    {ok, Label} = lv_textarea:get_label(Widget),
+                    {ok, Text} = lv_label:get_text(Label),
+                    ok = lv_label:set_text_sel_start(Label, 0),
+                    ok = lv_label:set_text_sel_end(Label, byte_size(Text)),
+                    {ok, S};
+                _ ->
+                    {ok, S}
+            end;
+        _ ->
+            {ok, S}
+    end.
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,

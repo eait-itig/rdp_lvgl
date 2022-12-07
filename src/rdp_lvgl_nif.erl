@@ -151,4 +151,10 @@ send_key_event(_Inst, _Key, _Btn) -> error(no_nif).
 -spec send_text_event(instance(), buffer()) -> ok | {error, term()}.
 send_text_event(_Inst, _Buf) -> error(no_nif).
 
+-spec obj_get_class(object()) -> atom().
+obj_get_class(_Obj) -> error(no_nif).
+
+-spec obj_has_class(object(), atom()) -> boolean().
+obj_has_class(_Obj, _Class) -> error(no_nif).
+
 -include("nif_gen.hrl").

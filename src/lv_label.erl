@@ -37,3 +37,21 @@ create(Parent) ->
 -spec set_text(lv:label(), string()) -> ok | lv:error().
 set_text(Lbl, Text) ->
     ?async_void_wrapper(label_set_text, Lbl, Text).
+
+-spec get_text(lv:label()) -> {ok, binary()} | lv:error().
+get_text(Lbl) ->
+    ?async_wrapper(label_get_text, Lbl).
+
+-type index() :: integer().
+
+-spec set_text_sel_start(lv:label(), index()) -> ok | lv:error().
+set_text_sel_start(Label, Index) ->
+    ?async_void_wrapper(label_set_text_sel_start, Label, Index).
+
+-spec set_text_sel_end(lv:label(), index()) -> ok | lv:error().
+set_text_sel_end(Label, Index) ->
+    ?async_void_wrapper(label_set_text_sel_end, Label, Index).
+
+-spec set_text_sel_off(lv:label()) -> ok | lv:error().
+set_text_sel_off(Label) ->
+    ?async_void_wrapper(label_set_text_sel_start, Label, 16#FFFF).

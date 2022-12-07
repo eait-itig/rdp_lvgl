@@ -67,3 +67,7 @@ set_group(Inst, keyboard, Group) ->
 -spec send_text(lv:instance(), string()) -> ok | lv:error().
 send_text(Inst, Text) ->
     ?async_void_wrapper(send_text, Inst, Text).
+
+-spec get_focused(lv:instance(), indev()) -> {ok, lv:object() | null} | lv:error().
+get_focused(Inst, keyboard) ->
+    ?async_wrapper(indev_get_focused, Inst).

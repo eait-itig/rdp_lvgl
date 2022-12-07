@@ -1063,6 +1063,118 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_textarea_get_label1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_textarea_get_label,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_textarea_set_password_show_time2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint time;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &time)) {
+		rv = enif_make_badarg2(env, "time", argv[1]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_textarea_set_password_show_time,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT16, time,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_img_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -1295,6 +1407,59 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_label_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_label_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_INLINE_STR, lv_label_get_text,
+	    ARG_OBJPTR, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -1335,6 +1500,124 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_label_set_text,
 	    ARG_OBJPTR, obj,
 	    ARG_INLINE_BUF, &text,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_label_set_text_sel_start2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint index;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &index)) {
+		rv = enif_make_badarg2(env, "index", argv[1]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_label_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_label_set_text_sel_start,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT32, index,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_label_set_text_sel_end2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint index;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &index)) {
+		rv = enif_make_badarg2(env, "index", argv[1]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_label_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_label_set_text_sel_end,
+	    ARG_OBJPTR, obj,
+	    ARG_UINT32, index,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3711,6 +3994,61 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_obj_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkinst *inst;
+	struct lvkobj *parent;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_obj_hdl(env, argv[1], &nls, &parent, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_disp_obj_create,
+	    ARG_PTR, inst->lvki_disp,
+	    ARG_OBJPTR, parent,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_obj_center1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -5667,6 +6005,54 @@ out:
 	return (rv);
 }
 
+static ERL_NIF_TERM
+rlvgl_indev_get_focused1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkinst *inst;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_indev_get_focused,
+	    ARG_PTR, inst->lvki_kbd,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
 #define AUTOGEN_NIFS \
 { "bar_create",				1, rlvgl_bar_create1 }, \
 { "bar_set_value",			3, rlvgl_bar_set_value3 }, \
@@ -5686,11 +6072,16 @@ out:
 { "textarea_set_password_mode",		2, rlvgl_textarea_set_password_mode2 }, \
 { "textarea_set_one_line",		2, rlvgl_textarea_set_one_line2 }, \
 { "textarea_set_accepted_chars",	2, rlvgl_textarea_set_accepted_chars2 }, \
+{ "textarea_get_label",			1, rlvgl_textarea_get_label1 }, \
+{ "textarea_set_password_show_time",	2, rlvgl_textarea_set_password_show_time2 }, \
 { "img_create",				1, rlvgl_img_create1 }, \
 { "img_set_offset",			2, rlvgl_img_set_offset2 }, \
 { "img_set_src",			2, rlvgl_img_set_src2 }, \
 { "label_create",			1, rlvgl_label_create1 }, \
+{ "label_get_text",			1, rlvgl_label_get_text1 }, \
 { "label_set_text",			2, rlvgl_label_set_text2 }, \
+{ "label_set_text_sel_start",		2, rlvgl_label_set_text_sel_start2 }, \
+{ "label_set_text_sel_end",		2, rlvgl_label_set_text_sel_end2 }, \
 { "btnmatrix_create",			1, rlvgl_btnmatrix_create1 }, \
 { "dropdown_create",			1, rlvgl_dropdown_create1 }, \
 { "dropdown_set_options",		2, rlvgl_dropdown_set_options2 }, \
@@ -5733,6 +6124,7 @@ out:
 { "table_clear_cell_ctrl",		4, rlvgl_table_clear_cell_ctrl4 }, \
 { "table_get_selected_cell_pt",		1, rlvgl_table_get_selected_cell_pt1 }, \
 { "spinner_create",			3, rlvgl_spinner_create3 }, \
+{ "obj_create",				2, rlvgl_obj_create2 }, \
 { "obj_center",				1, rlvgl_obj_center1 }, \
 { "obj_add_flag",			2, rlvgl_obj_add_flag2 }, \
 { "obj_clear_flag",			2, rlvgl_obj_clear_flag2 }, \
@@ -5767,4 +6159,5 @@ out:
 { "set_kbd_group",			2, rlvgl_set_kbd_group2 }, \
 { "scr_load",				2, rlvgl_scr_load2 }, \
 { "scr_load_anim",			6, rlvgl_scr_load_anim6 }, \
-{ "set_mouse_cursor",			2, rlvgl_set_mouse_cursor2 }
+{ "set_mouse_cursor",			2, rlvgl_set_mouse_cursor2 }, \
+{ "indev_get_focused",			1, rlvgl_indev_get_focused1 }
