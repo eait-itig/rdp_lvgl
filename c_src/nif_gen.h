@@ -3934,6 +3934,94 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *parent;
+	ErlNifBinary title;
+	ErlNifBinary text;
+	ErlNifBinary btns[16];
+	size_t btns_n = 0;
+	ERL_NIF_TERM btns_list, btns_hd;
+	char atom[32];
+	uint add_close;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 5)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &parent, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_inspect_iolist_as_binary(env, argv[1], &title)) {
+		rv = enif_make_badarg2(env, "title", argv[1]);
+		goto out;
+	}
+	if (!enif_inspect_iolist_as_binary(env, argv[2], &text)) {
+		rv = enif_make_badarg2(env, "text", argv[2]);
+		goto out;
+	}
+	btns_list = argv[3];
+	while (enif_get_list_cell(env, btns_list, &btns_hd, &btns_list)) {
+		assert(btns_n < 16);
+		if (!enif_inspect_iolist_as_binary(env, btns_hd, &btns[btns_n])) {
+			rv = enif_make_badarg2(env, "btns", argv[3]);
+		goto out;
+		}
+		++btns_n;
+	}
+	if (!enif_get_atom(env, argv[4], atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		rv = enif_make_badarg2(env, "add_close", argv[4]);
+		goto out;
+	}
+	if (strcmp(atom, "true") == 0) {
+		add_close = 1;
+	} else if (strcmp(atom, "false") == 0) {
+		add_close = 0;
+	} else {
+		rv = enif_make_badarg2(env, "add_close", argv[4]);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_OBJPTR, lv_msgbox_create,
+	    ARG_OBJPTR, parent,
+	    ARG_INLINE_BUF, &title,
+	    ARG_INLINE_BUF, &text,
+	    ARG_INL_BUF_ARR, btns, btns_n,
+	    ARG_UINT8, add_close,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_spinner_create3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -6123,6 +6211,7 @@ out:
 { "table_add_cell_ctrl",		4, rlvgl_table_add_cell_ctrl4 }, \
 { "table_clear_cell_ctrl",		4, rlvgl_table_clear_cell_ctrl4 }, \
 { "table_get_selected_cell_pt",		1, rlvgl_table_get_selected_cell_pt1 }, \
+{ "msgbox_create",			5, rlvgl_msgbox_create5 }, \
 { "spinner_create",			3, rlvgl_spinner_create3 }, \
 { "obj_create",				2, rlvgl_obj_create2 }, \
 { "obj_center",				1, rlvgl_obj_center1 }, \

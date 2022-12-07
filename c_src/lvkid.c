@@ -1273,6 +1273,9 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		return;
 	}
 
+	/* Not supported yet. */
+	assert(call->lvkc_rt != ARG_INL_BUF_ARR);
+
 	switch (call->lvkc_rt) {
 	case ARG_NONE:
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, NULL, call->lvkc_priv);
@@ -1282,6 +1285,7 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	case ARG_GRPPTR:
 	case ARG_INLINE_STR:
 	case ARG_INLINE_BUF:
+	case ARG_INL_BUF_ARR:
 		/* handled above */
 		break;
 	case ARG_PTR:
@@ -1337,10 +1341,12 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	lv_color_t *col;
 	lv_point_t *pt;
 	lv_style_value_t *stv;
-	uint i;
+	uint i, ai;
+	size_t sz;
 	const char *str;
 	ErlNifBinary *bin = NULL;
 	struct cdinline *inl;
+	uint8_t alen[8];
 
 	if (inst == NULL)
 		assert(rt != ARG_OBJPTR);
@@ -1432,6 +1438,21 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			cd[0].cd_call.cdc_arg[i] = strlen(str);
 			cdi_put(inl, (const uint8_t *)str,
 			    cd[0].cd_call.cdc_arg[i]);
+			break;
+		case ARG_INL_BUF_ARR:
+			bin = va_arg(ap, ErlNifBinary *);
+			sz = va_arg(ap, size_t);
+			for (ai = 0; ai < sz; ++ai) {
+				alen[ai] = bin[ai].size;
+				cdi_put(inl, bin[ai].data, alen[ai]);
+			}
+			cd[0].cd_call.cdc_arg[i] = 0;
+			for (; ai > 0; --ai) {
+				cd[0].cd_call.cdc_arg[i] <<= 8;
+				cd[0].cd_call.cdc_arg[i] |= alen[ai - 1];
+			}
+			log_debug("inline buf arr of %zu members, cdc_arg = %llx",
+			    sz, cd[0].cd_call.cdc_arg[i]);
 			break;
 		}
 	}

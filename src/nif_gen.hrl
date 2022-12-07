@@ -136,6 +136,8 @@ table_add_cell_ctrl(_Obj, _Row, _Col, _Ctrl) -> error(no_nif).
 table_clear_cell_ctrl(_Obj, _Row, _Col, _Ctrl) -> error(no_nif).
 -spec table_get_selected_cell_pt(object()) -> async_return(lv:point()).
 table_get_selected_cell_pt(_Obj) -> error(no_nif).
+-spec msgbox_create(object(), iolist(), iolist(), [iolist()], boolean()) -> async_return(object()).
+msgbox_create(_Parent, _Title, _Text, _Btns, _Add_close) -> error(no_nif).
 -spec spinner_create(object(), integer(), integer()) -> async_return(object()).
 spinner_create(_Parent, _Time, _Arclen) -> error(no_nif).
 -spec obj_create(instance(), object()) -> async_return(object()).

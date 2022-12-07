@@ -215,6 +215,10 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
         {login_pin, "chemlabs", PinText}),
 
+    {ok, MsgBox} = lv_msgbox:create(Screen, "Testing message box",
+        "This is a test", ["OK", "Nope"], true),
+    ok = lv_obj:center(MsgBox),
+
     case S0#?MODULE.errmsg of
         undefined -> ok;
         ErrMsg ->

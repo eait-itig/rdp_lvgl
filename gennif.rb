@@ -185,6 +185,29 @@ class InlineStr < Arg
   def erl_type; 'iolist()'; end
 end
 
+class InlineStrArray < Arg
+  def arg_type; 'ARG_INL_BUF_ARR'; end
+  def declare
+    write "ErlNifBinary #{@name}[16];"
+    write "size_t #{@name}_n = 0;"
+    write "ERL_NIF_TERM #{@name}_list, #{@name}_hd;"
+  end
+  def parse
+    write "#{@name}_list = argv[#{@idx}];"
+    write "while (enif_get_list_cell(env, #{@name}_list, &#{@name}_hd, &#{@name}_list)) {"
+    write "\tassert(#{@name}_n < 16);"
+    write "\tif (!enif_inspect_iolist_as_binary(env, #{@name}_hd, &#{@name}[#{@name}_n])) {"
+    write "\t" + parse_error
+    write "\t}"
+    write "\t++#{@name}_n;"
+    write "}"
+  end
+  def call
+    write "    ARG_INL_BUF_ARR, #{@name}, #{@name}_n,"
+  end
+  def erl_type; '[iolist()]'; end
+end
+
 class ImgSrc < Arg
   def arg_type; 'ARG_INLINE_STR'; end
   def declare
@@ -696,6 +719,8 @@ WidgetFunc.new('table', 'set_cell_value', Void, UInt16.new('row'), UInt16.new('c
 WidgetFunc.new('table', 'add_cell_ctrl', Void, UInt16.new('row'), UInt16.new('col'), TableCellCtrl.new('ctrl'))
 WidgetFunc.new('table', 'clear_cell_ctrl', Void, UInt16.new('row'), UInt16.new('col'), TableCellCtrl.new('ctrl'))
 WidgetFunc.new('table', 'get_selected_cell_pt', Point)
+
+WidgetCreateFunc.new('msgbox', InlineStr.new('title'), InlineStr.new('text'), InlineStrArray.new('btns'), Bool8.new('add_close'));
 
 WidgetCreateFunc.new('spinner', UInt32.new('time'), UInt32.new('arclen'))
 

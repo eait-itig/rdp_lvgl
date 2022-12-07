@@ -30,14 +30,21 @@
 #include "lvkutils.h"
 
 struct ibuf {
-	uint8_t	ib_buf[256];
-	size_t	ib_len;
-	uint	ib_idx;
+	uint8_t	 ib_buf[512];
+	uint8_t *ib_ptrs[4];
+	size_t	 ib_len;
+	uint	 ib_idx;
 };
 
 static struct ibuf ibuf[8];
 
 #define	LVCALL_DEBUG	0
+
+#if LVCALL_DEBUG == 1
+# define debug(fmt...)	log_debug(fmt)
+#else
+# define debug(fmt...)	(void)0
+#endif
 
 void
 lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
@@ -53,17 +60,16 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	uint8_t *data;
 	enum arg_type rt = cdc->cdc_rettype;
 
-#if LVCALL_DEBUG == 1
-	log_debug("call to %p", (void *)cdc->cdc_func);
-	log_debug("rtype = %u", cdc->cdc_rettype);
-#endif
+	debug("call to %p", (void *)cdc->cdc_func);
+	debug("rtype = %u", cdc->cdc_rettype);
 
 	inl = cdi_init(cd, ncd, FOFFSET_CALL);
 	assert(inl != NULL);
 
 	for (i = 0; i < 8; ++i) {
 		if (cdc->cdc_argtype[i] != ARG_INLINE_BUF &&
-		    cdc->cdc_argtype[i] != ARG_INLINE_STR)
+		    cdc->cdc_argtype[i] != ARG_INLINE_STR &&
+		    cdc->cdc_argtype[i] != ARG_INL_BUF_ARR)
 			continue;
 
 		if (cdc->cdc_arg[i] == 0) {
@@ -71,9 +77,39 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			continue;
 		}
 
-#if LVCALL_DEBUG == 1
-		log_debug("inline buf in arg%d: %lu bytes", i, cdc->cdc_arg[i]);
-#endif
+		if (cdc->cdc_argtype[i] == ARG_INL_BUF_ARR) {
+			uint64_t v = cdc->cdc_arg[i];
+			uint8_t len;
+			uint aidx = 0;
+
+			ibuf[ib].ib_len = 0;
+			ibuf[ib].ib_idx = i;
+			bzero(ibuf[ib].ib_buf, sizeof (ibuf[ib].ib_buf));
+
+			cdc->cdc_argtype[i] = ARG_PTR;
+			cdc->cdc_arg[i] = (uint64_t)ibuf[ib].ib_ptrs;
+
+			while ((v & 0xFF) != 0) {
+				len = v & 0xFF;
+				v >>= 8;
+
+				debug("inline arr buf in arg%d/%d: "
+				    "%d bytes", i, aidx, len);
+
+				ibuf[ib].ib_ptrs[aidx++] =
+				    &ibuf[ib].ib_buf[ibuf[ib].ib_len];
+				cdi_get(inl, &ibuf[ib].ib_buf[ibuf[ib].ib_len],
+				    len);
+				ibuf[ib].ib_len += len + 1;
+
+				debug("=> inlined as ib %d/%d", ib, aidx);
+			}
+
+			++ib;
+			continue;
+		}
+
+		debug("inline buf in arg%d: %lu bytes", i, cdc->cdc_arg[i]);
 
 		ibuf[ib].ib_len = cdc->cdc_arg[i];
 		ibuf[ib].ib_idx = i;
@@ -84,9 +120,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		cdc->cdc_argtype[i] = ARG_PTR;
 		cdc->cdc_arg[i] = (uint64_t)ibuf[ib].ib_buf;
 
-#if LVCALL_DEBUG == 1
-		log_debug("=> inlined as ib %d", ib);
-#endif
+		debug("=> inlined as ib %d", ib);
 
 		++ib;
 	}
@@ -98,7 +132,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 #if LVCALL_DEBUG == 1
 	for (i = 0; i < 8; ++i) {
-		log_debug("arg%u type = %u, val = %lx",
+		debug("arg%u type = %u, val = %lx",
 		    i, cdc->cdc_argtype[i], cdc->cdc_arg[i]);
 		if (cdc->cdc_argtype[i] == ARG_NONE)
 			break;
@@ -107,9 +141,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 	rv = lv_do_real_call(cdc);
 
-#if LVCALL_DEBUG == 1
-	log_debug("rv = %lx", rv);
-#endif
+	debug("rv = %lx", rv);
 
 	switch (rt) {
 	case ARG_INLINE_STR:

@@ -168,7 +168,8 @@ enum arg_type {
 	ARG_POINT,
 	ARG_STYLEVAL,
 	ARG_INLINE_BUF,
-	ARG_INLINE_STR
+	ARG_INLINE_STR,
+	ARG_INL_BUF_ARR
 };
 
 struct cdesc_call {
