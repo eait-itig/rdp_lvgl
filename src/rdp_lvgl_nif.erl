@@ -73,11 +73,6 @@ init() ->
 
 -type pixeldata() :: iolist().
 
--type msec() :: integer().
--type degrees() :: integer().
-
--type color() :: {R :: integer(), G :: integer(), B :: integer()}.
-
 -type style_generic_prop() :: width | min_width | max_width | height |
     min_height | max_height | x | y | align | radius | pad_top | pad_bottom |
     pad_left | pad_right | pad_row | pad_column | base_dir | clip_corner |
@@ -95,8 +90,6 @@ init() ->
     transform_angle | transform_pivot_x | transform_pivot_y.
 -type style_generic_val() :: integer() | lv:coord() |
     atom() | boolean() | lv:color().
-
--type layout() :: flex | grid.
 
 -spec setup_instance(lv:size()) ->
     {ok, instance(), msgref()} | lv:error().

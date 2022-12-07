@@ -82,5 +82,5 @@ handle_event(_Evt, _Srv, S0 = #?MODULE{}) ->
     {ok, S0}.
 
 %% @private
-terminate(Reason, #?MODULE{}) ->
+terminate(_Reason, #?MODULE{}) ->
     ok.

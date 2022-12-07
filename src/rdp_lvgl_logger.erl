@@ -52,7 +52,7 @@ init([]) ->
     ok = rdp_lvgl_nif:take_log_ownership(),
     {ok, #?MODULE{}}.
 
-terminate(Why, #?MODULE{}) ->
+terminate(_Why, #?MODULE{}) ->
     ok.
 
 handle_call(Req, _From, S0 = #?MODULE{}) ->

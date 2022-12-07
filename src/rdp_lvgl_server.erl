@@ -91,7 +91,9 @@ handle_connect(Cookie, Protocols, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0})
             {accept, AcceptOpts, S0#?MODULE{modstate = MS1}};
         {accept_raw, MS1} ->
             {accept_raw, S0#?MODULE{modstate = MS1}};
-        {reject, Reason, MS1} ->
+        {reject, _Reason, MS1} ->
+            {reject, S0#?MODULE{modstate = MS1}};
+        {reject, MS1} ->
             {reject, S0#?MODULE{modstate = MS1}};
         {stop, Reason, MS1} ->
             {stop, Reason, S0#?MODULE{modstate = MS1}}
@@ -101,7 +103,7 @@ choose_format(_Preferred, Supported, S = #?MODULE{}) ->
     lager:debug("using color format 16bpp out of ~p", [Supported]),
     {'16bpp', S}.
 
-handle_info({R, flush, _, _}, Srv, S = #?MODULE{flushref = R, suppress = true}) ->
+handle_info({R, flush, _, _}, _Srv, S = #?MODULE{flushref = R, suppress = true}) ->
     {ok, S};
 handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = R}) ->
     W = (X2 - X1) + 1,
@@ -121,7 +123,7 @@ handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = 
     rdp_server:send_update(Srv, Update),
     {ok, S};
 
-handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R, suppress = true}) ->
+handle_info({R, flush_sync}, _Srv, S0 = #?MODULE{flushref = R, suppress = true}) ->
     #?MODULE{inst = Inst, frame = FrameId} = S0,
     flush_done(Inst),
     {ok, S0#?MODULE{frame = FrameId + 1, sent_sof = false}};
@@ -133,7 +135,7 @@ handle_info({R, flush_sync}, Srv, S0 = #?MODULE{flushref = R}) ->
     flush_done(Inst),
     {ok, S0#?MODULE{frame = FrameId + 1, sent_sof = false}};
 
-handle_info({'DOWN', ClipMon, process, _Pid, Why}, Srv, S0 = #?MODULE{clipmon = ClipMon}) ->
+handle_info({'DOWN', ClipMon, process, _Pid, Why}, _Srv, S0 = #?MODULE{clipmon = ClipMon}) ->
     case Why of
         normal -> ok;
         _ -> lager:debug("clipmon died: ~p", [Why])
@@ -205,9 +207,9 @@ init_ui(Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
     end.
 
 handle_paste(Srv, S = #?MODULE{clipmon = undefined, inst = Inst}) ->
-    {Pid, MonRef} = spawn_monitor(?MODULE, paste_proc, [Srv, Inst]),
+    {_Pid, MonRef} = spawn_monitor(?MODULE, paste_proc, [Srv, Inst]),
     {ok, S#?MODULE{clipmon = MonRef}};
-handle_paste(Srv, S = #?MODULE{}) ->
+handle_paste(_Srv, S = #?MODULE{}) ->
     {ok, S}.
 
 paste_proc(Srv, Inst) ->
@@ -233,31 +235,31 @@ paste_proc(Srv, Inst) ->
             ok
     end.
 
-handle_copy(Srv, S = #?MODULE{}) ->
+handle_copy(_Srv, S = #?MODULE{}) ->
     {ok, S}.
 
-handle_select_all(Srv, S = #?MODULE{}) ->
+handle_select_all(_Srv, S = #?MODULE{}) ->
     {ok, S}.
 
-handle_event(#ts_inpevt_mouse{point = Pt, action = move}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_mouse{point = Pt, action = move}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_pointer_event(Inst, Pt, released),
     {ok, S};
 
-handle_event(#ts_inpevt_mouse{point = Pt, action = down}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_mouse{point = Pt, action = down}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_pointer_event(Inst, Pt, pressed),
     {ok, S};
 
-handle_event(#ts_inpevt_mouse{point = Pt, action = up}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_mouse{point = Pt, action = up}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_pointer_event(Inst, Pt, released),
     {ok, S};
 
-handle_event(#ts_inpevt_mouse{}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_mouse{}, _Srv, S = #?MODULE{}) ->
     {ok, S};
 
-handle_event(#ts_inpevt_key{code = C, action = A}, Srv, S0 = #?MODULE{})
+handle_event(#ts_inpevt_key{code = C, action = A}, _Srv, S0 = #?MODULE{})
                         when (C =:= alt) or (C =:= shift) or (C =:= ctrl) ->
     #?MODULE{modkeys = MK0} = S0,
     MK1 = case A of
@@ -265,11 +267,11 @@ handle_event(#ts_inpevt_key{code = C, action = A}, Srv, S0 = #?MODULE{})
         up -> MK0#{C => false}
     end,
     {ok, S0#?MODULE{modkeys = MK1}};
-handle_event(#ts_inpevt_key{code = caps, action = down}, Srv, S0 = #?MODULE{}) ->
+handle_event(#ts_inpevt_key{code = caps, action = down}, _Srv, S0 = #?MODULE{}) ->
     #?MODULE{modkeys = MK0} = S0,
     MK1 = MK0#{capslock => not (maps:get(capslock, MK0, false))},
     {ok, S0#?MODULE{modkeys = MK1}};
-handle_event(#ts_inpevt_key{code = num, action = down}, Srv, S0 = #?MODULE{}) ->
+handle_event(#ts_inpevt_key{code = num, action = down}, _Srv, S0 = #?MODULE{}) ->
     #?MODULE{modkeys = MK0} = S0,
     MK1 = MK0#{numlock => not (maps:get(numlock, MK0, false))},
     {ok, S0#?MODULE{modkeys = MK1}};
@@ -286,7 +288,7 @@ handle_event(#ts_inpevt_key{code = Code, flags = F, action = down}, Srv, S0 = #?
             ok = lv_indev:send_key_event(Inst, LvKey, pressed),
             {ok, S1}
     end;
-handle_event(#ts_inpevt_key{code = Code, flags = F, action = up}, Srv, S0 = #?MODULE{keydown = {Ext, Code}}) ->
+handle_event(#ts_inpevt_key{code = Code, flags = F, action = up}, _Srv, S0 = #?MODULE{keydown = {Ext, Code}}) ->
     #?MODULE{inst = Inst, modkeys = MK} = S0,
     S1 = S0#?MODULE{keydown = none},
     Ext = lists:member(extended, F),
@@ -299,35 +301,35 @@ handle_event(#ts_inpevt_key{code = Code, flags = F, action = up}, Srv, S0 = #?MO
             ok = lv_indev:send_key_event(Inst, LvKey, released),
             {ok, S1}
     end;
-handle_event(Ev = #ts_inpevt_key{code = Code, action = down}, Srv, S0 = #?MODULE{keydown = {OldExt, OldCode}}) ->
+handle_event(Ev = #ts_inpevt_key{action = down}, Srv, S0 = #?MODULE{keydown = {OldExt, OldCode}}) ->
     F = case OldExt of true -> [extended]; false -> [] end,
     {ok, S1} = handle_event(#ts_inpevt_key{code = OldCode, flags = F, action = up}, Srv, S0),
     handle_event(Ev, Srv, S1);
 
-handle_event(#ts_inpevt_key{}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_key{}, _Srv, S = #?MODULE{}) ->
     {ok, S};
 
 handle_event(#ts_inpevt_unicode{code = Code, action = A}, Srv, S = #?MODULE{}) ->
     handle_event(#ts_inpevt_key{code = {Code,Code}, flags = [], action = A}, Srv, S);
 
-handle_event(#ts_inpevt_wheel{clicks = N}, Srv, S = #?MODULE{}) ->
+handle_event(#ts_inpevt_wheel{clicks = N}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_wheel_event(Inst, N),
     {ok, S};
 
-handle_event(#ts_inpevt_sync{flags = Flags}, Srv, S0 = #?MODULE{}) ->
+handle_event(#ts_inpevt_sync{flags = Flags}, _Srv, S0 = #?MODULE{}) ->
     #?MODULE{modkeys = MK0} = S0,
     MK1 = MK0#{capslock => lists:member(capslock, Flags)},
     MK2 = MK1#{numlock => lists:member(numlock, Flags)},
     {ok, S0#?MODULE{modkeys = MK2}};
 
-handle_event(#ts_suppress_output{allow_updates = false}, Srv, S0 = #?MODULE{}) ->
+handle_event(#ts_suppress_output{allow_updates = false}, _Srv, S0 = #?MODULE{}) ->
     {ok, S0#?MODULE{suppress = true}};
 handle_event(#ts_suppress_output{allow_updates = true, rect = R}, Srv, S0 = #?MODULE{}) ->
     S1 = S0#?MODULE{suppress = false},
     handle_event(#ts_refresh_rect{rects = [R]}, Srv, S1);
 
-handle_event(#ts_refresh_rect{rects = []}, Srv, S0 = #?MODULE{}) ->
+handle_event(#ts_refresh_rect{rects = []}, _Srv, S0 = #?MODULE{}) ->
     {ok, S0};
 handle_event(#ts_refresh_rect{rects = [R | Rest]}, Srv, S0 = #?MODULE{}) ->
     #?MODULE{inst = Inst, flushref = Ref} = S0,
@@ -382,7 +384,7 @@ ts_key_to_lv(del, false, #{numlock := true}) -> $.;
 ts_key_to_lv('gray+', _, _) -> $+;
 ts_key_to_lv('gray-', _, _) -> $-;
 ts_key_to_lv(prisc, _, _) -> $*;
-ts_key_to_lv({Plain, Shifted}, true, MK) -> Plain;
+ts_key_to_lv({Plain, _Shifted}, true, _MK) -> Plain;
 ts_key_to_lv({Plain, Shifted}, false, MK) ->
     case {maps:get(capslock, MK, false), maps:get(shift, MK, false)} of
         {true, true} when (Plain >= $a) and (Plain =< $z) -> Plain;

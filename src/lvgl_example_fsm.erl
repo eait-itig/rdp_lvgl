@@ -64,8 +64,8 @@ start_link(Srv, Inst, Res) ->
     chars :: lv:buffer(),
     evs = [] :: [lv:event()],
     errmsg :: undefined | string(),
-    login :: undefined | string(),
-    password :: undefined | string()
+    login :: undefined | binary(),
+    password :: undefined | binary()
     }).
 
 %% @private
@@ -114,7 +114,7 @@ make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
     {ok, Logo} = lv_img:create(Screen),
     ok = lv_img:set_src(Logo,
         rdp_lvgl_server:find_image_path("uq-logo.png")),
-    {ok, {LogoW, LogoH}} = lv_obj:get_size(Logo),
+    {ok, {LogoW, _LogoH}} = lv_obj:get_size(Logo),
     {ok, Flex} = lv_obj:create(Inst, Screen),
     ok = lv_obj:add_style(Flex, FlowStyle),
 
@@ -134,7 +134,7 @@ make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
 %% @private
 loading(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
     {Screen, Flex} = make_flex(S0),
-    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
+    {ok, _Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 100, 0, true),
     {keep_state_and_data, [{state_timeout, 1000, advance}]};
 loading(state_timeout, advance, S0 = #?MODULE{}) ->
@@ -143,8 +143,7 @@ loading(state_timeout, advance, S0 = #?MODULE{}) ->
 make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
                                                  flowsty = FlowStyle,
                                                  apsty = APStyle,
-                                                 rlsty = RLStyle,
-                                                 res = {W, H}}) ->
+                                                 rlsty = RLStyle}) ->
     {ok, Outer} = lv_obj:create(Inst, TopLevel),
     ok = lv_obj:add_style(Outer, APStyle),
     ok = lv_obj:set_size(Outer, {{percent, 100}, content}),
@@ -242,11 +241,9 @@ login(info, {_Ref, {login_pin, Login, PinInp}}, S0 = #?MODULE{}) ->
     {next_state, checking_login, S0#?MODULE{login = Login, password = Pin}}.
 
 %% @private
-checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
-                                                flowsty = FlowStyle,
-                                                res = {W, H}}) ->
+checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
     {Screen, Flex} = make_flex(S0),
-    {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
+    {ok, _Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
 
     {keep_state_and_data, [{state_timeout, 1000, advance}]};
@@ -263,7 +260,7 @@ checking_login(state_timeout, advance, S0 = #?MODULE{login = L, password = P}) -
     end.
 
 %% @private
-done(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
+done(enter, _PrevState, #?MODULE{inst = Inst}) ->
     {ok, Screen} = lv_scr:create(Inst),
     {ok, Lbl} = lv_label:create(Screen),
     ok = lv_label:set_text(Lbl, "End of demo!"),
