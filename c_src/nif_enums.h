@@ -259,6 +259,19 @@ const static struct enum_spec table_cell_ctrls[] = {
 	{ "custom_4",		LV_TABLE_CELL_CTRL_CUSTOM_4 },
 	{ NULL, 0 }
 };
+const static struct enum_spec btnmatrix_ctrls[] = {
+	{ "hidden",		LV_BTNMATRIX_CTRL_HIDDEN },
+	{ "no_repeat",		LV_BTNMATRIX_CTRL_NO_REPEAT },
+	{ "disabled",		LV_BTNMATRIX_CTRL_DISABLED },
+	{ "checkable",		LV_BTNMATRIX_CTRL_CHECKABLE },
+	{ "checked",		LV_BTNMATRIX_CTRL_CHECKED },
+	{ "click_trig",		LV_BTNMATRIX_CTRL_CLICK_TRIG },
+	{ "popover",		LV_BTNMATRIX_CTRL_POPOVER },
+	{ "recolor",		LV_BTNMATRIX_CTRL_RECOLOR },
+	{ "custom_1",		LV_BTNMATRIX_CTRL_CUSTOM_1 },
+	{ "custom_2",		LV_BTNMATRIX_CTRL_CUSTOM_2 },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

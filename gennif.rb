@@ -478,6 +478,11 @@ class TableCellCtrl < Enum8
   def multi; false; end
   def erl_flag_type; 'lv_table:ctrl()'; end
 end
+class BtnMatrixControl < Enum16
+  def enum; 'btnmatrix_ctrls'; end
+  def multi; true; end
+  def erl_flag_type; 'lv_btnmatrix:ctrl()'; end
+end
 
 class Func
   attr_reader :flags
@@ -670,6 +675,17 @@ WidgetFunc.new('label', 'set_text_sel_start', Void, UInt32.new('index'))
 WidgetFunc.new('label', 'set_text_sel_end', Void, UInt32.new('index'))
 
 WidgetCreateFunc.new('btnmatrix')
+WidgetFunc.new('btnmatrix', 'set_map', Void, InlineStrArray.new('map'))
+WidgetFunc.new('btnmatrix', 'set_btn_ctrl', Void, UInt16.new('idx'), BtnMatrixControl.new('ctrl'))
+WidgetFunc.new('btnmatrix', 'clear_btn_ctrl', Void, UInt16.new('idx'), BtnMatrixControl.new('ctrl'))
+WidgetFunc.new('btnmatrix', 'set_btn_ctrl_all', Void, BtnMatrixControl.new('ctrl'))
+WidgetFunc.new('btnmatrix', 'clear_btn_ctrl_all', Void, BtnMatrixControl.new('ctrl'))
+WidgetFunc.new('btnmatrix', 'set_btn_width', Void, UInt16.new('idx'), UInt8.new('width'))
+WidgetFunc.new('btnmatrix', 'set_one_checked', Void, Bool8.new('checked'))
+WidgetFunc.new('btnmatrix', 'get_selected_btn', UInt16)
+WidgetFunc.new('btnmatrix', 'set_selected_btn', Void, UInt16.new('idx'))
+WidgetFunc.new('btnmatrix', 'get_btn_text', InlineStr, UInt16.new('idx'))
+WidgetFunc.new('btnmatrix', 'has_btn_ctrl', Bool8, UInt16.new('idx'), BtnMatrixControl.new('ctrl'))
 
 WidgetCreateFunc.new('dropdown')
 WidgetFunc.new('dropdown', 'set_options', Void, InlineStr.new('opts'))
@@ -721,6 +737,10 @@ WidgetFunc.new('table', 'clear_cell_ctrl', Void, UInt16.new('row'), UInt16.new('
 WidgetFunc.new('table', 'get_selected_cell_pt', Point)
 
 WidgetCreateFunc.new('msgbox', InlineStr.new('title'), InlineStr.new('text'), InlineStrArray.new('btns'), Bool8.new('add_close'));
+WidgetFunc.new('msgbox', 'get_active_btn', UInt16)
+WidgetFunc.new('msgbox', 'get_active_btn_text', InlineStr)
+WidgetFunc.new('msgbox', 'close', Void)
+WidgetFunc.new('msgbox', 'get_btns', LvObject)
 
 WidgetCreateFunc.new('spinner', UInt32.new('time'), UInt32.new('arclen'))
 

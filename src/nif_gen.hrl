@@ -56,6 +56,28 @@ label_set_text_sel_start(_Obj, _Index) -> error(no_nif).
 label_set_text_sel_end(_Obj, _Index) -> error(no_nif).
 -spec btnmatrix_create(object()) -> async_return(object()).
 btnmatrix_create(_Parent) -> error(no_nif).
+-spec btnmatrix_set_map(object(), [iolist()]) -> async_return().
+btnmatrix_set_map(_Obj, _Map) -> error(no_nif).
+-spec btnmatrix_set_btn_ctrl(object(), integer(), lv:flags(lv_btnmatrix:ctrl())) -> async_return().
+btnmatrix_set_btn_ctrl(_Obj, _Idx, _Ctrl) -> error(no_nif).
+-spec btnmatrix_clear_btn_ctrl(object(), integer(), lv:flags(lv_btnmatrix:ctrl())) -> async_return().
+btnmatrix_clear_btn_ctrl(_Obj, _Idx, _Ctrl) -> error(no_nif).
+-spec btnmatrix_set_btn_ctrl_all(object(), lv:flags(lv_btnmatrix:ctrl())) -> async_return().
+btnmatrix_set_btn_ctrl_all(_Obj, _Ctrl) -> error(no_nif).
+-spec btnmatrix_clear_btn_ctrl_all(object(), lv:flags(lv_btnmatrix:ctrl())) -> async_return().
+btnmatrix_clear_btn_ctrl_all(_Obj, _Ctrl) -> error(no_nif).
+-spec btnmatrix_set_btn_width(object(), integer(), integer()) -> async_return().
+btnmatrix_set_btn_width(_Obj, _Idx, _Width) -> error(no_nif).
+-spec btnmatrix_set_one_checked(object(), boolean()) -> async_return().
+btnmatrix_set_one_checked(_Obj, _Checked) -> error(no_nif).
+-spec btnmatrix_get_selected_btn(object()) -> async_return(integer()).
+btnmatrix_get_selected_btn(_Obj) -> error(no_nif).
+-spec btnmatrix_set_selected_btn(object(), integer()) -> async_return().
+btnmatrix_set_selected_btn(_Obj, _Idx) -> error(no_nif).
+-spec btnmatrix_get_btn_text(object(), integer()) -> async_return(iolist()).
+btnmatrix_get_btn_text(_Obj, _Idx) -> error(no_nif).
+-spec btnmatrix_has_btn_ctrl(object(), integer(), lv:flags(lv_btnmatrix:ctrl())) -> async_return(boolean()).
+btnmatrix_has_btn_ctrl(_Obj, _Idx, _Ctrl) -> error(no_nif).
 -spec dropdown_create(object()) -> async_return(object()).
 dropdown_create(_Parent) -> error(no_nif).
 -spec dropdown_set_options(object(), iolist()) -> async_return().
@@ -138,6 +160,14 @@ table_clear_cell_ctrl(_Obj, _Row, _Col, _Ctrl) -> error(no_nif).
 table_get_selected_cell_pt(_Obj) -> error(no_nif).
 -spec msgbox_create(object(), iolist(), iolist(), [iolist()], boolean()) -> async_return(object()).
 msgbox_create(_Parent, _Title, _Text, _Btns, _Add_close) -> error(no_nif).
+-spec msgbox_get_active_btn(object()) -> async_return(integer()).
+msgbox_get_active_btn(_Obj) -> error(no_nif).
+-spec msgbox_get_active_btn_text(object()) -> async_return(iolist()).
+msgbox_get_active_btn_text(_Obj) -> error(no_nif).
+-spec msgbox_close(object()) -> async_return().
+msgbox_close(_Obj) -> error(no_nif).
+-spec msgbox_get_btns(object()) -> async_return(object()).
+msgbox_get_btns(_Obj) -> error(no_nif).
 -spec spinner_create(object(), integer(), integer()) -> async_return(object()).
 spinner_create(_Parent, _Time, _Arclen) -> error(no_nif).
 -spec obj_create(instance(), object()) -> async_return(object()).
