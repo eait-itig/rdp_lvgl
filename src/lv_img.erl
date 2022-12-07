@@ -45,6 +45,13 @@
     usb | bluetooth | trash | edit | backspace | sd_card | new_line | dummy.
 -type src() :: file_path() | symbol() | none.
 
+-type degrees() :: integer().
+%% An integer number of degrees in the range 0 - 360.
+
+-type zoom() :: float().
+%% Zoom factor. 1.0 is 1:1 scaled against source image (no zoom). <1.0 shrinks
+%% the image, while >1.0 enlarges it.
+
 -spec create(lv:object()) -> {ok, lv:img()} | lv:error().
 create(Parent) ->
     ?async_wrapper(img_create, Parent).
@@ -56,3 +63,25 @@ set_offset(Img, Offset) ->
 -spec set_src(lv:img(), src()) -> ok | lv:error().
 set_src(Img, Src) ->
     ?async_void_wrapper(img_set_src, Img, Src).
+
+-spec set_angle(lv:img(), degrees()) -> ok | lv:error().
+set_angle(Img, Angle) ->
+    ?async_void_wrapper(img_set_angle, Img, Angle).
+
+-spec set_pivot(lv:img(), lv:point()) -> ok | lv:error().
+set_pivot(Img, Pivot) ->
+    ?async_void_wrapper(img_set_pivot, Img, Pivot).
+
+-spec set_zoom(lv:img(), zoom()) -> ok | lv:error().
+set_zoom(Img, ZoomFactor) ->
+    Zoom0 = round(ZoomFactor * 256),
+    Zoom1 = if
+        (Zoom0 < 1) -> 1;
+        (Zoom0 > (1 bsl 15)) -> (1 bsl 15);
+        true -> Zoom0
+    end,
+    ?async_void_wrapper(img_set_zoom, Img, Zoom1).
+
+-spec set_antialias(lv:img(), boolean()) -> ok | lv:error().
+set_antialias(Img, Ena) ->
+    ?async_void_wrapper(img_set_antialias, Img, Ena).

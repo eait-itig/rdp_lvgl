@@ -44,6 +44,14 @@ img_create(_Parent) -> error(no_nif).
 img_set_offset(_Obj, _Pt) -> error(no_nif).
 -spec img_set_src(object(), lv_img:src()) -> async_return().
 img_set_src(_Obj, _Src) -> error(no_nif).
+-spec img_set_angle(object(), integer()) -> async_return().
+img_set_angle(_Obj, _Angle) -> error(no_nif).
+-spec img_set_pivot(object(), lv:point()) -> async_return().
+img_set_pivot(_Obj, _Pivot) -> error(no_nif).
+-spec img_set_zoom(object(), integer()) -> async_return().
+img_set_zoom(_Obj, _Zoom) -> error(no_nif).
+-spec img_set_antialias(object(), boolean()) -> async_return().
+img_set_antialias(_Obj, _Ena) -> error(no_nif).
 -spec label_create(object()) -> async_return(object()).
 label_create(_Parent) -> error(no_nif).
 -spec label_get_text(object()) -> async_return(iolist()).
