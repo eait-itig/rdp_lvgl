@@ -212,6 +212,30 @@ obj_get_size(_Obj) -> error(no_nif).
 obj_set_size(_Obj, _Size) -> error(no_nif).
 -spec obj_set_local_style_prop(object(), style_generic_prop(), style_generic_val(), lv:flags(lv_obj:selector())) -> async_return().
 obj_set_local_style_prop(_Obj, _Sty, _Val, _Sel) -> error(no_nif).
+-spec obj_move_foreground(object()) -> async_return().
+obj_move_foreground(_Obj) -> error(no_nif).
+-spec obj_move_background(object()) -> async_return().
+obj_move_background(_Obj) -> error(no_nif).
+-spec obj_swap(object(), object()) -> async_return().
+obj_swap(_Obj, _Other) -> error(no_nif).
+-spec obj_set_parent(object(), object()) -> async_return().
+obj_set_parent(_Obj, _Parent) -> error(no_nif).
+-spec obj_move_to_index(object(), integer()) -> async_return().
+obj_move_to_index(_Obj, _Index) -> error(no_nif).
+-spec obj_get_index(object()) -> async_return(integer()).
+obj_get_index(_Obj) -> error(no_nif).
+-spec obj_get_child_cnt(object()) -> async_return(integer()).
+obj_get_child_cnt(_Obj) -> error(no_nif).
+-spec obj_get_child(object(), integer()) -> async_return(object()).
+obj_get_child(_Obj, _Index) -> error(no_nif).
+-spec obj_get_parent(object()) -> async_return(object()).
+obj_get_parent(_Obj) -> error(no_nif).
+-spec obj_get_screen(object()) -> async_return(object()).
+obj_get_screen(_Obj) -> error(no_nif).
+-spec obj_clean(object()) -> async_return().
+obj_clean(_Obj) -> error(no_nif).
+-spec obj_del(object()) -> async_return().
+obj_del(_Obj) -> error(no_nif).
 -spec group_create(instance()) -> async_return(group()).
 group_create(_Inst) -> error(no_nif).
 -spec group_add_obj(group(), object()) -> async_return().

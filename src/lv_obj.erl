@@ -52,6 +52,18 @@
     add_style/3,
     get_size/1,
     get_pos/1,
+    move_foreground/1,
+    move_background/1,
+    swap/2,
+    set_parent/2,
+    move_to_index/2,
+    get_index/1,
+    get_child_cnt/1,
+    get_child/2,
+    get_parent/1,
+    get_screen/1,
+    clean/1,
+    del/1,
     set_style_width/2,
     set_style_width/3,
     set_style_min_width/2,
@@ -420,6 +432,98 @@ get_size(Obj) ->
 -spec get_pos(lv:object()) -> {ok, lv:point()} | lv:error().
 get_pos(Obj) ->
     ?async_wrapper(obj_get_pos, Obj).
+
+%% @doc Move the object to the foreground.
+%%
+%% @see move_to_index/2
+-spec move_foreground(lv:object()) -> ok | lv:error().
+move_foreground(Obj) ->
+    ?async_void_wrapper(obj_move_down, Obj).
+
+%% @doc Move the object to the background.
+%%
+%% @see move_to_index/2
+-spec move_background(lv:object()) -> ok | lv:error().
+move_background(Obj) ->
+    ?async_void_wrapper(obj_move_background, Obj).
+
+-type index() :: integer().
+%% Position in a list of children widgets. Can be specified as a negative
+%% number to count backwards from the last child.
+
+%% @doc Changes the relative position of an object within its parent.
+%%
+%% @see index()
+%% @see get_index/1
+-spec move_to_index(lv:object(), index()) -> ok | lv:error().
+move_to_index(Obj, Index) ->
+    ?async_void_wrapper(obj_move_to_index, Obj, Index).
+
+%% @doc Returns an object's relative position amongst its siblings.
+%%
+%% @see index()
+-spec get_index(lv:object()) -> {ok, index()} | lv:error().
+get_index(Obj) ->
+    ?async_wrapper(obj_get_index, Obj).
+
+%% @doc Gets the number of children within a widget.
+-spec get_child_cnt(lv:object()) -> {ok, integer()} | lv:error().
+get_child_cnt(Obj) ->
+    ?async_wrapper(obj_get_child_cnt, Obj).
+
+%% @doc Retrieves a child of this widget at the specified index.
+%%
+%% @see index()
+-spec get_child(lv:object(), index()) -> {ok, lv:object()} | lv:error().
+get_child(Obj, Index) ->
+    ?async_wrapper(obj_get_child, Obj, Index).
+
+%% @doc Retrieves the parent of this widget.
+-spec get_parent(lv:object()) -> {ok, lv:object() | null} | lv:error().
+get_parent(Obj) ->
+    ?async_wrapper(obj_get_parent, Obj).
+
+%% @doc Retrieves the screen that this object is placed on.
+%%
+%% @see lv_scr
+-spec get_screen(lv:object()) -> {ok, lv:scr()} | lv:error().
+get_screen(Obj) ->
+    ?async_wrapper(obj_get_screen, Obj).
+
+%% @doc Deletes all children of a widget.
+%%
+%% Note that this operation can race against other attempts to use handles for
+%% this object's children. When using this function, be sure that there can
+%% be no concurrent or following attempt to use handles to any children which
+%% are being deleted.
+%%
+%% @see del/1
+-spec clean(lv:object()) -> ok | lv:error().
+clean(Obj) ->
+    ?async_void_wrapper(obj_clean, Obj).
+
+%% @doc Deletes a widget.
+%%
+%% Note that this operation can race against other attempts to use the same
+%% <code>lv:object()</code> or its children. When using this function, be sure
+%% that there can be no concurrent or following attempt to use the handle.
+-spec del(lv:object()) -> ok | lv:error().
+del(Obj) ->
+    ?async_void_wrapper(obj_del, Obj).
+
+%% @doc Swaps the positions of two objects.
+%%
+%% When used in listboxes, it can be used to sort the listbox items.
+-spec swap(lv:object(), lv:object()) -> ok | lv:error().
+swap(Obj, OtherObj) ->
+    ?async_void_wrapper(obj_swap, Obj, OtherObj).
+
+%% @doc Move the parent of an object.
+%%
+%% The relative coordinates will be kept.
+-spec set_parent(lv:object(), lv:object()) -> ok | lv:error().
+set_parent(Obj, NewParent) ->
+    ?async_void_wrapper(obj_set_parent, Obj, NewParent).
 
 %% @doc Sets the 'width' style property as a local style on this object.
 %% @see lv:coord()
