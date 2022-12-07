@@ -23,6 +23,9 @@
 %% (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+%% @doc The <code>lv_btn</code> widget, a simple button.
+%%
+%% See [https://docs.lvgl.io/master/widgets/btn.html]
 -module(lv_btn).
 
 -export([
@@ -32,8 +35,6 @@
 -include("async_wrappers.hrl").
 
 %% @doc Creates a new lv_btn widget.
-%%
-%% See [https://docs.lvgl.io/master/widgets/btn.html]
 -spec create(lv:object()) -> {ok, lv:btn()} | lv:error().
 create(Parent) ->
     ?async_wrapper(btn_create, Parent).

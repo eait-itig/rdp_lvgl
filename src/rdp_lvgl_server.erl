@@ -27,6 +27,7 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
+%% @doc Adapter module for writing RDP servers using LVGL.
 -module(rdp_lvgl_server).
 -behaviour(rdp_server).
 
@@ -56,7 +57,7 @@
 -record(?MODULE, {
     mod :: module(),
     modstate :: term(),
-    inst :: rdp_lvgl_nif:instance(),
+    inst :: lv:instance(),
     suppress = false :: boolean(),
     flushref :: undefined | reference(),
     frame = 1 :: integer(),
@@ -149,7 +150,7 @@ handle_info(Msg, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
 
 flush_done(Inst) ->
     erlang:garbage_collect(),
-    case rdp_lvgl_nif:flush_done(Inst) of
+    case lv:flush_done(Inst) of
         ok -> ok;
         {error, busy} -> flush_done(Inst)
     end.
@@ -190,8 +191,7 @@ setup_cursor(Inst) ->
 
 init_ui(Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
     {W, H, 16} = rdp_server:get_canvas(Srv),
-    {ok, Inst, MsgRef} = rdp_lvgl_nif:setup_instance({W, H}),
-    receive {MsgRef, setup_done} -> ok end,
+    {ok, Inst, MsgRef} = lv:setup({W, H}),
     setup_cursor(Inst),
     %ok = rdp_server:send_update(Srv, #fp_update_mouse{mode = hidden}),
 
@@ -312,7 +312,7 @@ handle_event(#ts_inpevt_unicode{code = Code, action = A}, Srv, S = #?MODULE{}) -
 
 handle_event(#ts_inpevt_wheel{clicks = N}, Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
-    ok = rdp_lvgl_nif:send_wheel_event(Inst, N),
+    ok = lv_indev:send_wheel_event(Inst, N),
     {ok, S};
 
 handle_event(#ts_inpevt_sync{flags = Flags}, Srv, S0 = #?MODULE{}) ->
@@ -331,7 +331,7 @@ handle_event(#ts_refresh_rect{rects = []}, Srv, S0 = #?MODULE{}) ->
     {ok, S0};
 handle_event(#ts_refresh_rect{rects = [R | Rest]}, Srv, S0 = #?MODULE{}) ->
     #?MODULE{inst = Inst, flushref = Ref} = S0,
-    {ok, Tiles} = rdp_lvgl_nif:read_framebuffer(Inst, R),
+    {ok, Tiles} = lv:read_framebuffer(Inst, R),
     S1 = lists:foldl(fun ({TileRect, PixData}, SS0) ->
         {ok, SS1} = handle_info({Ref, flush, TileRect, PixData}, Srv, SS0),
         SS1

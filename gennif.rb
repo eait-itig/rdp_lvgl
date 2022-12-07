@@ -49,6 +49,7 @@ class Void < Arg
   def call
     raise Exception.new('void args not ok')
   end
+  def erl_type; ''; end
 end
 
 class StylePropVal < Arg
@@ -68,6 +69,9 @@ class StylePropVal < Arg
     write "    ARG_UINT32, #{@name}_prop,"
     write "    ARG_STYLEVAL, &#{@name}_val,"
   end
+  def erl_type
+    "style_generic_prop()"
+  end
 end
 
 class Dummy < Arg
@@ -76,6 +80,9 @@ class Dummy < Arg
   def parse
   end
   def call
+  end
+  def erl_type
+    "style_generic_val()"
   end
 end
 
@@ -90,6 +97,7 @@ class LvObject < Arg
     write parse_error_rc
     write "}"
   end
+  def erl_type; 'object()'; end
 end
 
 class Group < Arg
@@ -103,6 +111,7 @@ class Group < Arg
     write parse_error_rc
     write "}"
   end
+  def erl_type; 'group()'; end
 end
 
 class Buffer < Arg
@@ -116,6 +125,7 @@ class Buffer < Arg
     write parse_error_rc
     write "}"
   end
+  def erl_type; 'buffer()'; end
 end
 
 class Style < Arg
@@ -129,6 +139,7 @@ class Style < Arg
     write parse_error_rc
     write "}"
   end
+  def erl_type; 'style()'; end
 end
 
 class Inst < Arg
@@ -144,6 +155,7 @@ class Inst < Arg
   end
   def call
   end
+  def erl_type; 'instance()'; end
 end
 
 class InstMember < Inst
@@ -170,6 +182,7 @@ class InlineStr < Arg
   def call
     write "    ARG_INLINE_BUF, &#{@name},"
   end
+  def erl_type; 'iolist()'; end
 end
 
 class ImgSrc < Arg
@@ -189,6 +202,7 @@ class ImgSrc < Arg
   def call
     write "    #{@name}_type, #{@name},"
   end
+  def erl_type; 'lv_img:src()'; end
 end
 
 class Bool < Arg
@@ -210,6 +224,7 @@ class Bool < Arg
     write parse_error
     write "}"
   end
+  def erl_type; 'boolean()'; end
 end
 class Bool8 < Bool
   def arg_type; 'ARG_UINT8'; end
@@ -247,6 +262,7 @@ class Point < Arg
   def call
     write "    ARG_POINT, &#{@name},"
   end
+  def erl_type; 'lv:point()'; end
 end
 
 class Coord < Arg
@@ -259,6 +275,7 @@ class Coord < Arg
     write parse_error_rc
     write "}"
   end
+  def erl_type; 'lv:coord()'; end
 end
 
 class SplitPoint < Point
@@ -280,6 +297,7 @@ class Color < Arg
   def call
     write "    ARG_COLOR, &#{@name},"
   end
+  def erl_type; 'lv:color()'; end
 end
 
 class IntBase < Arg
@@ -291,6 +309,7 @@ class IntBase < Arg
     write parse_error
     write "}"
   end
+  def erl_type; 'integer()'; end
 end
 
 class UIntBase < Arg
@@ -302,6 +321,7 @@ class UIntBase < Arg
     write parse_error
     write "}"
   end
+  def erl_type; 'integer()'; end
 end
 
 class UInt32 < UIntBase
@@ -343,6 +363,7 @@ class AnimEnable < Int32
     write parse_error
     write "}"
   end
+  def erl_type; 'lv_anim:enable()'; end
 end
 
 class EnumBase < IntBase
@@ -357,6 +378,14 @@ class EnumBase < IntBase
   end
   def enum; nil; end
   def multi; false; end
+  def erl_flag_type; 'atom()'; end
+  def erl_type;
+    if multi
+      "lv:flags(#{erl_flag_type})"
+    else
+      erl_flag_type
+    end
+  end
 end
 
 class Enum16 < EnumBase
@@ -374,46 +403,57 @@ end
 class AlignSpec < Enum32
   def enum; 'align_specs'; end
   def multi; false; end
+  def erl_flag_type; 'lv_obj:align_spec()'; end
 end
 class ObjFlags < Enum32
   def enum; 'obj_flags'; end
   def multi; true; end
+  def erl_flag_type; 'lv_obj:flag()'; end
 end
 class ObjStates < Enum32
   def enum; 'obj_state_specs'; end
   def multi; true; end
+  def erl_flag_type; 'lv_obj:state()'; end
 end
 class StyleSelector < Enum32
   def enum; 'style_selector_specs'; end
   def multi; true; end
+  def erl_flag_type; 'lv_obj:selector()'; end
 end
 class FlexAlign < Enum32
   def enum; 'flex_align'; end
   def multi; false; end
+  def erl_flag_type; 'lv_style:flex_align()'; end
 end
 class FlexFlow < Enum32
   def enum; 'flex_flow'; end
   def multi; false; end
+  def erl_flag_type; 'lv_style:flex_flow()'; end
 end
 class ScrLoadAnim < Enum32
   def enum; 'scr_load_anims'; end
   def multi; false; end
+  def erl_flag_type; 'lv_scr:load_anim()'; end
 end
 class BarMode < Enum8
   def enum; 'bar_mode'; end
   def multi; false; end
+  def erl_flag_type; 'lv_bar:mode()'; end
 end
 class MenuModeRootBackBtn < Enum8
   def enum; 'menu_mode_root_back_btn'; end
   def multi; false; end
+  def erl_flag_type; 'lv_menu:root_back_btn_mode()'; end
 end
 class MenuModeHeader < Enum8
   def enum; 'menu_mode_header'; end
   def multi; false; end
+  def erl_flag_type; 'lv_menu:header_mode()'; end
 end
 class TableCellCtrl < Enum8
   def enum; 'table_cell_ctrls'; end
   def multi; false; end
+  def erl_flag_type; 'lv_table:ctrl()'; end
 end
 
 class Func
@@ -442,6 +482,10 @@ class Func
   def self.print_all_nif_defs()
     defs = @funcs.map { |f| f.get_nif_def }
     puts defs.join(", \\\n")
+  end
+
+  def self.print_all_erl()
+    @funcs.each { |f| f.print_erl }
   end
 
   def if_not_flag(flag, &blk)
@@ -508,6 +552,14 @@ class Func
     puts "\treturn (rv);"
     puts "}"
     puts
+  end
+
+  def print_erl
+    rtype = @rtype.erl_type
+    args = @args.map { |a| a.erl_type }.join(', ')
+    argnames = @args.map { |a| '_' + a.name[0].upcase + a.name[1..] }.join(', ')
+    puts "-spec #{@name}(#{args}) -> async_return(#{rtype})."
+    puts "#{@name}(#{argnames}) -> error(no_nif)."
   end
 
   def get_nif_def
@@ -647,6 +699,8 @@ WidgetCreateFunc.new('spinner', UInt32.new('time'), UInt32.new('arclen'))
 ObjFunc.new('center', Void)
 ObjFunc.new('add_flag', Void, ObjFlags.new('flags'))
 ObjFunc.new('clear_flag', Void, ObjFlags.new('flags'))
+ObjFunc.new('has_flag', Bool8, ObjFlags.new('flags'))
+ObjFunc.new('has_flag_any', Bool8, ObjFlags.new('flags'))
 ObjFunc.new('add_state', Void, ObjStates.new('states'))
 ObjFunc.new('clear_state', Void, ObjStates.new('states'))
 ObjFunc.new('get_state', ObjStates)
@@ -673,7 +727,16 @@ StyleFunc.new('set_prop', Void, StylePropVal.new('sty'), Dummy.new('val'))
 
 LvFunc.new('disp_set_bg_color', Void, InstMember.new('inst', 'lvki_disp'),
   Color.new('color'))
+LvFunc.new('disp_set_bg_image', Void, InstMember.new('inst', 'lvki_disp'),
+  ImgSrc.new('src'))
+LvFunc.new('disp_set_bg_opa', Void, InstMember.new('inst', 'lvki_disp'),
+  UInt8.new('opacity'))
+LvFunc.new('disp_get_inactive_time', UInt32, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_trig_activity', Void, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_get_layer_sys', LvObject, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_layer_top', LvObject, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_scr_act', LvObject, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_scr_prev', LvObject, InstMember.new('inst', 'lvki_disp'))
 Func.new('set_kbd_group', 'lv_indev_set_group', Void,
   InstMember.new('inst', 'lvki_kbd'), Group.new('group'))
 Func.new('scr_load', 'lv_disp_scr_load', Void,
@@ -689,7 +752,12 @@ Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void,
   InstMember.new('inst', 'lvki_mouse'),
   LvObject.new('cursor'))
 
+$stdout.reopen('c_src/nif_gen.h', 'w')
 Func.print_all
-
 puts "#define AUTOGEN_NIFS \\"
 Func.print_all_nif_defs
+$stdout.close
+
+$stdout.reopen('src/nif_gen.hrl', 'w')
+Func.print_all_erl
+$stdout.close

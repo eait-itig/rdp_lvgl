@@ -972,6 +972,7 @@ parse_style_prop_val(ErlNifEnv *env, ERL_NIF_TERM kterm, ERL_NIF_TERM vterm,
 	const struct style_prop *sp;
 	int intval;
 	int rc;
+	lv_coord_t coord;
 
 	if (!enif_get_atom(env, kterm, atom, sizeof (atom), ERL_NIF_LATIN1)) {
 		enif_raise_exception(env, enif_make_tuple2(env,
@@ -1001,6 +1002,11 @@ parse_style_prop_val(ErlNifEnv *env, ERL_NIF_TERM kterm, ERL_NIF_TERM vterm,
 			return (EINVAL);
 		}
 		*pval = (lv_style_value_t){ .num = intval };
+		break;
+	case SPT_COORD:
+		if ((rc = parse_coord(env, vterm, &coord)))
+			return (rc);
+		*pval = (lv_style_value_t){ .num = (int32_t)coord };
 		break;
 	case SPT_COLOR:
 		if (!enif_get_color(env, vterm, &col)) {

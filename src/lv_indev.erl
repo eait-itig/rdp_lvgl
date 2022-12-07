@@ -40,6 +40,10 @@
     next | prev | home | 'end' | charcode().
 -type indev() :: keyboard | mouse.
 
+-type clicks() :: integer().
+%% A number of mouse wheel "clicks", can be negative (upwards direction) or
+%% positive (downwards direction).
+
 -spec set_mouse_cursor(lv:instance(), lv:object()) -> {ok, lv:object()} | lv:error().
 set_mouse_cursor(Inst, Cursor) ->
     ?async_void_wrapper(set_mouse_cursor, Inst, Cursor).
@@ -47,6 +51,10 @@ set_mouse_cursor(Inst, Cursor) ->
 -spec send_pointer_event(lv:instance(), lv:point(), state()) -> ok | lv:error().
 send_pointer_event(Inst, Point, State) ->
     rdp_lvgl_nif:send_pointer_event(Inst, Point, State).
+
+-spec send_wheel_event(lv:instance(), clicks()) -> ok | lv:error().
+send_wheel_event(Inst, Clicks) ->
+    rdp_lvgl_nif:send_wheel_event(Inst, Clicks).
 
 -spec send_key_event(lv:instance(), key(), state()) -> ok | lv:error().
 send_key_event(Inst, Key, State) ->

@@ -27,6 +27,7 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
+%% @doc UI state machine for {@link lvgl_example}
 -module(lvgl_example_fsm).
 -behaviour(gen_statem).
 
@@ -47,6 +48,7 @@
     done/3
     ]).
 
+%% @doc Called by {@link lvgl_example:init_ui/2}
 -spec start_link(rdp_server:server(), lv:instance(), lv:point()) ->
     {ok, pid()} | {error, term()}.
 start_link(Srv, Inst, Res) ->
@@ -66,6 +68,7 @@ start_link(Srv, Inst, Res) ->
     password :: undefined | string()
     }).
 
+%% @private
 init([Srv, Inst, {W, H}]) ->
     {ok, FlowStyle} = lv_style:create(Inst),
     ok = lv_style:set_flex_flow(FlowStyle, column),
@@ -95,11 +98,14 @@ init([Srv, Inst, {W, H}]) ->
 
     {ok, loading, S0}.
 
+%% @private
 callback_mode() -> [state_functions, state_enter].
 
+%% @private
 terminate(_Why, _State, #?MODULE{}) ->
     ok.
 
+%% @private
 code_change(_OldVsn, OldState, S0, _Extra) ->
     {ok, OldState, S0}.
 
@@ -125,6 +131,7 @@ make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
     end,
     {Screen, Flex}.
 
+%% @private
 loading(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
     {Screen, Flex} = make_flex(S0),
     {ok, Spinner} = lv_spinner:create(Flex, 1000, 90),
@@ -153,7 +160,7 @@ make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
     ok = lv_obj:add_style(InnerFlex, RLStyle),
     InnerFlex.
 
-
+%% @private
 login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {Screen, Flex} = make_flex(S0),
     {ok, Group} = lv_group:create(Inst),
@@ -234,7 +241,7 @@ login(info, {_Ref, {login_pin, Login, PinInp}}, S0 = #?MODULE{}) ->
     lager:debug("logging in with account ~p, PIN ~p", [Login, Pin]),
     {next_state, checking_login, S0#?MODULE{login = Login, password = Pin}}.
 
-
+%% @private
 checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst,
                                                 flowsty = FlowStyle,
                                                 res = {W, H}}) ->
@@ -255,7 +262,7 @@ checking_login(state_timeout, advance, S0 = #?MODULE{login = L, password = P}) -
             {next_state, login, S0#?MODULE{errmsg = "Invalid username or password"}}
     end.
 
-
+%% @private
 done(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
     {ok, Screen} = lv_scr:create(Inst),
     {ok, Lbl} = lv_label:create(Screen),

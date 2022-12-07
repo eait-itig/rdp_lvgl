@@ -27,6 +27,7 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%
 
+%% @doc An example of using {@link rdp_lvgl_server}
 -module(lvgl_example).
 -behaviour(rdp_server).
 
@@ -48,6 +49,7 @@
 -include_lib("rdp_proto/include/rdp_server.hrl").
 -include_lib("rdp_proto/include/rdpdr.hrl").
 
+%% @doc Starts a <code>rdp_server_sup</code> on port 3389 for the example.
 start() ->
     rdp_server_sup:start_link(3389, {rdp_lvgl_server, ?MODULE}).
 
@@ -56,23 +58,29 @@ start() ->
     fsm :: pid()
     }).
 
+%% @private
 init(_Peer) ->
     {ok, #?MODULE{}}.
 
+%% @private
 handle_connect(_Cookie, _Protocols, _Srv, S0 = #?MODULE{}) ->
     {accept, [{certfile, "etc/cert.pem"}, {keyfile, "etc/key.pem"}], S0}.
 
+%% @private
 init_ui({Srv, Inst}, S = #?MODULE{}) ->
     {W, H, _} = rdp_server:get_canvas(Srv),
     {ok, Pid} = lvgl_example_fsm:start_link(Srv, Inst, {W, H}),
     lager:debug("ui fsm in ~p", [Pid]),
     {ok, S#?MODULE{fsm = Pid}}.
 
+%% @private
 handle_info(_Msg, _Srv, S0 = #?MODULE{}) ->
     {ok, S0}.
 
+%% @private
 handle_event(_Evt, _Srv, S0 = #?MODULE{}) ->
     {ok, S0}.
 
+%% @private
 terminate(Reason, #?MODULE{}) ->
     ok.
