@@ -155,11 +155,15 @@ struct cdesc_teardown {
 
 enum arg_type {
 	ARG_NONE		= 0,
-	ARG_BUFPTR,
-	ARG_OBJPTR,
-	ARG_STYPTR,
-	ARG_GRPPTR,
 	ARG_PTR,
+	ARG_PTR_BUFFER,
+	ARG_PTR_OBJ,
+	ARG_PTR_STYLE,
+	ARG_PTR_GROUP,
+	ARG_PTR_CHART_SER,
+	ARG_PTR_CHART_CUR,
+	ARG_PTR_METER_SCL,
+	ARG_PTR_METER_IND,
 	ARG_UINT64,
 	ARG_UINT32,
 	ARG_UINT16,
@@ -182,9 +186,9 @@ struct cdesc_call {
 };
 
 struct cdesc_setudata {
-	uint64_t		cdsu_obj;
-	uint64_t		cdsu_group;
+	uint64_t		cdsu_ptr;
 	uint64_t		cdsu_udata;
+	uint8_t			cdsu_type;
 };
 
 struct cdesc_copybuf {

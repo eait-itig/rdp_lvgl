@@ -89,6 +89,17 @@
         Err -> Err
     end).
 
+-define(async_void_wrapper(Func, Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6),
+    case rdp_lvgl_nif:Func(Arg0, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6) of
+        {async, MsgRef} ->
+            receive
+                {MsgRef, ok} -> ok;
+                {MsgRef, error, Why} -> {error, Why};
+                {MsgRef, error, Num, Str} -> {error, Num, Str}
+            end;
+        Err -> Err
+    end).
+
 -define(async_wrapper(Func, Arg0),
     case rdp_lvgl_nif:Func(Arg0) of
         {async, MsgRef} ->
@@ -113,6 +124,17 @@
 
 -define(async_wrapper(Func, Arg0, Arg1, Arg2),
     case rdp_lvgl_nif:Func(Arg0, Arg1, Arg2) of
+        {async, MsgRef} ->
+            receive
+                {MsgRef, ok, Res} -> {ok, Res};
+                {MsgRef, error, Why} -> {error, Why};
+                {MsgRef, error, Num, Str} -> {error, Num, Str}
+            end;
+        Err -> Err
+    end).
+
+-define(async_wrapper(Func, Arg0, Arg1, Arg2, Arg3),
+    case rdp_lvgl_nif:Func(Arg0, Arg1, Arg2, Arg3) of
         {async, MsgRef} ->
             receive
                 {MsgRef, ok, Res} -> {ok, Res};

@@ -78,6 +78,7 @@ typedef struct {
     uint8_t y_ext_buf_assigned : 1;
     uint8_t x_axis_sec : 1;
     uint8_t y_axis_sec : 1;
+    void *user_data;
 } lv_chart_series_t;
 
 typedef struct {
@@ -87,6 +88,7 @@ typedef struct {
     lv_chart_series_t * ser;
     lv_dir_t dir;
     uint8_t pos_set: 1; /*1: pos is set; 0: point_id is set*/
+    void *user_data;
 } lv_chart_cursor_t;
 
 typedef struct {

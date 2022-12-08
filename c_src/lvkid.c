@@ -134,6 +134,10 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 	struct lvkevt *evt;
 	struct lvkstyle *sty;
 	struct lvkgroup *grp;
+	struct lvkchartser *chartser;
+	struct lvkchartcur *chartcur;
+	struct lvkmeterind *meterind;
+	struct lvkmeterscl *meterscl;
 	struct fbuf *fb;
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
@@ -182,6 +186,26 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 		grp = hdl->lvkh_ptr;
 		assert(grp->lvkg_hdl == hdl);
 		grp->lvkg_hdl = NULL;
+		break;
+	case LVK_CHART_SER:
+		chartser = hdl->lvkh_ptr;
+		assert(chartser->lvkcs_hdl == hdl);
+		chartser->lvkcs_hdl = NULL;
+		break;
+	case LVK_CHART_CUR:
+		chartcur = hdl->lvkh_ptr;
+		assert(chartcur->lvkcc_hdl == hdl);
+		chartcur->lvkcc_hdl = NULL;
+		break;
+	case LVK_METER_IND:
+		meterind = hdl->lvkh_ptr;
+		assert(meterind->lvkmi_hdl == hdl);
+		meterind->lvkmi_hdl = NULL;
+		break;
+	case LVK_METER_SCL:
+		meterscl = hdl->lvkh_ptr;
+		assert(meterscl->lvkms_hdl == hdl);
+		meterscl->lvkms_hdl = NULL;
 		break;
 	}
 
@@ -257,6 +281,10 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 	struct lvkevt *evt;
 	struct lvkstyle *sty;
 	struct lvkgroup *grp;
+	struct lvkchartser *chartser;
+	struct lvkchartcur *chartcur;
+	struct lvkmeterind *meterind;
+	struct lvkmeterscl *meterscl;
 	struct fbuf *fb;
 	struct lvkhdl **phdl = NULL;
 	ErlNifResourceType *rtype = lvkid_hdl_rsrc;
@@ -305,6 +333,30 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 		kid = grp->lvkg_kid;
 		phdl = &grp->lvkg_hdl;
 		inst = grp->lvkg_inst;
+		break;
+	case LVK_CHART_SER:
+		chartser = ptr;
+		kid = chartser->lvkcs_kid;
+		phdl = &chartser->lvkcs_hdl;
+		inst = chartser->lvkcs_inst;
+		break;
+	case LVK_CHART_CUR:
+		chartcur = ptr;
+		kid = chartcur->lvkcc_kid;
+		phdl = &chartcur->lvkcc_hdl;
+		inst = chartcur->lvkcc_inst;
+		break;
+	case LVK_METER_IND:
+		meterind = ptr;
+		kid = meterind->lvkmi_kid;
+		phdl = &meterind->lvkmi_hdl;
+		inst = meterind->lvkmi_inst;
+		break;
+	case LVK_METER_SCL:
+		meterscl = ptr;
+		kid = meterscl->lvkms_kid;
+		phdl = &meterscl->lvkms_hdl;
+		inst = meterscl->lvkms_inst;
 		break;
 	}
 	assert(phdl != NULL);
@@ -679,14 +731,50 @@ lvkid_lv_cmd_set_udata(struct lvkid *kid, struct shmintf *shm,
 	struct rdesc rd;
 	lv_obj_t *obj;
 	lv_group_t *grp;
+	lv_style_t *sty;
+	lv_chart_series_t *chs;
+	lv_chart_cursor_t *ccs;
+	lv_meter_indicator_t *mi;
+	lv_meter_scale_t *ms;
 
 	pthread_mutex_lock(&lv_mtx);
-	obj = (lv_obj_t *)cdsu->cdsu_obj;
-	if (obj != NULL)
-		lv_obj_set_user_data(obj, (void *)cdsu->cdsu_udata);
-	grp = (lv_group_t *)cdsu->cdsu_group;
-	if (grp != NULL)
-		grp->user_data = (void *)cdsu->cdsu_udata;
+	switch (cdsu->cdsu_type) {
+	case ARG_PTR_OBJ:
+		obj = (lv_obj_t *)cdsu->cdsu_ptr;
+		if (obj != NULL)
+			lv_obj_set_user_data(obj, (void *)cdsu->cdsu_udata);
+		break;
+	case ARG_PTR_STYLE:
+		sty = (lv_style_t *)cdsu->cdsu_ptr;
+		if (sty != NULL)
+			sty->user_data = (void *)cdsu->cdsu_udata;
+		break;
+	case ARG_PTR_GROUP:
+		grp = (lv_group_t *)cdsu->cdsu_ptr;
+		if (grp != NULL)
+			grp->user_data = (void *)cdsu->cdsu_udata;
+		break;
+	case ARG_PTR_CHART_SER:
+		chs = (lv_chart_series_t *)cdsu->cdsu_ptr;
+		if (chs != NULL)
+			chs->user_data = (void *)cdsu->cdsu_udata;
+		break;
+	case ARG_PTR_CHART_CUR:
+		ccs = (lv_chart_cursor_t *)cdsu->cdsu_ptr;
+		if (ccs != NULL)
+			ccs->user_data = (void *)cdsu->cdsu_udata;
+		break;
+	case ARG_PTR_METER_IND:
+		mi = (lv_meter_indicator_t *)cdsu->cdsu_ptr;
+		if (mi != NULL)
+			mi->user_data = (void *)cdsu->cdsu_udata;
+		break;
+	case ARG_PTR_METER_SCL:
+		ms = (lv_meter_scale_t *)cdsu->cdsu_ptr;
+		if (ms != NULL)
+			ms->user_data = (void *)cdsu->cdsu_udata;
+		break;
+	}
 	pthread_mutex_unlock(&lv_mtx);
 
 	rd = (struct rdesc){
@@ -1029,10 +1117,139 @@ lvkevt_setup_cb(struct rdesc **rd, uint nrd, void *priv)
 	pthread_rwlock_unlock(&kid->lvk_lock);
 }
 
+static struct lvkchartser *
+lvk_make_chart_series(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
+{
+	struct lvkchartser *cs;
+	struct cdesc cd;
+
+	LIST_FOREACH(cs, &inst->lvki_chart_series, lvkcs_entry) {
+		if (ptr == cs->lvkcs_ptr) {
+			return (cs);
+		}
+	}
+
+	cs = calloc(1, sizeof (*cs));
+	cs->lvkcs_kid = kid;
+	cs->lvkcs_inst = inst;
+	LIST_INSERT_HEAD(&inst->lvki_chart_series, cs, lvkcs_entry);
+
+	cs->lvkcs_ptr = ptr;
+
+	cd = (struct cdesc){
+		.cd_op = CMD_SET_UDATA,
+		.cd_set_udata = (struct cdesc_setudata){
+			.cdsu_type = ARG_PTR_CHART_SER,
+			.cdsu_ptr = ptr,
+			.cdsu_udata = (uint64_t)cs
+		}
+	};
+	lvk_cmd(kid, &cd, 1, NULL, NULL);
+
+	return (cs);
+}
+
+static struct lvkchartcur *
+lvk_make_chart_cursor(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
+{
+	struct lvkchartcur *cc;
+	struct cdesc cd;
+
+	LIST_FOREACH(cc, &inst->lvki_chart_cursors, lvkcc_entry) {
+		if (ptr == cc->lvkcc_ptr) {
+			return (cc);
+		}
+	}
+
+	cc = calloc(1, sizeof (*cc));
+	cc->lvkcc_kid = kid;
+	cc->lvkcc_inst = inst;
+	LIST_INSERT_HEAD(&inst->lvki_chart_cursors, cc, lvkcc_entry);
+
+	cc->lvkcc_ptr = ptr;
+
+	cd = (struct cdesc){
+		.cd_op = CMD_SET_UDATA,
+		.cd_set_udata = (struct cdesc_setudata){
+			.cdsu_type = ARG_PTR_CHART_CUR,
+			.cdsu_ptr = ptr,
+			.cdsu_udata = (uint64_t)cc
+		}
+	};
+	lvk_cmd(kid, &cd, 1, NULL, NULL);
+
+	return (cc);
+}
+
+static struct lvkmeterind *
+lvk_make_meter_ind(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
+{
+	struct lvkmeterind *mi;
+	struct cdesc cd;
+
+	LIST_FOREACH(mi, &inst->lvki_meter_inds, lvkmi_entry) {
+		if (ptr == mi->lvkmi_ptr) {
+			return (mi);
+		}
+	}
+
+	mi = calloc(1, sizeof (*mi));
+	mi->lvkmi_kid = kid;
+	mi->lvkmi_inst = inst;
+	LIST_INSERT_HEAD(&inst->lvki_meter_inds, mi, lvkmi_entry);
+
+	mi->lvkmi_ptr = ptr;
+
+	cd = (struct cdesc){
+		.cd_op = CMD_SET_UDATA,
+		.cd_set_udata = (struct cdesc_setudata){
+			.cdsu_type = ARG_PTR_METER_IND,
+			.cdsu_ptr = ptr,
+			.cdsu_udata = (uint64_t)mi
+		}
+	};
+	lvk_cmd(kid, &cd, 1, NULL, NULL);
+
+	return (mi);
+}
+
+static struct lvkmeterscl *
+lvk_make_meter_scale(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
+{
+	struct lvkmeterscl *ms;
+	struct cdesc cd;
+
+	LIST_FOREACH(ms, &inst->lvki_meter_scales, lvkms_entry) {
+		if (ptr == ms->lvkms_ptr) {
+			return (ms);
+		}
+	}
+
+	ms = calloc(1, sizeof (*ms));
+	ms->lvkms_kid = kid;
+	ms->lvkms_inst = inst;
+	LIST_INSERT_HEAD(&inst->lvki_meter_scales, ms, lvkms_entry);
+
+	ms->lvkms_ptr = ptr;
+
+	cd = (struct cdesc){
+		.cd_op = CMD_SET_UDATA,
+		.cd_set_udata = (struct cdesc_setudata){
+			.cdsu_type = ARG_PTR_METER_SCL,
+			.cdsu_ptr = ptr,
+			.cdsu_udata = (uint64_t)ms
+		}
+	};
+	lvk_cmd(kid, &cd, 1, NULL, NULL);
+
+	return (ms);
+}
+
 static struct lvkstyle *
 lvk_make_style(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 {
 	struct lvkstyle *sty;
+	struct cdesc cd;
 
 	LIST_FOREACH(sty, &inst->lvki_styles, lvks_entry) {
 		if (ptr == sty->lvks_ptr) {
@@ -1046,6 +1263,16 @@ lvk_make_style(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 	LIST_INSERT_HEAD(&inst->lvki_styles, sty, lvks_entry);
 
 	sty->lvks_ptr = ptr;
+
+	cd = (struct cdesc){
+		.cd_op = CMD_SET_UDATA,
+		.cd_set_udata = (struct cdesc_setudata){
+			.cdsu_type = ARG_PTR_STYLE,
+			.cdsu_ptr = ptr,
+			.cdsu_udata = (uint64_t)sty
+		}
+	};
+	lvk_cmd(kid, &cd, 1, NULL, NULL);
 
 	return (sty);
 }
@@ -1072,7 +1299,8 @@ lvk_make_group(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 	cd = (struct cdesc){
 		.cd_op = CMD_SET_UDATA,
 		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_group = ptr,
+			.cdsu_type = ARG_PTR_GROUP,
+			.cdsu_ptr = ptr,
 			.cdsu_udata = (uint64_t)grp
 		}
 	};
@@ -1112,7 +1340,8 @@ lvk_make_obj(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr,
 	cd = (struct cdesc){
 		.cd_op = CMD_SET_UDATA,
 		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_obj = ptr,
+			.cdsu_type = ARG_PTR_OBJ,
+			.cdsu_ptr = ptr,
 			.cdsu_udata = (uint64_t)obj
 		}
 	};
@@ -1175,6 +1404,9 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	lv_style_value_t stv;
 	struct lvkstyle *sty;
 	struct lvkgroup *grp;
+	struct lvkchartser *cser;
+	struct lvkchartcur *ccur;
+	struct lvkmeterind *mi;
 	uint i;
 	ErlNifBinary bin;
 	size_t take, pos, rem;
@@ -1224,7 +1456,7 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		return;
 	}
 
-	if (call->lvkc_rt == ARG_OBJPTR) {
+	if (call->lvkc_rt == ARG_PTR_OBJ) {
 		assert(inst != NULL);
 		if (rdr->rdr_val != 0) {
 			cls = (const lv_obj_class_t *)rdr->rdr_class;
@@ -1237,13 +1469,13 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		} else {
 			obj = NULL;
 		}
-		(*call->lvkc_cb)(kid, 0, ARG_OBJPTR, obj, call->lvkc_priv);
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_OBJ, obj, call->lvkc_priv);
 
 		free(call);
 		return;
 	}
 
-	if (call->lvkc_rt == ARG_STYPTR) {
+	if (call->lvkc_rt == ARG_PTR_STYLE) {
 		assert(inst != NULL);
 		sty = (struct lvkstyle *)rdr->rdr_udata;
 		if (sty == NULL) {
@@ -1252,13 +1484,13 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 			pthread_rwlock_unlock(&inst->lvki_lock);
 		}
 
-		(*call->lvkc_cb)(kid, 0, ARG_STYPTR, sty, call->lvkc_priv);
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_STYLE, sty, call->lvkc_priv);
 
 		free(call);
 		return;
 	}
 
-	if (call->lvkc_rt == ARG_GRPPTR) {
+	if (call->lvkc_rt == ARG_PTR_GROUP) {
 		assert(inst != NULL);
 		grp = (struct lvkgroup *)rdr->rdr_udata;
 		if (grp == NULL) {
@@ -1267,7 +1499,73 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 			pthread_rwlock_unlock(&inst->lvki_lock);
 		}
 
-		(*call->lvkc_cb)(kid, 0, ARG_GRPPTR, grp, call->lvkc_priv);
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_GROUP, grp, call->lvkc_priv);
+
+		free(call);
+		return;
+	}
+
+	if (call->lvkc_rt == ARG_PTR_METER_IND) {
+		assert(inst != NULL);
+		mi = (struct lvkmeterind *)rdr->rdr_udata;
+		if (mi == NULL) {
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+			mi = lvk_make_meter_ind(kid, inst, rdr->rdr_val);
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		}
+
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_METER_IND, mi,
+		    call->lvkc_priv);
+
+		free(call);
+		return;
+	}
+
+	if (call->lvkc_rt == ARG_PTR_METER_SCL) {
+		struct lvkmeterscl *ms;
+
+		assert(inst != NULL);
+		ms = (struct lvkmeterscl *)rdr->rdr_udata;
+		if (ms == NULL) {
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+			ms = lvk_make_meter_scale(kid, inst, rdr->rdr_val);
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		}
+
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_METER_SCL, ms,
+		    call->lvkc_priv);
+
+		free(call);
+		return;
+	}
+
+	if (call->lvkc_rt == ARG_PTR_CHART_SER) {
+		assert(inst != NULL);
+		cser = (struct lvkchartser *)rdr->rdr_udata;
+		if (cser == NULL) {
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+			cser = lvk_make_chart_series(kid, inst, rdr->rdr_val);
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		}
+
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_CHART_SER, cser,
+		    call->lvkc_priv);
+
+		free(call);
+		return;
+	}
+
+	if (call->lvkc_rt == ARG_PTR_CHART_CUR) {
+		assert(inst != NULL);
+		ccur = (struct lvkchartcur *)rdr->rdr_udata;
+		if (ccur == NULL) {
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+			ccur = lvk_make_chart_cursor(kid, inst, rdr->rdr_val);
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		}
+
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_CHART_CUR, ccur,
+		    call->lvkc_priv);
 
 		free(call);
 		return;
@@ -1280,16 +1578,20 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	case ARG_NONE:
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, NULL, call->lvkc_priv);
 		break;
-	case ARG_OBJPTR:
-	case ARG_STYPTR:
-	case ARG_GRPPTR:
+	case ARG_PTR_OBJ:
+	case ARG_PTR_STYLE:
+	case ARG_PTR_GROUP:
+	case ARG_PTR_CHART_CUR:
+	case ARG_PTR_CHART_SER:
+	case ARG_PTR_METER_IND:
+	case ARG_PTR_METER_SCL:
 	case ARG_INLINE_STR:
 	case ARG_INLINE_BUF:
 	case ARG_INL_BUF_ARR:
 		/* handled above */
 		break;
 	case ARG_PTR:
-	case ARG_BUFPTR:
+	case ARG_PTR_BUFFER:
 	case ARG_UINT64:
 		u64 = rdr->rdr_val;
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &u64, call->lvkc_priv);
@@ -1333,6 +1635,10 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	struct lvkobj *obj;
 	struct lvkstyle *sty;
 	struct lvkgroup *grp;
+	struct lvkchartser *cser;
+	struct lvkchartcur *ccur;
+	struct lvkmeterind *mi;
+	struct lvkmeterscl *ms;
 	struct lvkbuf *buf;
 	struct cdesc cd[8];
 	struct cdesc *pcd[8];
@@ -1349,7 +1655,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	uint8_t alen[8];
 
 	if (inst == NULL)
-		assert(rt != ARG_OBJPTR);
+		assert(rt != ARG_PTR_OBJ);
 
 	cd[0] = (struct cdesc){
 		.cd_op = CMD_CALL,
@@ -1373,29 +1679,53 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			break;
 		cd[0].cd_call.cdc_argtype[i] = argtype;
 		switch (argtype) {
-		case ARG_BUFPTR:
+		case ARG_PTR_BUFFER:
 			buf = va_arg(ap, struct lvkbuf *);
 			if (buf == NULL)
 				break;
 			cd[0].cd_call.cdc_arg[i] = buf->lvkb_ptr;
 			break;
-		case ARG_OBJPTR:
+		case ARG_PTR_OBJ:
 			obj = va_arg(ap, struct lvkobj *);
 			if (obj == NULL)
 				break;
 			cd[0].cd_call.cdc_arg[i] = obj->lvko_ptr;
 			break;
-		case ARG_STYPTR:
+		case ARG_PTR_STYLE:
 			sty = va_arg(ap, struct lvkstyle *);
 			if (sty == NULL)
 				break;
 			cd[0].cd_call.cdc_arg[i] = sty->lvks_ptr;
 			break;
-		case ARG_GRPPTR:
+		case ARG_PTR_GROUP:
 			grp = va_arg(ap, struct lvkgroup *);
 			if (grp == NULL)
 				break;
 			cd[0].cd_call.cdc_arg[i] = grp->lvkg_ptr;
+			break;
+		case ARG_PTR_CHART_SER:
+			cser = va_arg(ap, struct lvkchartser *);
+			if (cser == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = cser->lvkcs_ptr;
+			break;
+		case ARG_PTR_CHART_CUR:
+			ccur = va_arg(ap, struct lvkchartcur *);
+			if (ccur == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = ccur->lvkcc_ptr;
+			break;
+		case ARG_PTR_METER_IND:
+			mi = va_arg(ap, struct lvkmeterind *);
+			if (mi == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = mi->lvkmi_ptr;
+			break;
+		case ARG_PTR_METER_SCL:
+			ms = va_arg(ap, struct lvkmeterscl *);
+			if (ms == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = ms->lvkms_ptr;
 			break;
 		case ARG_PTR:
 			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uintptr_t);
@@ -1408,11 +1738,9 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			break;
 		case ARG_UINT16:
 			cd[0].cd_call.cdc_arg[i] = va_arg(ap, int);
-			assert(cd[0].cd_call.cdc_arg[i] < UINT16_MAX);
 			break;
 		case ARG_UINT8:
 			cd[0].cd_call.cdc_arg[i] = va_arg(ap, int);
-			assert(cd[0].cd_call.cdc_arg[i] < UINT8_MAX);
 			break;
 		case ARG_COLOR:
 			col = va_arg(ap, lv_color_t *);
@@ -1474,7 +1802,7 @@ int
 lvk_cast(struct lvkid *kid, enum arg_type rt, lvk_call_func_t f, ...)
 {
 	va_list ap;
-	assert(rt != ARG_BUFPTR);
+	assert(rt != ARG_PTR_BUFFER);
 	va_start(ap, f);
 	lvk_vcall(kid, NULL, NULL, NULL, rt, 0, f, ap);
 	va_end(ap);
@@ -1488,7 +1816,7 @@ lvk_icast(struct lvkinst *inst, enum arg_type rt, lvk_call_func_t f, ...)
 	va_list ap;
 	if (inst->lvki_state != LVKINST_ALIVE)
 		return (EBADF);
-	assert(rt != ARG_BUFPTR);
+	assert(rt != ARG_PTR_BUFFER);
 	va_start(ap, f);
 	lvk_vcall(kid, inst, NULL, NULL, rt, 0, f, ap);
 	va_end(ap);
@@ -1501,7 +1829,7 @@ lvk_call_buf(struct lvkid *kid, lvk_call_cb_t cb, void *priv,
 {
 	va_list ap;
 	va_start(ap, f);
-	lvk_vcall(kid, NULL, cb, priv, ARG_BUFPTR, rtblen, f, ap);
+	lvk_vcall(kid, NULL, cb, priv, ARG_PTR_BUFFER, rtblen, f, ap);
 	va_end(ap);
 	return (0);
 }
@@ -1511,7 +1839,7 @@ lvk_call(struct lvkid *kid, lvk_call_cb_t cb, void *priv, enum arg_type rt,
     lvk_call_func_t f, ...)
 {
 	va_list ap;
-	assert(rt != ARG_BUFPTR);
+	assert(rt != ARG_PTR_BUFFER);
 	va_start(ap, f);
 	lvk_vcall(kid, NULL, cb, priv, rt, 0, f, ap);
 	va_end(ap);
@@ -1526,7 +1854,7 @@ lvk_icall(struct lvkinst *inst, lvk_call_cb_t cb, void *priv, enum arg_type rt,
 	va_list ap;
 	if (inst->lvki_state != LVKINST_ALIVE)
 		return (EBADF);
-	assert(rt != ARG_BUFPTR);
+	assert(rt != ARG_PTR_BUFFER);
 	va_start(ap, f);
 	lvk_vcall(kid, inst, cb, priv, rt, 0, f, ap);
 	va_end(ap);
@@ -2136,6 +2464,10 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkstyle *sty, *nsty;
 	struct lvkgroup *grp, *ngrp;
 	struct lvkbuf *buf, *nbuf;
+	struct lvkchartser *cser, *ncser;
+	struct lvkchartcur *ccur, *nccur;
+	struct lvkmeterind *mi, *nmi;
+	struct lvkmeterscl *ms, *nms;
 
 	assert(nrd == 1);
 	log_debug("inst %p teardown cb", inst);
@@ -2177,6 +2509,46 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 		}
 		LIST_REMOVE(grp, lvkg_entry);
 		free(grp);
+	}
+	LIST_FOREACH_SAFE(cser, &inst->lvki_chart_series, lvkcs_entry, ncser) {
+		if (cser->lvkcs_hdl) {
+			cser->lvkcs_hdl->lvkh_type = LVK_NONE;
+			cser->lvkcs_hdl->lvkh_ptr = NULL;
+			cser->lvkcs_hdl->lvkh_inst = NULL;
+			cser->lvkcs_hdl = NULL;
+		}
+		LIST_REMOVE(cser, lvkcs_entry);
+		free(cser);
+	}
+	LIST_FOREACH_SAFE(ccur, &inst->lvki_chart_cursors, lvkcc_entry, nccur) {
+		if (ccur->lvkcc_hdl) {
+			ccur->lvkcc_hdl->lvkh_type = LVK_NONE;
+			ccur->lvkcc_hdl->lvkh_ptr = NULL;
+			ccur->lvkcc_hdl->lvkh_inst = NULL;
+			ccur->lvkcc_hdl = NULL;
+		}
+		LIST_REMOVE(ccur, lvkcc_entry);
+		free(ccur);
+	}
+	LIST_FOREACH_SAFE(mi, &inst->lvki_meter_inds, lvkmi_entry, nmi) {
+		if (mi->lvkmi_hdl) {
+			mi->lvkmi_hdl->lvkh_type = LVK_NONE;
+			mi->lvkmi_hdl->lvkh_ptr = NULL;
+			mi->lvkmi_hdl->lvkh_inst = NULL;
+			mi->lvkmi_hdl = NULL;
+		}
+		LIST_REMOVE(mi, lvkmi_entry);
+		free(mi);
+	}
+	LIST_FOREACH_SAFE(ms, &inst->lvki_meter_scales, lvkms_entry, nms) {
+		if (ms->lvkms_hdl) {
+			ms->lvkms_hdl->lvkh_type = LVK_NONE;
+			ms->lvkms_hdl->lvkh_ptr = NULL;
+			ms->lvkms_hdl->lvkh_inst = NULL;
+			ms->lvkms_hdl = NULL;
+		}
+		LIST_REMOVE(ms, lvkms_entry);
+		free(ms);
 	}
 	LIST_FOREACH_SAFE(buf, &inst->lvki_bufs, lvkb_entry, nbuf) {
 		LIST_REMOVE(buf, lvkb_entry);

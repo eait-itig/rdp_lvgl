@@ -54,6 +54,11 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	uint64_t rv;
 	lv_obj_t *obj;
 	lv_group_t *grp;
+	lv_style_t *sty;
+	lv_chart_cursor_t *chartcur;
+	lv_chart_series_t *chartser;
+	lv_meter_indicator_t *meterind;
+	lv_meter_scale_t *meterscl;
 	struct cdinline *inl;
 	uint ib = 0, i;
 	size_t rem, off, take;
@@ -128,7 +133,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	cdi_free(inl);
 
 	if (rt == ARG_INLINE_BUF || rt == ARG_INLINE_STR)
-		cdc->cdc_rettype = ARG_BUFPTR;
+		cdc->cdc_rettype = ARG_PTR_BUFFER;
 
 #if LVCALL_DEBUG == 1
 	for (i = 0; i < 8; ++i) {
@@ -189,7 +194,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 		shm_produce_rsp(shm, rd, i);
 		break;
-	case ARG_OBJPTR:
+	case ARG_PTR_OBJ:
 		obj = (lv_obj_t *)rv;
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
@@ -202,7 +207,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		};
 		shm_produce_rsp(shm, rd, 1);
 		break;
-	case ARG_GRPPTR:
+	case ARG_PTR_GROUP:
 		grp = (lv_group_t *)rv;
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
@@ -210,6 +215,66 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (uint64_t)grp->user_data,
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_PTR_STYLE:
+		sty = (lv_style_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (uint64_t)sty->user_data,
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_PTR_CHART_CUR:
+		chartcur = (lv_chart_cursor_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (uint64_t)chartcur->user_data,
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_PTR_CHART_SER:
+		chartser = (lv_chart_series_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (uint64_t)chartser->user_data,
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_PTR_METER_IND:
+		meterind = (lv_meter_indicator_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (uint64_t)meterind->user_data,
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_PTR_METER_SCL:
+		meterscl = (lv_meter_scale_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (uint64_t)meterscl->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);

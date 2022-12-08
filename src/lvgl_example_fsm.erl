@@ -215,9 +215,13 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
         {login_pin, "chemlabs", PinText}),
 
-    {ok, MsgBox} = lv_msgbox:create(Screen, "Testing message box",
-        "This is a test", ["OK", "Nope"], true),
-    ok = lv_obj:center(MsgBox),
+    {ok, Meter} = lv_meter:create(UPwFlex),
+    {ok, Scale} = lv_meter:add_scale(Meter),
+    ok = lv_meter:set_scale_range(Meter, Scale, 0, 100, 240, 0),
+    ok = lv_meter:set_scale_ticks(Meter, Scale, 50, 1, 3, lv_color:palette(black)),
+    ok = lv_meter:set_scale_major_ticks(Meter, Scale, 5, 2, 5, lv_color:darken(red, 1), 5),
+    {ok, Indic} = lv_meter:add_needle_line(Meter, Scale, 3, lv_color:darken(blue_grey, 3), -10),
+    ok = lv_meter:set_indicator_value(Meter, Indic, 33),
 
     case S0#?MODULE.errmsg of
         undefined -> ok;

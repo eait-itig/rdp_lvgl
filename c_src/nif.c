@@ -170,6 +170,10 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 	struct lvkstyle *sty;
 	struct lvkgroup *grp;
 	struct lvkhdl *hdl;
+	struct lvkchartser *cser;
+	struct lvkchartcur *ccur;
+	struct lvkmeterind *mi;
+	struct lvkmeterscl *ms;
 	uint64_t *u64;
 	uint32_t *u32;
 	uint16_t *u16;
@@ -197,7 +201,7 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		    ncd->ncd_msgref,
 		    enif_make_atom(env, "ok"));
 		goto out;
-	case ARG_OBJPTR:
+	case ARG_PTR_OBJ:
 		obj = rv;
 		if (obj == NULL) {
 			rterm = enif_make_atom(env, "null");
@@ -210,7 +214,7 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		if (do_release)
 			enif_release_resource(hdl);
 		break;
-	case ARG_STYPTR:
+	case ARG_PTR_STYLE:
 		sty = rv;
 		pthread_rwlock_wrlock(&sty->lvks_inst->lvki_lock);
 		hdl = lvkid_make_hdl(LVK_STY, sty, &do_release);
@@ -219,11 +223,47 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		if (do_release)
 			enif_release_resource(hdl);
 		break;
-	case ARG_GRPPTR:
+	case ARG_PTR_GROUP:
 		grp = rv;
 		pthread_rwlock_wrlock(&grp->lvkg_inst->lvki_lock);
 		hdl = lvkid_make_hdl(LVK_GRP, grp, &do_release);
 		pthread_rwlock_unlock(&grp->lvkg_inst->lvki_lock);
+		rterm = enif_make_resource(env, hdl);
+		if (do_release)
+			enif_release_resource(hdl);
+		break;
+	case ARG_PTR_CHART_SER:
+		cser = rv;
+		pthread_rwlock_wrlock(&cser->lvkcs_inst->lvki_lock);
+		hdl = lvkid_make_hdl(LVK_CHART_SER, cser, &do_release);
+		pthread_rwlock_unlock(&cser->lvkcs_inst->lvki_lock);
+		rterm = enif_make_resource(env, hdl);
+		if (do_release)
+			enif_release_resource(hdl);
+		break;
+	case ARG_PTR_CHART_CUR:
+		ccur = rv;
+		pthread_rwlock_wrlock(&ccur->lvkcc_inst->lvki_lock);
+		hdl = lvkid_make_hdl(LVK_CHART_CUR, ccur, &do_release);
+		pthread_rwlock_unlock(&ccur->lvkcc_inst->lvki_lock);
+		rterm = enif_make_resource(env, hdl);
+		if (do_release)
+			enif_release_resource(hdl);
+		break;
+	case ARG_PTR_METER_IND:
+		mi = rv;
+		pthread_rwlock_wrlock(&mi->lvkmi_inst->lvki_lock);
+		hdl = lvkid_make_hdl(LVK_METER_IND, mi, &do_release);
+		pthread_rwlock_unlock(&mi->lvkmi_inst->lvki_lock);
+		rterm = enif_make_resource(env, hdl);
+		if (do_release)
+			enif_release_resource(hdl);
+		break;
+	case ARG_PTR_METER_SCL:
+		ms = rv;
+		pthread_rwlock_wrlock(&ms->lvkms_inst->lvki_lock);
+		hdl = lvkid_make_hdl(LVK_METER_SCL, ms, &do_release);
+		pthread_rwlock_unlock(&ms->lvkms_inst->lvki_lock);
 		rterm = enif_make_resource(env, hdl);
 		if (do_release)
 			enif_release_resource(hdl);
@@ -535,12 +575,11 @@ enter_obj_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 	return (0);
 }
 
-static int
-enter_sty_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
-    struct lvkstyle **psty, uint wrlock)
+static inline int
+enter_hdl(ErlNifEnv *env, ERL_NIF_TERM term, enum lvkh_type want_type,
+    struct nif_lock_state *nls, void **pptr, uint wrlock)
 {
 	struct lvkhdl *hdl;
-	struct lvkstyle *sty;
 	struct lvkinst *inst;
 	struct lvkid *kid;
 
@@ -562,19 +601,19 @@ enter_sty_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 			pthread_rwlock_rdlock(&kid->lvk_lock);
 	} else if (nls->nls_kid != kid) {
 		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "inst_hdl_not_same_kid"), term));
+		    enif_make_atom(env, "hdl_not_same_kid"), term));
 		return (EINVAL);
 	}
 
-	if (hdl->lvkh_type != LVK_STY) {
+	if (hdl->lvkh_type != want_type) {
 		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "not_lv_style"), term));
+		    enif_make_atom(env, "wrong_hdl_type"), term));
 		pthread_rwlock_unlock(&kid->lvk_lock);
 		return (EBADF);
 	}
 
 	inst = hdl->lvkh_inst;
-	sty = hdl->lvkh_ptr;
+	*pptr = hdl->lvkh_ptr;
 
 	if (nls->nls_first_hdl == NULL) {
 		if (wrlock)
@@ -587,8 +626,22 @@ enter_sty_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 		nls->nls_wrlock = wrlock;
 	}
 
-	assert(sty->lvks_kid == kid);
-	assert(sty->lvks_inst == inst);
+	return (0);
+}
+
+static int
+enter_style_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
+    struct lvkstyle **psty, uint wrlock)
+{
+	int rc;
+	struct lvkstyle *sty;
+
+	rc = enter_hdl(env, term, LVK_STY, nls, (void **)&sty, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(sty->lvks_kid == nls->nls_kid);
+	assert(sty->lvks_inst == nls->nls_inst);
 
 	*psty = sty;
 
@@ -596,61 +649,96 @@ enter_sty_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 }
 
 static int
-enter_grp_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
+enter_group_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
     struct lvkgroup **pgrp, uint wrlock)
 {
-	struct lvkhdl *hdl;
+	int rc;
 	struct lvkgroup *grp;
-	struct lvkinst *inst;
-	struct lvkid *kid;
 
-	if (nls->nls_first_hdl != NULL)
-		assert(nls->nls_wrlock == wrlock);
+	rc = enter_hdl(env, term, LVK_GRP, nls, (void **)&grp, wrlock);
+	if (rc != 0)
+		return (rc);
 
-	if (!enif_get_resource(env, term, lvkid_hdl_rsrc, (void **)&hdl)) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "bad_lvgl_handle"), term));
-		return (EINVAL);
-	}
-
-	kid = hdl->lvkh_kid;
-
-	if (nls->nls_first_hdl == NULL) {
-		if (wrlock)
-			pthread_rwlock_wrlock(&kid->lvk_lock);
-		else
-			pthread_rwlock_rdlock(&kid->lvk_lock);
-	} else if (nls->nls_kid != kid) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "inst_hdl_not_same_kid"), term));
-		return (EINVAL);
-	}
-
-	if (hdl->lvkh_type != LVK_GRP) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "not_lv_group"), term));
-		pthread_rwlock_unlock(&kid->lvk_lock);
-		return (EBADF);
-	}
-
-	inst = hdl->lvkh_inst;
-	grp = hdl->lvkh_ptr;
-
-	if (nls->nls_first_hdl == NULL) {
-		if (wrlock)
-			pthread_rwlock_wrlock(&inst->lvki_lock);
-		else
-			pthread_rwlock_rdlock(&inst->lvki_lock);
-		nls->nls_first_hdl = hdl;
-		nls->nls_kid = kid;
-		nls->nls_inst = inst;
-		nls->nls_wrlock = wrlock;
-	}
-
-	assert(grp->lvkg_kid == kid);
-	assert(grp->lvkg_inst == inst);
+	assert(grp->lvkg_kid == nls->nls_kid);
+	assert(grp->lvkg_inst == nls->nls_inst);
 
 	*pgrp = grp;
+
+	return (0);
+}
+
+static int
+enter_chartser_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
+    struct nif_lock_state *nls, struct lvkchartser **pcser, uint wrlock)
+{
+	int rc;
+	struct lvkchartser *cser;
+
+	rc = enter_hdl(env, term, LVK_CHART_SER, nls, (void **)&cser, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(cser->lvkcs_kid == nls->nls_kid);
+	assert(cser->lvkcs_inst == nls->nls_inst);
+
+	*pcser = cser;
+
+	return (0);
+}
+
+static int
+enter_chartcur_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
+    struct nif_lock_state *nls, struct lvkchartcur **pccur, uint wrlock)
+{
+	int rc;
+	struct lvkchartcur *ccur;
+
+	rc = enter_hdl(env, term, LVK_CHART_CUR, nls, (void **)&ccur, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(ccur->lvkcc_kid == nls->nls_kid);
+	assert(ccur->lvkcc_inst == nls->nls_inst);
+
+	*pccur = ccur;
+
+	return (0);
+}
+
+static int
+enter_meterind_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
+    struct nif_lock_state *nls, struct lvkmeterind **pmi, uint wrlock)
+{
+	int rc;
+	struct lvkmeterind *mi;
+
+	rc = enter_hdl(env, term, LVK_METER_IND, nls, (void **)&mi, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(mi->lvkmi_kid == nls->nls_kid);
+	assert(mi->lvkmi_inst == nls->nls_inst);
+
+	*pmi = mi;
+
+	return (0);
+}
+
+static int
+enter_meterscl_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
+    struct nif_lock_state *nls, struct lvkmeterscl **pms, uint wrlock)
+{
+	int rc;
+	struct lvkmeterscl *ms;
+
+	rc = enter_hdl(env, term, LVK_METER_SCL, nls, (void **)&ms, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(ms->lvkms_kid == nls->nls_kid);
+	assert(ms->lvkms_inst == nls->nls_inst);
+
+	*pms = ms;
 
 	return (0);
 }

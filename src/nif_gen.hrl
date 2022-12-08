@@ -178,6 +178,28 @@ msgbox_close(_Obj) -> error(no_nif).
 msgbox_get_btns(_Obj) -> error(no_nif).
 -spec spinner_create(object(), integer(), integer()) -> async_return(object()).
 spinner_create(_Parent, _Time, _Arclen) -> error(no_nif).
+-spec meter_create(object()) -> async_return(object()).
+meter_create(_Parent) -> error(no_nif).
+-spec meter_add_scale(object()) -> async_return(lv_meter:scale()).
+meter_add_scale(_Obj) -> error(no_nif).
+-spec meter_set_scale_ticks(object(), lv_meter:scale(), integer(), integer(), integer(), lv:color()) -> async_return().
+meter_set_scale_ticks(_Obj, _Scale, _Cnt, _Width, _Len, _Color) -> error(no_nif).
+-spec meter_set_scale_major_ticks(object(), lv_meter:scale(), integer(), integer(), integer(), lv:color(), integer()) -> async_return().
+meter_set_scale_major_ticks(_Obj, _Scale, _Nth, _Width, _Len, _Color, _Label_gap) -> error(no_nif).
+-spec meter_set_scale_range(object(), lv_meter:scale(), integer(), integer(), integer(), integer()) -> async_return().
+meter_set_scale_range(_Obj, _Scale, _Min, _Max, _Angle_range, _Rotation) -> error(no_nif).
+-spec meter_add_needle_line(object(), lv_meter:scale(), integer(), lv:color(), integer()) -> async_return(lv_meter:indicator()).
+meter_add_needle_line(_Obj, _Scale, _Width, _Color, _R_mod) -> error(no_nif).
+-spec meter_add_arc(object(), lv_meter:scale(), integer(), lv:color(), integer()) -> async_return(lv_meter:indicator()).
+meter_add_arc(_Obj, _Scale, _Width, _Color, _R_mod) -> error(no_nif).
+-spec meter_set_indicator_value(object(), lv_meter:indicator(), integer()) -> async_return().
+meter_set_indicator_value(_Obj, _Ind, _Value) -> error(no_nif).
+-spec meter_set_indicator_start_value(object(), lv_meter:indicator(), integer()) -> async_return().
+meter_set_indicator_start_value(_Obj, _Ind, _Value) -> error(no_nif).
+-spec meter_set_indicator_end_value(object(), lv_meter:indicator(), integer()) -> async_return().
+meter_set_indicator_end_value(_Obj, _Ind, _Value) -> error(no_nif).
+-spec chart_create(object()) -> async_return(object()).
+chart_create(_Parent) -> error(no_nif).
 -spec obj_create(instance(), object()) -> async_return(object()).
 obj_create(_Inst, _Parent) -> error(no_nif).
 -spec obj_center(object()) -> async_return().

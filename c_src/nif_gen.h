@@ -26,8 +26,8 @@ rlvgl_bar_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_bar_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_bar_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -99,7 +99,7 @@ rlvgl_bar_set_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_bar_set_value,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, value,
 	    ARG_UINT32, anim,
 	    ARG_NONE);
@@ -173,7 +173,7 @@ rlvgl_bar_set_start_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_bar_set_start_value,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, value,
 	    ARG_UINT32, anim,
 	    ARG_NONE);
@@ -238,7 +238,7 @@ rlvgl_bar_set_range3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_bar_set_range,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, min,
 	    ARG_UINT32, max,
 	    ARG_NONE);
@@ -298,7 +298,7 @@ rlvgl_bar_set_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_bar_set_mode,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, mode,
 	    ARG_NONE);
 
@@ -352,7 +352,7 @@ rlvgl_bar_get_value1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT32, lv_bar_get_value,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -399,8 +399,8 @@ rlvgl_btn_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_btn_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_btn_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -447,8 +447,8 @@ rlvgl_checkbox_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_checkbox_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_checkbox_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -506,7 +506,7 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_checkbox_set_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
@@ -560,7 +560,7 @@ rlvgl_checkbox_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_checkbox_get_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -607,8 +607,8 @@ rlvgl_textarea_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_textarea_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_textarea_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -666,7 +666,7 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
@@ -720,7 +720,7 @@ rlvgl_textarea_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_textarea_get_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -778,7 +778,7 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_placeholder_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
@@ -846,7 +846,7 @@ rlvgl_textarea_set_text_selection2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_text_selection,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, state,
 	    ARG_NONE);
 
@@ -914,7 +914,7 @@ rlvgl_textarea_set_password_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_password_mode,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, state,
 	    ARG_NONE);
 
@@ -982,7 +982,7 @@ rlvgl_textarea_set_one_line2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_one_line,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, state,
 	    ARG_NONE);
 
@@ -1042,8 +1042,8 @@ rlvgl_textarea_set_accepted_chars2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_accepted_chars,
-	    ARG_OBJPTR, obj,
-	    ARG_BUFPTR, buf,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_BUFFER, buf,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1095,8 +1095,8 @@ rlvgl_textarea_get_label1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_textarea_get_label,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_textarea_get_label,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1154,7 +1154,7 @@ rlvgl_textarea_set_password_show_time2(ErlNifEnv *env, int argc, const ERL_NIF_T
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_textarea_set_password_show_time,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, time,
 	    ARG_NONE);
 
@@ -1202,8 +1202,8 @@ rlvgl_img_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_img_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_img_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1275,7 +1275,7 @@ rlvgl_img_set_offset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_offset,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_POINT, &pt,
 	    ARG_NONE);
 
@@ -1338,7 +1338,7 @@ rlvgl_img_set_src2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_src,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    src_type, src,
 	    ARG_NONE);
 
@@ -1397,7 +1397,7 @@ rlvgl_img_set_angle2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_angle,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, angle,
 	    ARG_NONE);
 
@@ -1470,7 +1470,7 @@ rlvgl_img_set_pivot2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_pivot,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, pivot.x,
 	    ARG_UINT32, pivot.y,
 	    ARG_NONE);
@@ -1530,7 +1530,7 @@ rlvgl_img_set_zoom2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_zoom,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, zoom,
 	    ARG_NONE);
 
@@ -1598,7 +1598,7 @@ rlvgl_img_set_antialias2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_antialias,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, ena,
 	    ARG_NONE);
 
@@ -1646,8 +1646,8 @@ rlvgl_label_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_label_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_label_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1700,7 +1700,7 @@ rlvgl_label_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_label_get_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1758,7 +1758,7 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_label_set_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
@@ -1817,7 +1817,7 @@ rlvgl_label_set_text_sel_start2(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_label_set_text_sel_start,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, index,
 	    ARG_NONE);
 
@@ -1876,7 +1876,7 @@ rlvgl_label_set_text_sel_end2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_label_set_text_sel_end,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, index,
 	    ARG_NONE);
 
@@ -1924,8 +1924,8 @@ rlvgl_btnmatrix_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_btnmatrix_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_btnmatrix_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -1990,7 +1990,7 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_map,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INL_BUF_ARR, map, map_n,
 	    ARG_NONE);
 
@@ -2054,7 +2054,7 @@ rlvgl_btnmatrix_set_btn_ctrl3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_btn_ctrl,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, idx,
 	    ARG_UINT16, ctrl,
 	    ARG_NONE);
@@ -2119,7 +2119,7 @@ rlvgl_btnmatrix_clear_btn_ctrl3(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_clear_btn_ctrl,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, idx,
 	    ARG_UINT16, ctrl,
 	    ARG_NONE);
@@ -2179,7 +2179,7 @@ rlvgl_btnmatrix_set_btn_ctrl_all2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_btn_ctrl_all,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, ctrl,
 	    ARG_NONE);
 
@@ -2238,7 +2238,7 @@ rlvgl_btnmatrix_clear_btn_ctrl_all2(ErlNifEnv *env, int argc, const ERL_NIF_TERM
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_clear_btn_ctrl_all,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, ctrl,
 	    ARG_NONE);
 
@@ -2302,7 +2302,7 @@ rlvgl_btnmatrix_set_btn_width3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_btn_width,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, idx,
 	    ARG_UINT8, width,
 	    ARG_NONE);
@@ -2371,7 +2371,7 @@ rlvgl_btnmatrix_set_one_checked2(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_one_checked,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, checked,
 	    ARG_NONE);
 
@@ -2425,7 +2425,7 @@ rlvgl_btnmatrix_get_selected_btn1(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT16, lv_btnmatrix_get_selected_btn,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -2483,7 +2483,7 @@ rlvgl_btnmatrix_set_selected_btn2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_selected_btn,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, idx,
 	    ARG_NONE);
 
@@ -2542,7 +2542,7 @@ rlvgl_btnmatrix_get_btn_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_btnmatrix_get_btn_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, idx,
 	    ARG_NONE);
 
@@ -2606,7 +2606,7 @@ rlvgl_btnmatrix_has_btn_ctrl3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT8, lv_btnmatrix_has_btn_ctrl,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, idx,
 	    ARG_UINT16, ctrl,
 	    ARG_NONE);
@@ -2655,8 +2655,8 @@ rlvgl_dropdown_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_dropdown_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_dropdown_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -2714,7 +2714,7 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_dropdown_set_options,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &opts,
 	    ARG_NONE);
 
@@ -2778,7 +2778,7 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_dropdown_add_option,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &text,
 	    ARG_UINT32, index,
 	    ARG_NONE);
@@ -2833,7 +2833,7 @@ rlvgl_dropdown_get_selected1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT32, lv_dropdown_get_selected,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -2891,7 +2891,7 @@ rlvgl_dropdown_set_selected2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_dropdown_set_selected,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, index,
 	    ARG_NONE);
 
@@ -2945,7 +2945,7 @@ rlvgl_dropdown_clear_options1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_dropdown_clear_options,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -2998,7 +2998,7 @@ rlvgl_dropdown_get_selected_str1(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_dropdown_get_selected_str,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3045,8 +3045,8 @@ rlvgl_imgbtn_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_imgbtn_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_imgbtn_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3093,8 +3093,8 @@ rlvgl_led_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_led_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_led_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3152,7 +3152,7 @@ rlvgl_led_set_color2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_led_set_color,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_COLOR, &color,
 	    ARG_NONE);
 
@@ -3211,7 +3211,7 @@ rlvgl_led_set_brightness2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_led_set_brightness,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, bright,
 	    ARG_NONE);
 
@@ -3265,7 +3265,7 @@ rlvgl_led_on1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_led_on,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3318,7 +3318,7 @@ rlvgl_led_off1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_led_off,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3371,7 +3371,7 @@ rlvgl_led_toggle1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_led_toggle,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3424,7 +3424,7 @@ rlvgl_led_get_brightness1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT8, lv_led_get_brightness,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3471,8 +3471,8 @@ rlvgl_list_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_list_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_list_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3529,8 +3529,8 @@ rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_list_add_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_list_add_text,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
 
@@ -3597,8 +3597,8 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_list_add_btn,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_list_add_btn,
+	    ARG_PTR_OBJ, obj,
 	    icon_type, icon,
 	    ARG_INLINE_BUF, &text,
 	    ARG_NONE);
@@ -3659,8 +3659,8 @@ rlvgl_list_get_btn_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_list_get_btn_text,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, btn,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, btn,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3707,8 +3707,8 @@ rlvgl_menu_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_menu_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_menu_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3765,8 +3765,8 @@ rlvgl_menu_page_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_menu_page_create,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_menu_page_create,
+	    ARG_PTR_OBJ, obj,
 	    ARG_INLINE_BUF, &title,
 	    ARG_NONE);
 
@@ -3814,8 +3814,8 @@ rlvgl_menu_cont_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_menu_cont_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_menu_cont_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3862,8 +3862,8 @@ rlvgl_menu_section_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_menu_section_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_menu_section_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3910,8 +3910,8 @@ rlvgl_menu_separator_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_menu_separator_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_menu_separator_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -3970,8 +3970,8 @@ rlvgl_menu_set_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_menu_set_page,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, page,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, page,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4030,8 +4030,8 @@ rlvgl_menu_set_sidebar_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_menu_set_sidebar_page,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, page,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, page,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4089,7 +4089,7 @@ rlvgl_menu_set_mode_root_back_btn2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_menu_set_mode_root_back_btn,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, mode,
 	    ARG_NONE);
 
@@ -4148,7 +4148,7 @@ rlvgl_menu_set_mode_header2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_menu_set_mode_header,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT8, mode,
 	    ARG_NONE);
 
@@ -4214,9 +4214,9 @@ rlvgl_menu_set_load_page_event3(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_menu_set_load_page_event,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, btn,
-	    ARG_OBJPTR, page,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, btn,
+	    ARG_PTR_OBJ, page,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4263,8 +4263,8 @@ rlvgl_roller_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_roller_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_roller_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4311,8 +4311,8 @@ rlvgl_slider_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_slider_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_slider_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4359,8 +4359,8 @@ rlvgl_switch_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_switch_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_switch_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4407,8 +4407,8 @@ rlvgl_table_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_table_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_table_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4466,7 +4466,7 @@ rlvgl_table_set_row_cnt2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_table_set_row_cnt,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, rows,
 	    ARG_NONE);
 
@@ -4525,7 +4525,7 @@ rlvgl_table_set_col_cnt2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_table_set_col_cnt,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, cols,
 	    ARG_NONE);
 
@@ -4589,7 +4589,7 @@ rlvgl_table_set_col_width3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_table_set_col_width,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, col_idx,
 	    ARG_UINT32, width,
 	    ARG_NONE);
@@ -4659,7 +4659,7 @@ rlvgl_table_set_cell_value4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_table_set_cell_value,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, row,
 	    ARG_UINT16, col,
 	    ARG_INLINE_BUF, &text,
@@ -4730,7 +4730,7 @@ rlvgl_table_add_cell_ctrl4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_table_add_cell_ctrl,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, row,
 	    ARG_UINT16, col,
 	    ARG_UINT8, ctrl,
@@ -4801,7 +4801,7 @@ rlvgl_table_clear_cell_ctrl4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_table_clear_cell_ctrl,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, row,
 	    ARG_UINT16, col,
 	    ARG_UINT8, ctrl,
@@ -4857,7 +4857,7 @@ rlvgl_table_get_selected_cell_pt1(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_POINT, lv_table_get_selected_cell_pt,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -4940,8 +4940,8 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_msgbox_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_msgbox_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_INLINE_BUF, &title,
 	    ARG_INLINE_BUF, &text,
 	    ARG_INL_BUF_ARR, btns, btns_n,
@@ -4998,7 +4998,7 @@ rlvgl_msgbox_get_active_btn1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT16, lv_msgbox_get_active_btn,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5051,7 +5051,7 @@ rlvgl_msgbox_get_active_btn_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_msgbox_get_active_btn_text,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5104,7 +5104,7 @@ rlvgl_msgbox_close1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_msgbox_close,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5156,8 +5156,8 @@ rlvgl_msgbox_get_btns1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_msgbox_get_btns,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_msgbox_get_btns,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5214,10 +5214,771 @@ rlvgl_spinner_create3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_spinner_create,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, lv_spinner_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_UINT32, time,
 	    ARG_UINT32, arclen,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *parent;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &parent, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_OBJ, lv_meter_create,
+	    ARG_PTR_OBJ, parent,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_add_scale1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_METER_SCL, lv_meter_add_scale,
+	    ARG_PTR_OBJ, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_set_scale_ticks6(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterscl *scale;
+	uint cnt;
+	uint width;
+	uint len;
+	lv_color_t color;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 6)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterscl_hdl(env, argv[1], &nls, &scale, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[2], &cnt)) {
+		rv = enif_make_badarg2(env, "cnt", argv[2]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[3], &width)) {
+		rv = enif_make_badarg2(env, "width", argv[3]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[4], &len)) {
+		rv = enif_make_badarg2(env, "len", argv[4]);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[5], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[5]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_meter_set_scale_ticks,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_SCL, scale,
+	    ARG_UINT16, cnt,
+	    ARG_UINT16, width,
+	    ARG_UINT16, len,
+	    ARG_COLOR, &color,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_set_scale_major_ticks7(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterscl *scale;
+	uint nth;
+	uint width;
+	uint len;
+	lv_color_t color;
+	int label_gap;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 7)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterscl_hdl(env, argv[1], &nls, &scale, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[2], &nth)) {
+		rv = enif_make_badarg2(env, "nth", argv[2]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[3], &width)) {
+		rv = enif_make_badarg2(env, "width", argv[3]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[4], &len)) {
+		rv = enif_make_badarg2(env, "len", argv[4]);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[5], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[5]);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[6], &label_gap)) {
+		rv = enif_make_badarg2(env, "label_gap", argv[6]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_meter_set_scale_major_ticks,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_SCL, scale,
+	    ARG_UINT16, nth,
+	    ARG_UINT16, width,
+	    ARG_UINT16, len,
+	    ARG_COLOR, &color,
+	    ARG_UINT16, label_gap,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_set_scale_range6(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterscl *scale;
+	int min;
+	int max;
+	uint angle_range;
+	uint rotation;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 6)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterscl_hdl(env, argv[1], &nls, &scale, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[2], &min)) {
+		rv = enif_make_badarg2(env, "min", argv[2]);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[3], &max)) {
+		rv = enif_make_badarg2(env, "max", argv[3]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[4], &angle_range)) {
+		rv = enif_make_badarg2(env, "angle_range", argv[4]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[5], &rotation)) {
+		rv = enif_make_badarg2(env, "rotation", argv[5]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_meter_set_scale_range,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_SCL, scale,
+	    ARG_UINT32, min,
+	    ARG_UINT32, max,
+	    ARG_UINT32, angle_range,
+	    ARG_UINT32, rotation,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_add_needle_line5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterscl *scale;
+	uint width;
+	lv_color_t color;
+	int r_mod;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 5)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterscl_hdl(env, argv[1], &nls, &scale, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[2], &width)) {
+		rv = enif_make_badarg2(env, "width", argv[2]);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[3], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[3]);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[4], &r_mod)) {
+		rv = enif_make_badarg2(env, "r_mod", argv[4]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_METER_IND, lv_meter_add_needle_line,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_SCL, scale,
+	    ARG_UINT16, width,
+	    ARG_COLOR, &color,
+	    ARG_UINT16, r_mod,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_add_arc5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterscl *scale;
+	uint width;
+	lv_color_t color;
+	int r_mod;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 5)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterscl_hdl(env, argv[1], &nls, &scale, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[2], &width)) {
+		rv = enif_make_badarg2(env, "width", argv[2]);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[3], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[3]);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[4], &r_mod)) {
+		rv = enif_make_badarg2(env, "r_mod", argv[4]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_METER_IND, lv_meter_add_arc,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_SCL, scale,
+	    ARG_UINT16, width,
+	    ARG_COLOR, &color,
+	    ARG_UINT16, r_mod,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_set_indicator_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterind *ind;
+	int value;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterind_hdl(env, argv[1], &nls, &ind, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[2], &value)) {
+		rv = enif_make_badarg2(env, "value", argv[2]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_meter_set_indicator_value,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_IND, ind,
+	    ARG_UINT32, value,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_set_indicator_start_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterind *ind;
+	int value;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterind_hdl(env, argv[1], &nls, &ind, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[2], &value)) {
+		rv = enif_make_badarg2(env, "value", argv[2]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_meter_set_indicator_start_value,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_IND, ind,
+	    ARG_UINT32, value,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_meter_set_indicator_end_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkmeterind *ind;
+	int value;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_meterind_hdl(env, argv[1], &nls, &ind, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_int(env, argv[2], &value)) {
+		rv = enif_make_badarg2(env, "value", argv[2]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_meter_set_indicator_end_value,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_METER_IND, ind,
+	    ARG_UINT32, value,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *parent;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &parent, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_OBJ, lv_chart_create,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5270,9 +6031,9 @@ rlvgl_obj_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_disp_obj_create,
+	    ARG_PTR_OBJ, lv_disp_obj_create,
 	    ARG_PTR, inst->lvki_disp,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5320,7 +6081,7 @@ rlvgl_obj_center1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_center,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5373,7 +6134,7 @@ rlvgl_obj_add_flag2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_add_flag,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, flags,
 	    ARG_NONE);
 
@@ -5427,7 +6188,7 @@ rlvgl_obj_clear_flag2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_clear_flag,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, flags,
 	    ARG_NONE);
 
@@ -5481,7 +6242,7 @@ rlvgl_obj_has_flag2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT8, lv_obj_has_flag,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, flags,
 	    ARG_NONE);
 
@@ -5535,7 +6296,7 @@ rlvgl_obj_has_flag_any2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT8, lv_obj_has_flag_any,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, flags,
 	    ARG_NONE);
 
@@ -5589,7 +6350,7 @@ rlvgl_obj_add_state2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_add_state,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, states,
 	    ARG_NONE);
 
@@ -5643,7 +6404,7 @@ rlvgl_obj_clear_state2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_clear_state,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, states,
 	    ARG_NONE);
 
@@ -5694,7 +6455,7 @@ rlvgl_obj_get_state1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT32, lv_obj_get_state,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5734,7 +6495,7 @@ rlvgl_obj_add_style3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = make_errno(env, rc);
 		goto out;
 	}
-	rc = enter_sty_hdl(env, argv[1], &nls, &style, 0);
+	rc = enter_style_hdl(env, argv[1], &nls, &style, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -5753,8 +6514,8 @@ rlvgl_obj_add_style3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_add_style,
-	    ARG_OBJPTR, obj,
-	    ARG_STYPTR, style,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_STYLE, style,
 	    ARG_UINT32, sel,
 	    ARG_NONE);
 
@@ -5827,7 +6588,7 @@ rlvgl_obj_align3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_align,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, align,
 	    ARG_UINT32, offset.x,
 	    ARG_UINT32, offset.y,
@@ -5883,7 +6644,7 @@ rlvgl_obj_align2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_set_align,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, align,
 	    ARG_NONE);
 
@@ -5962,8 +6723,8 @@ rlvgl_obj_align_to4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_align_to,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, tobj,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, tobj,
 	    ARG_UINT32, align,
 	    ARG_UINT32, offset.x,
 	    ARG_UINT32, offset.y,
@@ -6014,7 +6775,7 @@ rlvgl_obj_get_pos1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_POINT, lv_obj_get_pos,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6062,7 +6823,7 @@ rlvgl_obj_get_size1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_POINT, lv_obj_get_size,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6129,7 +6890,7 @@ rlvgl_obj_set_size2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_set_size,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, size.x,
 	    ARG_UINT32, size.y,
 	    ARG_NONE);
@@ -6192,7 +6953,7 @@ rlvgl_obj_set_local_style_prop4(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_set_local_style_prop,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, sty_prop,
 	    ARG_STYLEVAL, &sty_val,
 	    ARG_UINT32, sel,
@@ -6243,7 +7004,7 @@ rlvgl_obj_move_foreground1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_move_foreground,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6291,7 +7052,7 @@ rlvgl_obj_move_background1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_move_background,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6345,8 +7106,8 @@ rlvgl_obj_swap2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_swap,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, other,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, other,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6400,8 +7161,8 @@ rlvgl_obj_set_parent2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_set_parent,
-	    ARG_OBJPTR, obj,
-	    ARG_OBJPTR, parent,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_OBJ, parent,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6454,7 +7215,7 @@ rlvgl_obj_move_to_index2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_move_to_index,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, index,
 	    ARG_NONE);
 
@@ -6503,7 +7264,7 @@ rlvgl_obj_get_index1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT32, lv_obj_get_index,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6551,7 +7312,7 @@ rlvgl_obj_get_child_cnt1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_UINT32, lv_obj_get_child_cnt,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6603,8 +7364,8 @@ rlvgl_obj_get_child2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_obj_get_child,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_obj_get_child,
+	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, index,
 	    ARG_NONE);
 
@@ -6652,8 +7413,8 @@ rlvgl_obj_get_parent1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_obj_get_parent,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_obj_get_parent,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6700,8 +7461,8 @@ rlvgl_obj_get_screen1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_obj_get_screen,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, lv_obj_get_screen,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6749,7 +7510,7 @@ rlvgl_obj_clean1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_clean,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6797,7 +7558,7 @@ rlvgl_obj_del1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_del,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6844,7 +7605,7 @@ rlvgl_group_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_GRPPTR, lv_group_create,
+	    ARG_PTR_GROUP, lv_group_create,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6878,7 +7639,7 @@ rlvgl_group_add_obj2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (argc != 2)
 		return (enif_make_badarg(env));
 
-	rc = enter_grp_hdl(env, argv[0], &nls, &group, 0);
+	rc = enter_group_hdl(env, argv[0], &nls, &group, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -6898,8 +7659,8 @@ rlvgl_group_add_obj2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_group_add_obj,
-	    ARG_GRPPTR, group,
-	    ARG_OBJPTR, obj,
+	    ARG_PTR_GROUP, group,
+	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6946,7 +7707,7 @@ rlvgl_style_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_STYPTR, lv_style_alloc,
+	    ARG_PTR_STYLE, lv_style_alloc,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -6982,7 +7743,7 @@ rlvgl_style_set_flex_align4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (argc != 4)
 		return (enif_make_badarg(env));
 
-	rc = enter_sty_hdl(env, argv[0], &nls, &style, 0);
+	rc = enter_style_hdl(env, argv[0], &nls, &style, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -7009,7 +7770,7 @@ rlvgl_style_set_flex_align4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_style_set_flex_align,
-	    ARG_STYPTR, style,
+	    ARG_PTR_STYLE, style,
 	    ARG_UINT32, main,
 	    ARG_UINT32, cross,
 	    ARG_UINT32, tracks,
@@ -7046,7 +7807,7 @@ rlvgl_style_set_flex_flow2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (argc != 2)
 		return (enif_make_badarg(env));
 
-	rc = enter_sty_hdl(env, argv[0], &nls, &style, 0);
+	rc = enter_style_hdl(env, argv[0], &nls, &style, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -7065,7 +7826,7 @@ rlvgl_style_set_flex_flow2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_style_set_flex_flow,
-	    ARG_STYPTR, style,
+	    ARG_PTR_STYLE, style,
 	    ARG_UINT32, flow,
 	    ARG_NONE);
 
@@ -7101,7 +7862,7 @@ rlvgl_style_set_prop3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (argc != 3)
 		return (enif_make_badarg(env));
 
-	rc = enter_sty_hdl(env, argv[0], &nls, &style, 0);
+	rc = enter_style_hdl(env, argv[0], &nls, &style, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -7122,7 +7883,7 @@ rlvgl_style_set_prop3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_style_set_prop,
-	    ARG_STYPTR, style,
+	    ARG_PTR_STYLE, style,
 	    ARG_UINT32, sty_prop,
 	    ARG_STYLEVAL, &sty_val,
 	    ARG_NONE);
@@ -7433,7 +8194,7 @@ rlvgl_disp_get_layer_sys1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_disp_get_layer_sys,
+	    ARG_PTR_OBJ, lv_disp_get_layer_sys,
 	    ARG_PTR, inst->lvki_disp,
 	    ARG_NONE);
 
@@ -7481,7 +8242,7 @@ rlvgl_disp_get_layer_top1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_disp_get_layer_top,
+	    ARG_PTR_OBJ, lv_disp_get_layer_top,
 	    ARG_PTR, inst->lvki_disp,
 	    ARG_NONE);
 
@@ -7529,7 +8290,7 @@ rlvgl_disp_get_scr_act1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_disp_get_scr_act,
+	    ARG_PTR_OBJ, lv_disp_get_scr_act,
 	    ARG_PTR, inst->lvki_disp,
 	    ARG_NONE);
 
@@ -7577,7 +8338,7 @@ rlvgl_disp_get_scr_prev1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_disp_get_scr_prev,
+	    ARG_PTR_OBJ, lv_disp_get_scr_prev,
 	    ARG_PTR, inst->lvki_disp,
 	    ARG_NONE);
 
@@ -7617,7 +8378,7 @@ rlvgl_set_kbd_group2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = make_errno(env, rc);
 		goto out;
 	}
-	rc = enter_grp_hdl(env, argv[1], &nls, &group, 0);
+	rc = enter_group_hdl(env, argv[1], &nls, &group, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -7633,7 +8394,7 @@ rlvgl_set_kbd_group2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_indev_set_group,
 	    ARG_PTR, inst->lvki_kbd,
-	    ARG_GRPPTR, group,
+	    ARG_PTR_GROUP, group,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -7688,7 +8449,7 @@ rlvgl_scr_load2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_disp_scr_load,
 	    ARG_PTR, inst->lvki_disp,
-	    ARG_OBJPTR, screen,
+	    ARG_PTR_OBJ, screen,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -7772,7 +8533,7 @@ rlvgl_scr_load_anim6(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_disp_scr_load_anim,
 	    ARG_PTR, inst->lvki_disp,
-	    ARG_OBJPTR, screen,
+	    ARG_PTR_OBJ, screen,
 	    ARG_UINT32, anim,
 	    ARG_UINT32, time,
 	    ARG_UINT32, delay,
@@ -7831,7 +8592,7 @@ rlvgl_set_mouse_cursor2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_indev_set_cursor,
 	    ARG_PTR, inst->lvki_mouse,
-	    ARG_OBJPTR, cursor,
+	    ARG_PTR_OBJ, cursor,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -7878,7 +8639,7 @@ rlvgl_indev_get_focused1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
-	    ARG_OBJPTR, lv_indev_get_focused,
+	    ARG_PTR_OBJ, lv_indev_get_focused,
 	    ARG_PTR, inst->lvki_kbd,
 	    ARG_NONE);
 
@@ -7989,6 +8750,17 @@ out:
 { "msgbox_close",			1, rlvgl_msgbox_close1 }, \
 { "msgbox_get_btns",			1, rlvgl_msgbox_get_btns1 }, \
 { "spinner_create",			3, rlvgl_spinner_create3 }, \
+{ "meter_create",			1, rlvgl_meter_create1 }, \
+{ "meter_add_scale",			1, rlvgl_meter_add_scale1 }, \
+{ "meter_set_scale_ticks",		6, rlvgl_meter_set_scale_ticks6 }, \
+{ "meter_set_scale_major_ticks",	7, rlvgl_meter_set_scale_major_ticks7 }, \
+{ "meter_set_scale_range",		6, rlvgl_meter_set_scale_range6 }, \
+{ "meter_add_needle_line",		5, rlvgl_meter_add_needle_line5 }, \
+{ "meter_add_arc",			5, rlvgl_meter_add_arc5 }, \
+{ "meter_set_indicator_value",		3, rlvgl_meter_set_indicator_value3 }, \
+{ "meter_set_indicator_start_value",	3, rlvgl_meter_set_indicator_start_value3 }, \
+{ "meter_set_indicator_end_value",	3, rlvgl_meter_set_indicator_end_value3 }, \
+{ "chart_create",			1, rlvgl_chart_create1 }, \
 { "obj_create",				2, rlvgl_obj_create2 }, \
 { "obj_center",				1, rlvgl_obj_center1 }, \
 { "obj_add_flag",			2, rlvgl_obj_add_flag2 }, \

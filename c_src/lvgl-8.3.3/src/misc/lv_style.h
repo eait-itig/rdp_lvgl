@@ -337,6 +337,7 @@ typedef struct {
     uint16_t prop1;
     uint8_t has_group;
     uint8_t prop_cnt;
+    void *user_data;
 } lv_style_t;
 
 /**********************

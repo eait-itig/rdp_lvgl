@@ -41,7 +41,8 @@
     btn/0, label/0, scr/0, img/0, spinner/0, textarea/0, tabview/0, btnmatrix/0,
     checkbox/0, dropdown/0, imgbtn/0, led/0, listview/0, menu/0, msgbox/0,
     roller/0, slider/0, switch/0, table/0, bar/0,
-    flags/1, font/0, group/0, coord/0, flush_msg/0
+    flags/1, font/0, group/0, coord/0, flush_msg/0,
+    chart/0, calendar/0, meter/0
 	]).
 
 -opaque object() :: rdp_lvgl_nif:object().
@@ -153,6 +154,12 @@
 %% A widget of type {@link lv_table}
 -type bar() :: object().
 %% A widget of type {@link lv_bar}
+-type chart() :: object().
+%% A widget of type {@link lv_chart}
+-type calendar() :: object().
+%% A widget of type {@link lv_calendar}
+-type meter() :: object().
+%% A widget of type {@link lv_meter}
 
 -type flags(T) :: T | [T].
 

@@ -57,7 +57,7 @@
 
 -type palette() :: red | pink | purple | deep_purple | indigo | blue |
     light_blue | cyan | teal | green | light_green | lime | yellow | amber |
-    orange | deep_orange | brown | blue_grey | grey.
+    orange | deep_orange | brown | blue_grey | grey | black | white.
 %% A named color.
 
 -type lighten_level() :: integer().
@@ -105,6 +105,8 @@ palette(deep_orange) -> { 255, 87, 34 };
 palette(brown) -> { 121, 85, 72 };
 palette(blue_grey) -> { 96, 125, 139 };
 palette(grey) -> { 158, 158, 158 };
+palette(black) -> { 0, 0, 0 };
+palette(white) -> { 255, 255, 255 };
 palette(X) -> error({invalid_color, X}).
 
 %% @doc Darkens a base palette color by a number of steps.

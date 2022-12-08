@@ -49,6 +49,7 @@ typedef struct {
     int16_t r_mod;
     uint16_t angle_range;
     int16_t rotation;
+    void *user_data;
 } lv_meter_scale_t;
 
 enum {
@@ -88,6 +89,7 @@ typedef struct {
             uint8_t local_grad  : 1;
         } scale_lines;
     } type_data;
+    void *user_data;
 } lv_meter_indicator_t;
 
 /*Data of line meter*/

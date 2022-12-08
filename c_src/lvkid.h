@@ -47,6 +47,10 @@ struct lvkbuf;
 struct lvkobj;
 struct lvkstyle;
 struct lvkgroup;
+struct lvkchartser;
+struct lvkchartcur;
+struct lvkmeterind;
+struct lvkmeterscl;
 TAILQ_HEAD(lvkid_list, lvkid);
 LIST_HEAD(lvkcmd_list, lvkcmd);
 LIST_HEAD(lvkinst_list, lvkinst);
@@ -56,6 +60,10 @@ LIST_HEAD(lvkobj_list, lvkobj);
 LIST_HEAD(lvkevt_list, lvkevt);
 LIST_HEAD(lvkstyle_list, lvkstyle);
 LIST_HEAD(lvkgroup_list, lvkgroup);
+LIST_HEAD(lvkchartser_list, lvkchartser);
+LIST_HEAD(lvkchartcur_list, lvkchartcur);
+LIST_HEAD(lvkmeterind_list, lvkmeterind);
+LIST_HEAD(lvkmeterscl_list, lvkmeterscl);
 
 enum lvkh_type {
 	LVK_NONE	= 0,
@@ -65,7 +73,11 @@ enum lvkh_type {
 	LVK_BUF,
 	LVK_EVT,
 	LVK_STY,
-	LVK_GRP
+	LVK_GRP,
+	LVK_CHART_SER,
+	LVK_CHART_CUR,
+	LVK_METER_IND,
+	LVK_METER_SCL,
 };
 
 struct lvkhdl {
@@ -136,6 +148,10 @@ struct lvkinst {
 	struct lvkstyle_list	 lvki_styles;
 	struct lvkgroup_list	 lvki_groups;
 	struct lvkbuf_list	 lvki_bufs;
+	struct lvkchartser_list	 lvki_chart_series;
+	struct lvkchartcur_list	 lvki_chart_cursors;
+	struct lvkmeterind_list	 lvki_meter_inds;
+	struct lvkmeterscl_list	 lvki_meter_scales;
 
 	ErlNifEnv		*lvki_env;
 	ERL_NIF_TERM		 lvki_msgref;
@@ -160,6 +176,46 @@ struct lvkgroup {
 	struct lvkhdl		*lvkg_hdl;
 
 	lvaddr_t		 lvkg_ptr;
+};
+
+struct lvkchartser {
+	struct lvkid		*lvkcs_kid;
+	LIST_ENTRY(lvkchartser)	 lvkcs_entry;
+	struct lvkinst		*lvkcs_inst;
+
+	struct lvkhdl		*lvkcs_hdl;
+
+	lvaddr_t		 lvkcs_ptr;
+};
+
+struct lvkchartcur {
+	struct lvkid		*lvkcc_kid;
+	LIST_ENTRY(lvkchartcur)	 lvkcc_entry;
+	struct lvkinst		*lvkcc_inst;
+
+	struct lvkhdl		*lvkcc_hdl;
+
+	lvaddr_t		 lvkcc_ptr;
+};
+
+struct lvkmeterind {
+	struct lvkid		*lvkmi_kid;
+	LIST_ENTRY(lvkmeterind)	 lvkmi_entry;
+	struct lvkinst		*lvkmi_inst;
+
+	struct lvkhdl		*lvkmi_hdl;
+
+	lvaddr_t		 lvkmi_ptr;
+};
+
+struct lvkmeterscl {
+	struct lvkid		*lvkms_kid;
+	LIST_ENTRY(lvkmeterscl)	 lvkms_entry;
+	struct lvkinst		*lvkms_inst;
+
+	struct lvkhdl		*lvkms_hdl;
+
+	lvaddr_t		 lvkms_ptr;
 };
 
 struct lvkbuf {

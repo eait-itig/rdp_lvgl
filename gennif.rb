@@ -86,36 +86,58 @@ class Dummy < Arg
   end
 end
 
-class LvObject < Arg
-  def arg_type; 'ARG_OBJPTR'; end
+class Handle < Arg
+  def stem; nil; end
+  def struct; stem.gsub('_', ''); end
+  def arg_type; "ARG_PTR_#{stem.upcase}"; end
   def declare
-    write "struct lvkobj *#{@name};"
+    write "struct lvk#{struct} *#{@name};"
   end
   def parse
-    write "rc = enter_obj_hdl(env, argv[#{@idx}], &nls, &#{@name}, 0);"
+    write "rc = enter_#{struct}_hdl(env, argv[#{@idx}], &nls, &#{@name}, 0);"
     write "if (rc != 0) {"
     write parse_error_rc
     write "}"
   end
+end
+
+class Obj < Handle
+  def stem; 'obj'; end
   def erl_type; 'object()'; end
 end
 
-class Group < Arg
-  def arg_type; 'ARG_GRPPTR'; end
-  def declare
-    write "struct lvkgroup *#{@name};"
-  end
-  def parse
-    write "rc = enter_grp_hdl(env, argv[#{@idx}], &nls, &#{@name}, 0);"
-    write "if (rc != 0) {"
-    write parse_error_rc
-    write "}"
-  end
+class Style < Handle
+  def stem; 'style'; end
+  def erl_type; 'style()'; end
+end
+
+class Group < Handle
+  def stem; 'group'; end
   def erl_type; 'group()'; end
 end
 
+class ChartSeries < Handle
+  def stem; 'chart_ser'; end
+  def erl_type; 'lv_chart:series()'; end
+end
+
+class ChartCursor < Handle
+  def stem; 'chart_cur'; end
+  def erl_type; 'lv_chart:cursor()'; end
+end
+
+class MeterInd < Handle
+  def stem; 'meter_ind'; end
+  def erl_type; 'lv_meter:indicator()'; end
+end
+
+class MeterScale < Handle
+  def stem; 'meter_scl'; end
+  def erl_type; 'lv_meter:scale()'; end
+end
+
 class Buffer < Arg
-  def arg_type; 'ARG_BUFPTR'; end
+  def arg_type; 'ARG_PTR_BUFFER'; end
   def declare
     write "struct lvkbuf *#{@name};"
   end
@@ -126,20 +148,6 @@ class Buffer < Arg
     write "}"
   end
   def erl_type; 'buffer()'; end
-end
-
-class Style < Arg
-  def arg_type; 'ARG_STYPTR'; end
-  def declare
-    write "struct lvkstyle *#{@name};"
-  end
-  def parse
-    write "rc = enter_sty_hdl(env, argv[#{@idx}], &nls, &#{@name}, 0);"
-    write "if (rc != 0) {"
-    write parse_error_rc
-    write "}"
-  end
-  def erl_type; 'style()'; end
 end
 
 class Inst < Arg
@@ -604,14 +612,14 @@ end
 
 class WidgetCreateFunc < Func
   def initialize(widget, *args)
-    args.unshift(LvObject.new('parent'))
-    super("#{widget}_create", "lv_#{widget}_create", LvObject, *args)
+    args.unshift(Obj.new('parent'))
+    super("#{widget}_create", "lv_#{widget}_create", Obj, *args)
   end
 end
 
 class ObjFunc < Func
   def initialize(name, rtype, *args)
-    args.unshift(LvObject.new('obj'))
+    args.unshift(Obj.new('obj'))
     super("obj_#{name}", "lv_obj_#{name}", rtype, *args)
   end
 end
@@ -626,7 +634,7 @@ end
 class WidgetFunc < Func
   def initialize(widget, name, rtype, *args)
     @widget = widget
-    args.unshift(LvObject.new('obj'))
+    args.unshift(Obj.new('obj'))
     super("#{widget}_#{name}", "lv_#{widget}_#{name}", rtype, *args)
   end
 
@@ -661,7 +669,7 @@ WidgetFunc.new('textarea', 'set_text_selection', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_password_mode', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_one_line', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_accepted_chars', Void, Buffer.new('buf'))
-WidgetFunc.new('textarea', 'get_label', LvObject)
+WidgetFunc.new('textarea', 'get_label', Obj)
 WidgetFunc.new('textarea', 'set_password_show_time', Void, UInt16.new('time'))
 
 WidgetCreateFunc.new('img')
@@ -710,20 +718,20 @@ WidgetFunc.new('led', 'toggle', Void)
 WidgetFunc.new('led', 'get_brightness', UInt8)
 
 WidgetCreateFunc.new('list')
-WidgetFunc.new('list', 'add_text', LvObject, InlineStr.new('text'))
-WidgetFunc.new('list', 'add_btn', LvObject, ImgSrc.new('icon'), InlineStr.new('text'))
-WidgetFunc.new('list', 'get_btn_text', InlineStr, LvObject.new('btn'))
+WidgetFunc.new('list', 'add_text', Obj, InlineStr.new('text'))
+WidgetFunc.new('list', 'add_btn', Obj, ImgSrc.new('icon'), InlineStr.new('text'))
+WidgetFunc.new('list', 'get_btn_text', InlineStr, Obj.new('btn'))
 
 WidgetCreateFunc.new('menu')
-WidgetFunc.new('menu', 'page_create', LvObject, InlineStr.new('title'))
-LvFunc.new('menu_cont_create', LvObject, LvObject.new('parent'))
-LvFunc.new('menu_section_create', LvObject, LvObject.new('parent'))
-LvFunc.new('menu_separator_create', LvObject, LvObject.new('parent'))
-WidgetFunc.new('menu', 'set_page', Void, LvObject.new('page'))
-WidgetFunc.new('menu', 'set_sidebar_page', Void, LvObject.new('page'))
+WidgetFunc.new('menu', 'page_create', Obj, InlineStr.new('title'))
+LvFunc.new('menu_cont_create', Obj, Obj.new('parent'))
+LvFunc.new('menu_section_create', Obj, Obj.new('parent'))
+LvFunc.new('menu_separator_create', Obj, Obj.new('parent'))
+WidgetFunc.new('menu', 'set_page', Void, Obj.new('page'))
+WidgetFunc.new('menu', 'set_sidebar_page', Void, Obj.new('page'))
 WidgetFunc.new('menu', 'set_mode_root_back_btn', Void, MenuModeRootBackBtn.new('mode'))
 WidgetFunc.new('menu', 'set_mode_header', Void, MenuModeHeader.new('mode'))
-WidgetFunc.new('menu', 'set_load_page_event', Void, LvObject.new('btn'), LvObject.new('page'))
+WidgetFunc.new('menu', 'set_load_page_event', Void, Obj.new('btn'), Obj.new('page'))
 
 WidgetCreateFunc.new('roller')
 
@@ -744,11 +752,24 @@ WidgetCreateFunc.new('msgbox', InlineStr.new('title'), InlineStr.new('text'), In
 WidgetFunc.new('msgbox', 'get_active_btn', UInt16)
 WidgetFunc.new('msgbox', 'get_active_btn_text', InlineStr)
 WidgetFunc.new('msgbox', 'close', Void)
-WidgetFunc.new('msgbox', 'get_btns', LvObject)
+WidgetFunc.new('msgbox', 'get_btns', Obj)
 
 WidgetCreateFunc.new('spinner', UInt32.new('time'), UInt32.new('arclen'))
 
-Func.new('obj_create', 'lv_disp_obj_create', LvObject, InstMember.new('inst', 'lvki_disp'), LvObject.new('parent'))
+WidgetCreateFunc.new('meter')
+WidgetFunc.new('meter', 'add_scale', MeterScale)
+WidgetFunc.new('meter', 'set_scale_ticks', Void, MeterScale.new('scale'), UInt16.new('cnt'), UInt16.new('width'), UInt16.new('len'), Color.new('color'))
+WidgetFunc.new('meter', 'set_scale_major_ticks', Void, MeterScale.new('scale'), UInt16.new('nth'), UInt16.new('width'), UInt16.new('len'), Color.new('color'), Int16.new('label_gap'))
+WidgetFunc.new('meter', 'set_scale_range', Void, MeterScale.new('scale'), Int32.new('min'), Int32.new('max'), UInt32.new('angle_range'), UInt32.new('rotation'))
+WidgetFunc.new('meter', 'add_needle_line', MeterInd, MeterScale.new('scale'), UInt16.new('width'), Color.new('color'), Int16.new('r_mod'))
+WidgetFunc.new('meter', 'add_arc', MeterInd, MeterScale.new('scale'), UInt16.new('width'), Color.new('color'), Int16.new('r_mod'))
+WidgetFunc.new('meter', 'set_indicator_value', Void, MeterInd.new('ind'), Int32.new('value'))
+WidgetFunc.new('meter', 'set_indicator_start_value', Void, MeterInd.new('ind'), Int32.new('value'))
+WidgetFunc.new('meter', 'set_indicator_end_value', Void, MeterInd.new('ind'), Int32.new('value'))
+
+WidgetCreateFunc.new('chart')
+
+Func.new('obj_create', 'lv_disp_obj_create', Obj, InstMember.new('inst', 'lvki_disp'), Obj.new('parent'))
 ObjFunc.new('center', Void)
 ObjFunc.new('add_flag', Void, ObjFlags.new('flags'))
 ObjFunc.new('clear_flag', Void, ObjFlags.new('flags'))
@@ -759,27 +780,27 @@ ObjFunc.new('clear_state', Void, ObjStates.new('states'))
 ObjFunc.new('get_state', ObjStates)
 ObjFunc.new('add_style', Void, Style.new('style'), StyleSelector.new('sel'))
 ObjFunc.new('align', Void, AlignSpec.new('align'), SplitPoint.new('offset'))
-Func.new('obj_align', 'lv_obj_set_align', Void, LvObject.new('obj'), AlignSpec.new('align'))
-ObjFunc.new('align_to', Void, LvObject.new('tobj'), AlignSpec.new('align'), SplitPoint.new('offset'))
+Func.new('obj_align', 'lv_obj_set_align', Void, Obj.new('obj'), AlignSpec.new('align'))
+ObjFunc.new('align_to', Void, Obj.new('tobj'), AlignSpec.new('align'), SplitPoint.new('offset'))
 ObjFunc.new('get_pos', Point)
 ObjFunc.new('get_size', Point)
 ObjFunc.new('set_size', Void, SplitPoint.new('size'))
 ObjFunc.new('set_local_style_prop', Void, StylePropVal.new('sty'), Dummy.new('val'), StyleSelector.new('sel'))
 ObjFunc.new('move_foreground', Void)
 ObjFunc.new('move_background', Void)
-ObjFunc.new('swap', Void, LvObject.new('other'))
-ObjFunc.new('set_parent', Void, LvObject.new('parent'))
+ObjFunc.new('swap', Void, Obj.new('other'))
+ObjFunc.new('set_parent', Void, Obj.new('parent'))
 ObjFunc.new('move_to_index', Void, Int32.new('index'))
 ObjFunc.new('get_index', Int32)
 ObjFunc.new('get_child_cnt', UInt32)
-ObjFunc.new('get_child', LvObject, Int32.new('index'))
-ObjFunc.new('get_parent', LvObject)
-ObjFunc.new('get_screen', LvObject)
+ObjFunc.new('get_child', Obj, Int32.new('index'))
+ObjFunc.new('get_parent', Obj)
+ObjFunc.new('get_screen', Obj)
 ObjFunc.new('clean', Void)
 ObjFunc.new('del', Void)
 
 LvFunc.new('group_create', Group, Inst.new('inst'))
-LvFunc.new('group_add_obj', Void, Group.new('group'), LvObject.new('obj'))
+LvFunc.new('group_add_obj', Void, Group.new('group'), Obj.new('obj'))
 
 Func.new('style_create', 'lv_style_alloc', Style, Inst.new('inst'))
 StyleFunc.new('set_flex_align', Void, FlexAlign.new('main'), FlexAlign.new('cross'), FlexAlign.new('tracks'))
@@ -791,16 +812,16 @@ LvFunc.new('disp_set_bg_image', Void, InstMember.new('inst', 'lvki_disp'), ImgSr
 LvFunc.new('disp_set_bg_opa', Void, InstMember.new('inst', 'lvki_disp'), UInt8.new('opacity'))
 LvFunc.new('disp_get_inactive_time', UInt32, InstMember.new('inst', 'lvki_disp'))
 LvFunc.new('disp_trig_activity', Void, InstMember.new('inst', 'lvki_disp'))
-LvFunc.new('disp_get_layer_sys', LvObject, InstMember.new('inst', 'lvki_disp'))
-LvFunc.new('disp_get_layer_top', LvObject, InstMember.new('inst', 'lvki_disp'))
-LvFunc.new('disp_get_scr_act', LvObject, InstMember.new('inst', 'lvki_disp'))
-LvFunc.new('disp_get_scr_prev', LvObject, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_layer_sys', Obj, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_layer_top', Obj, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_scr_act', Obj, InstMember.new('inst', 'lvki_disp'))
+LvFunc.new('disp_get_scr_prev', Obj, InstMember.new('inst', 'lvki_disp'))
 Func.new('set_kbd_group', 'lv_indev_set_group', Void, InstMember.new('inst', 'lvki_kbd'), Group.new('group'))
-Func.new('scr_load', 'lv_disp_scr_load', Void, InstMember.new('inst', 'lvki_disp'), LvObject.new('screen'))
-Func.new('scr_load_anim', 'lv_disp_scr_load_anim', Void, InstMember.new('inst', 'lvki_disp'), LvObject.new('screen'), ScrLoadAnim.new('anim'), UInt32.new('time'), UInt32.new('delay'), Bool8.new('autodel'))
-Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void, InstMember.new('inst', 'lvki_mouse'), LvObject.new('cursor'))
+Func.new('scr_load', 'lv_disp_scr_load', Void, InstMember.new('inst', 'lvki_disp'), Obj.new('screen'))
+Func.new('scr_load_anim', 'lv_disp_scr_load_anim', Void, InstMember.new('inst', 'lvki_disp'), Obj.new('screen'), ScrLoadAnim.new('anim'), UInt32.new('time'), UInt32.new('delay'), Bool8.new('autodel'))
+Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void, InstMember.new('inst', 'lvki_mouse'), Obj.new('cursor'))
 
-LvFunc.new('indev_get_focused', LvObject, InstMember.new('inst', 'lvki_kbd'))
+LvFunc.new('indev_get_focused', Obj, InstMember.new('inst', 'lvki_kbd'))
 
 $stdout.reopen('c_src/nif_gen.h', 'w')
 Func.print_all
