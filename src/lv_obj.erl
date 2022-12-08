@@ -64,6 +64,7 @@
     get_screen/1,
     clean/1,
     del/1,
+    refresh_ext_draw_size/1,
     set_style_width/2,
     set_style_width/3,
     set_style_min_width/2,
@@ -517,6 +518,13 @@ del(Obj) ->
 -spec swap(lv:object(), lv:object()) -> ok | lv:error().
 swap(Obj, OtherObj) ->
     ?async_void_wrapper(obj_swap, Obj, OtherObj).
+
+%% @doc Refreshes the object's extended raw size.
+%%
+%% Sends a <code>LV_EVENT_REFR_EXT_DRAW_SIZE</code> event.
+-spec refresh_ext_draw_size(lv:object()) -> ok | lv:error().
+refresh_ext_draw_size(Obj) ->
+    ?async_void_wrapper(obj_refresh_ext_draw_size, Obj).
 
 %% @doc Move the parent of an object.
 %%

@@ -373,6 +373,8 @@ lv_chart_series_t * lv_chart_add_series(lv_obj_t * obj, lv_color_t color, lv_cha
         p_tmp++;
     }
 
+    ser->user_data = NULL;
+
     return ser;
 }
 
@@ -454,6 +456,7 @@ lv_chart_cursor_t  * lv_chart_add_cursor(lv_obj_t * obj, lv_color_t color, lv_di
     cursor->pos_set = 0;
     cursor->color = color;
     cursor->dir = dir;
+    cursor->user_data = NULL;
 
     return cursor;
 }

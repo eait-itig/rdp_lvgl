@@ -126,6 +126,8 @@ void lv_indev_drv_update(lv_indev_t * indev, lv_indev_drv_t * new_drv)
     indev->proc.reset_query   = 1;
 }
 
+extern void lv_indev_ensure_inactive(lv_indev_t *indev);
+
 /**
 * Remove the provided input device. Make sure not to use the provided input device afterwards anymore.
 * @param indev pointer to delete
@@ -135,6 +137,7 @@ void lv_indev_delete(lv_indev_t * indev)
     LV_ASSERT_NULL(indev);
     LV_ASSERT_NULL(indev->driver);
     LV_ASSERT_NULL(indev->driver->read_timer);
+    lv_indev_ensure_inactive(indev);
     /*Clean up the read timer first*/
     lv_timer_del(indev->driver->read_timer);
     /*Remove the input device from the list*/

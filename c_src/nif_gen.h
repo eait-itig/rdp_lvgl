@@ -4591,7 +4591,7 @@ rlvgl_table_set_col_width3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_table_set_col_width,
 	    ARG_PTR_OBJ, obj,
 	    ARG_UINT16, col_idx,
-	    ARG_UINT32, width,
+	    ARG_UINT16, width,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5979,6 +5979,1146 @@ rlvgl_chart_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_PTR_OBJ, lv_chart_create,
 	    ARG_PTR_OBJ, parent,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_type2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	int type;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[1], chart_types, false, &type))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_type,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT8, type,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_point_count2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint count;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &count)) {
+		rv = enif_make_badarg2(env, "count", argv[1]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_point_count,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT16, count,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_range4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	int axis;
+	char atom[32];
+	lv_coord_t min;
+	lv_coord_t max;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 4)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[1], chart_axes, false, &axis))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1) &&
+	    strcmp(atom, "none") == 0) {
+		min = LV_CHART_POINT_NONE;
+	} else if ((rc = parse_coord(env, argv[2], &min))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (enif_get_atom(env, argv[3], atom, sizeof (atom), ERL_NIF_LATIN1) &&
+	    strcmp(atom, "none") == 0) {
+		max = LV_CHART_POINT_NONE;
+	} else if ((rc = parse_coord(env, argv[3], &max))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_range,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT8, axis,
+	    ARG_UINT16, min,
+	    ARG_UINT16, max,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_update_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	int mode;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[1], chart_update_modes, false, &mode))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_update_mode,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT8, mode,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_div_line_count3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint hdiv;
+	uint vdiv;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &hdiv)) {
+		rv = enif_make_badarg2(env, "hdiv", argv[1]);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[2], &vdiv)) {
+		rv = enif_make_badarg2(env, "vdiv", argv[2]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_div_line_count,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT8, hdiv,
+	    ARG_UINT8, vdiv,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_zoom_x2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint zoom;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &zoom)) {
+		rv = enif_make_badarg2(env, "zoom", argv[1]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_zoom_x,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT16, zoom,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_zoom_y2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	uint zoom;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_uint(env, argv[1], &zoom)) {
+		rv = enif_make_badarg2(env, "zoom", argv[1]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_zoom_y,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT16, zoom,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_axis_tick8(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	int axis;
+	lv_coord_t major_len;
+	lv_coord_t minor_len;
+	lv_coord_t major_cnt;
+	lv_coord_t minor_cnt;
+	char atom[32];
+	uint label_en;
+	lv_coord_t draw_size;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 8)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[1], chart_axes, false, &axis))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_coord(env, argv[2], &major_len))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_coord(env, argv[3], &minor_len))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_coord(env, argv[4], &major_cnt))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_coord(env, argv[5], &minor_cnt))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_atom(env, argv[6], atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		rv = enif_make_badarg2(env, "label_en", argv[6]);
+		goto out;
+	}
+	if (strcmp(atom, "true") == 0) {
+		label_en = 1;
+	} else if (strcmp(atom, "false") == 0) {
+		label_en = 0;
+	} else {
+		rv = enif_make_badarg2(env, "label_en", argv[6]);
+		goto out;
+	}
+	if ((rc = parse_coord(env, argv[7], &draw_size))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_axis_tick,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT8, axis,
+	    ARG_UINT16, major_len,
+	    ARG_UINT16, minor_len,
+	    ARG_UINT16, major_cnt,
+	    ARG_UINT16, minor_cnt,
+	    ARG_UINT8, label_en,
+	    ARG_UINT16, draw_size,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_get_point_count1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_UINT16, lv_chart_get_point_count,
+	    ARG_PTR_OBJ, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_add_series3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	lv_color_t color;
+	int axis;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[1], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[1]);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[2], chart_axes, false, &axis))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_CHART_SER, lv_chart_add_series,
+	    ARG_PTR_OBJ, obj,
+	    ARG_COLOR, &color,
+	    ARG_UINT8, axis,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_remove_series2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_remove_series,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_hide_series3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+	char atom[32];
+	uint hide;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		rv = enif_make_badarg2(env, "hide", argv[2]);
+		goto out;
+	}
+	if (strcmp(atom, "true") == 0) {
+		hide = 1;
+	} else if (strcmp(atom, "false") == 0) {
+		hide = 0;
+	} else {
+		rv = enif_make_badarg2(env, "hide", argv[2]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_hide_series,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_UINT8, hide,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_series_color3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+	lv_color_t color;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (!enif_get_color(env, argv[2], &color)) {
+		rv = enif_make_badarg2(env, "color", argv[2]);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_series_color,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_COLOR, &color,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_get_series_next2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_PTR_CHART_SER, lv_chart_get_series_next,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_all_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+	char atom[32];
+	lv_coord_t y;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1) &&
+	    strcmp(atom, "none") == 0) {
+		y = LV_CHART_POINT_NONE;
+	} else if ((rc = parse_coord(env, argv[2], &y))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_all_value,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_UINT16, y,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_next_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+	char atom[32];
+	lv_coord_t y;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 3)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1) &&
+	    strcmp(atom, "none") == 0) {
+		y = LV_CHART_POINT_NONE;
+	} else if ((rc = parse_coord(env, argv[2], &y))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_next_value,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_UINT16, y,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_chart_set_next_value24(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	struct lvkchartser *series;
+	char atom[32];
+	lv_coord_t x;
+	lv_coord_t y;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 4)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_chartser_hdl(env, argv[1], &nls, &series, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1) &&
+	    strcmp(atom, "none") == 0) {
+		x = LV_CHART_POINT_NONE;
+	} else if ((rc = parse_coord(env, argv[2], &x))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (enif_get_atom(env, argv[3], atom, sizeof (atom), ERL_NIF_LATIN1) &&
+	    strcmp(atom, "none") == 0) {
+		y = LV_CHART_POINT_NONE;
+	} else if ((rc = parse_coord(env, argv[3], &y))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_chart_set_next_value2,
+	    ARG_PTR_OBJ, obj,
+	    ARG_PTR_CHART_SER, series,
+	    ARG_UINT16, x,
+	    ARG_UINT16, y,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -7578,6 +8718,54 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_obj_refresh_ext_draw_size1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_obj_refresh_ext_draw_size,
+	    ARG_PTR_OBJ, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_group_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -8761,6 +9949,23 @@ out:
 { "meter_set_indicator_start_value",	3, rlvgl_meter_set_indicator_start_value3 }, \
 { "meter_set_indicator_end_value",	3, rlvgl_meter_set_indicator_end_value3 }, \
 { "chart_create",			1, rlvgl_chart_create1 }, \
+{ "chart_set_type",			2, rlvgl_chart_set_type2 }, \
+{ "chart_set_point_count",		2, rlvgl_chart_set_point_count2 }, \
+{ "chart_set_range",			4, rlvgl_chart_set_range4 }, \
+{ "chart_set_update_mode",		2, rlvgl_chart_set_update_mode2 }, \
+{ "chart_set_div_line_count",		3, rlvgl_chart_set_div_line_count3 }, \
+{ "chart_set_zoom_x",			2, rlvgl_chart_set_zoom_x2 }, \
+{ "chart_set_zoom_y",			2, rlvgl_chart_set_zoom_y2 }, \
+{ "chart_set_axis_tick",		8, rlvgl_chart_set_axis_tick8 }, \
+{ "chart_get_point_count",		1, rlvgl_chart_get_point_count1 }, \
+{ "chart_add_series",			3, rlvgl_chart_add_series3 }, \
+{ "chart_remove_series",		2, rlvgl_chart_remove_series2 }, \
+{ "chart_hide_series",			3, rlvgl_chart_hide_series3 }, \
+{ "chart_set_series_color",		3, rlvgl_chart_set_series_color3 }, \
+{ "chart_get_series_next",		2, rlvgl_chart_get_series_next2 }, \
+{ "chart_set_all_value",		3, rlvgl_chart_set_all_value3 }, \
+{ "chart_set_next_value",		3, rlvgl_chart_set_next_value3 }, \
+{ "chart_set_next_value2",		4, rlvgl_chart_set_next_value24 }, \
 { "obj_create",				2, rlvgl_obj_create2 }, \
 { "obj_center",				1, rlvgl_obj_center1 }, \
 { "obj_add_flag",			2, rlvgl_obj_add_flag2 }, \
@@ -8790,6 +9995,7 @@ out:
 { "obj_get_screen",			1, rlvgl_obj_get_screen1 }, \
 { "obj_clean",				1, rlvgl_obj_clean1 }, \
 { "obj_del",				1, rlvgl_obj_del1 }, \
+{ "obj_refresh_ext_draw_size",		1, rlvgl_obj_refresh_ext_draw_size1 }, \
 { "group_create",			1, rlvgl_group_create1 }, \
 { "group_add_obj",			2, rlvgl_group_add_obj2 }, \
 { "style_create",			1, rlvgl_style_create1 }, \

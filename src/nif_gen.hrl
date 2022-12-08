@@ -200,6 +200,40 @@ meter_set_indicator_start_value(_Obj, _Ind, _Value) -> error(no_nif).
 meter_set_indicator_end_value(_Obj, _Ind, _Value) -> error(no_nif).
 -spec chart_create(object()) -> async_return(object()).
 chart_create(_Parent) -> error(no_nif).
+-spec chart_set_type(object(), lv_chart:type()) -> async_return().
+chart_set_type(_Obj, _Type) -> error(no_nif).
+-spec chart_set_point_count(object(), integer()) -> async_return().
+chart_set_point_count(_Obj, _Count) -> error(no_nif).
+-spec chart_set_range(object(), lv_chart:axis(), none | integer(), none | integer()) -> async_return().
+chart_set_range(_Obj, _Axis, _Min, _Max) -> error(no_nif).
+-spec chart_set_update_mode(object(), lv_chart:update_mode()) -> async_return().
+chart_set_update_mode(_Obj, _Mode) -> error(no_nif).
+-spec chart_set_div_line_count(object(), integer(), integer()) -> async_return().
+chart_set_div_line_count(_Obj, _Hdiv, _Vdiv) -> error(no_nif).
+-spec chart_set_zoom_x(object(), integer()) -> async_return().
+chart_set_zoom_x(_Obj, _Zoom) -> error(no_nif).
+-spec chart_set_zoom_y(object(), integer()) -> async_return().
+chart_set_zoom_y(_Obj, _Zoom) -> error(no_nif).
+-spec chart_set_axis_tick(object(), lv_chart:axis(), lv:coord(), lv:coord(), lv:coord(), lv:coord(), boolean(), lv:coord()) -> async_return().
+chart_set_axis_tick(_Obj, _Axis, _Major_len, _Minor_len, _Major_cnt, _Minor_cnt, _Label_en, _Draw_size) -> error(no_nif).
+-spec chart_get_point_count(object()) -> async_return(integer()).
+chart_get_point_count(_Obj) -> error(no_nif).
+-spec chart_add_series(object(), lv:color(), lv_chart:axis()) -> async_return(lv_chart:series()).
+chart_add_series(_Obj, _Color, _Axis) -> error(no_nif).
+-spec chart_remove_series(object(), lv_chart:series()) -> async_return().
+chart_remove_series(_Obj, _Series) -> error(no_nif).
+-spec chart_hide_series(object(), lv_chart:series(), boolean()) -> async_return().
+chart_hide_series(_Obj, _Series, _Hide) -> error(no_nif).
+-spec chart_set_series_color(object(), lv_chart:series(), lv:color()) -> async_return().
+chart_set_series_color(_Obj, _Series, _Color) -> error(no_nif).
+-spec chart_get_series_next(object(), lv_chart:series()) -> async_return(lv_chart:series()).
+chart_get_series_next(_Obj, _Series) -> error(no_nif).
+-spec chart_set_all_value(object(), lv_chart:series(), none | integer()) -> async_return().
+chart_set_all_value(_Obj, _Series, _Y) -> error(no_nif).
+-spec chart_set_next_value(object(), lv_chart:series(), none | integer()) -> async_return().
+chart_set_next_value(_Obj, _Series, _Y) -> error(no_nif).
+-spec chart_set_next_value2(object(), lv_chart:series(), none | integer(), none | integer()) -> async_return().
+chart_set_next_value2(_Obj, _Series, _X, _Y) -> error(no_nif).
 -spec obj_create(instance(), object()) -> async_return(object()).
 obj_create(_Inst, _Parent) -> error(no_nif).
 -spec obj_center(object()) -> async_return().
@@ -258,6 +292,8 @@ obj_get_screen(_Obj) -> error(no_nif).
 obj_clean(_Obj) -> error(no_nif).
 -spec obj_del(object()) -> async_return().
 obj_del(_Obj) -> error(no_nif).
+-spec obj_refresh_ext_draw_size(object()) -> async_return().
+obj_refresh_ext_draw_size(_Obj) -> error(no_nif).
 -spec group_create(instance()) -> async_return(group()).
 group_create(_Inst) -> error(no_nif).
 -spec group_add_obj(group(), object()) -> async_return().

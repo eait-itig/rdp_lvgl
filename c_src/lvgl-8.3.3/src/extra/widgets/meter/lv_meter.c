@@ -80,6 +80,7 @@ lv_meter_scale_t * lv_meter_add_scale(lv_obj_t * obj)
     scale->tick_length = 8;
     scale->tick_width = 2;
     scale->label_gap = 2;
+    scale->user_data = NULL;
 
     return scale;
 }
@@ -134,6 +135,7 @@ lv_meter_indicator_t * lv_meter_add_needle_line(lv_obj_t * obj, lv_meter_scale_t
     indic->type_data.needle_line.width = width;
     indic->type_data.needle_line.color = color;
     indic->type_data.needle_line.r_mod = r_mod;
+    indic->user_data = NULL;
     lv_obj_invalidate(obj);
 
     return indic;
@@ -149,6 +151,7 @@ lv_meter_indicator_t * lv_meter_add_needle_img(lv_obj_t * obj, lv_meter_scale_t 
     lv_memset_00(indic, sizeof(lv_meter_indicator_t));
     indic->scale = scale;
     indic->opa = LV_OPA_COVER;
+    indic->user_data = NULL;
 
     indic->type = LV_METER_INDICATOR_TYPE_NEEDLE_IMG;
     indic->type_data.needle_img.src = src;
@@ -174,6 +177,7 @@ lv_meter_indicator_t * lv_meter_add_arc(lv_obj_t * obj, lv_meter_scale_t * scale
     indic->type_data.arc.width = width;
     indic->type_data.arc.color = color;
     indic->type_data.arc.r_mod = r_mod;
+    indic->user_data = NULL;
 
     lv_obj_invalidate(obj);
     return indic;
@@ -195,6 +199,7 @@ lv_meter_indicator_t * lv_meter_add_scale_lines(lv_obj_t * obj, lv_meter_scale_t
     indic->type_data.scale_lines.color_end = color_end;
     indic->type_data.scale_lines.local_grad = local;
     indic->type_data.scale_lines.width_mod = width_mod;
+    indic->user_data = NULL;
 
     lv_obj_invalidate(obj);
     return indic;

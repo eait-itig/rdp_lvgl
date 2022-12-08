@@ -272,6 +272,25 @@ const static struct enum_spec btnmatrix_ctrls[] = {
 	{ "custom_2",		LV_BTNMATRIX_CTRL_CUSTOM_2 },
 	{ NULL, 0 }
 };
+const static struct enum_spec chart_types[] = {
+	{ "none",		LV_CHART_TYPE_NONE },
+	{ "line",		LV_CHART_TYPE_LINE },
+	{ "bar",		LV_CHART_TYPE_BAR },
+	{ "scatter",		LV_CHART_TYPE_SCATTER },
+	{ NULL, 0 }
+};
+const static struct enum_spec chart_update_modes[] = {
+	{ "shift",		LV_CHART_UPDATE_MODE_SHIFT },
+	{ "circular",		LV_CHART_UPDATE_MODE_CIRCULAR },
+	{ NULL, 0 }
+};
+const static struct enum_spec chart_axes[] = {
+	{ "primary_y",		LV_CHART_AXIS_PRIMARY_Y },
+	{ "secondary_y",	LV_CHART_AXIS_SECONDARY_Y },
+	{ "primary_x",		LV_CHART_AXIS_PRIMARY_X },
+	{ "secondary_x",	LV_CHART_AXIS_SECONDARY_Y },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

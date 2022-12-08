@@ -2362,6 +2362,10 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	LIST_INIT(&inst->lvki_objs);
 	LIST_INIT(&inst->lvki_styles);
 	LIST_INIT(&inst->lvki_groups);
+	LIST_INIT(&inst->lvki_chart_series);
+	LIST_INIT(&inst->lvki_chart_cursors);
+	LIST_INIT(&inst->lvki_meter_inds);
+	LIST_INIT(&inst->lvki_meter_scales);
 
 	inst->lvki_env = enif_alloc_env();
 	inst->lvki_owner = owner;

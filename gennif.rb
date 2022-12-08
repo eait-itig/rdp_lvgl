@@ -296,8 +296,27 @@ class Point < Arg
   def erl_type; 'lv:point()'; end
 end
 
+class ChartValue < Arg
+  def arg_type; 'ARG_UINT16'; end
+  def declare
+    @func.if_not_flag('atom_decl') do
+      write "char atom[32];"
+    end
+    write "lv_coord_t #{@name};"
+  end
+  def parse
+    write "if (enif_get_atom(env, argv[#{@idx}], atom, sizeof (atom), ERL_NIF_LATIN1) &&"
+    write "    strcmp(atom, \"none\") == 0) {"
+    write "\t#{@name} = LV_CHART_POINT_NONE;"
+    write "} else if ((rc = parse_coord(env, argv[#{@idx}], &#{@name}))) {"
+    write parse_error_rc
+    write "}"
+  end
+  def erl_type; 'none | integer()'; end
+end
+
 class Coord < Arg
-  def arg_type; 'ARG_UINT32'; end
+  def arg_type; 'ARG_UINT16'; end
   def declare
     write "lv_coord_t #{@name};"
   end
@@ -490,6 +509,21 @@ class BtnMatrixControl < Enum16
   def enum; 'btnmatrix_ctrls'; end
   def multi; true; end
   def erl_flag_type; 'lv_btnmatrix:ctrl()'; end
+end
+class ChartType < Enum8
+  def enum; 'chart_types'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_chart:type()'; end
+end
+class ChartUpdateMode < Enum8
+  def enum; 'chart_update_modes'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_chart:update_mode()'; end
+end
+class ChartAxis < Enum8
+  def enum; 'chart_axes'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_chart:axis()'; end
 end
 
 class Func
@@ -768,6 +802,23 @@ WidgetFunc.new('meter', 'set_indicator_start_value', Void, MeterInd.new('ind'), 
 WidgetFunc.new('meter', 'set_indicator_end_value', Void, MeterInd.new('ind'), Int32.new('value'))
 
 WidgetCreateFunc.new('chart')
+WidgetFunc.new('chart', 'set_type', Void, ChartType.new('type'))
+WidgetFunc.new('chart', 'set_point_count', Void, UInt16.new('count'))
+WidgetFunc.new('chart', 'set_range', Void, ChartAxis.new('axis'), ChartValue.new('min'), ChartValue.new('max'))
+WidgetFunc.new('chart', 'set_update_mode', Void, ChartUpdateMode.new('mode'))
+WidgetFunc.new('chart', 'set_div_line_count', Void, UInt8.new('hdiv'), UInt8.new('vdiv'))
+WidgetFunc.new('chart', 'set_zoom_x', Void, UInt16.new('zoom'))
+WidgetFunc.new('chart', 'set_zoom_y', Void, UInt16.new('zoom'))
+WidgetFunc.new('chart', 'set_axis_tick', Void, ChartAxis.new('axis'), Coord.new('major_len'), Coord.new('minor_len'), Coord.new('major_cnt'), Coord.new('minor_cnt'), Bool8.new('label_en'), Coord.new('draw_size'))
+WidgetFunc.new('chart', 'get_point_count', UInt16)
+WidgetFunc.new('chart', 'add_series', ChartSeries, Color.new('color'), ChartAxis.new('axis'))
+WidgetFunc.new('chart', 'remove_series', Void, ChartSeries.new('series'))
+WidgetFunc.new('chart', 'hide_series', Void, ChartSeries.new('series'), Bool8.new('hide'))
+WidgetFunc.new('chart', 'set_series_color', Void, ChartSeries.new('series'), Color.new('color'))
+WidgetFunc.new('chart', 'get_series_next', ChartSeries, ChartSeries.new('series'))
+WidgetFunc.new('chart', 'set_all_value', Void, ChartSeries.new('series'), ChartValue.new('y'))
+WidgetFunc.new('chart', 'set_next_value', Void, ChartSeries.new('series'), ChartValue.new('y'))
+WidgetFunc.new('chart', 'set_next_value2', Void, ChartSeries.new('series'), ChartValue.new('x'), ChartValue.new('y'))
 
 Func.new('obj_create', 'lv_disp_obj_create', Obj, InstMember.new('inst', 'lvki_disp'), Obj.new('parent'))
 ObjFunc.new('center', Void)
@@ -798,6 +849,7 @@ ObjFunc.new('get_parent', Obj)
 ObjFunc.new('get_screen', Obj)
 ObjFunc.new('clean', Void)
 ObjFunc.new('del', Void)
+ObjFunc.new('refresh_ext_draw_size', Void)
 
 LvFunc.new('group_create', Group, Inst.new('inst'))
 LvFunc.new('group_add_obj', Void, Group.new('group'), Obj.new('obj'))

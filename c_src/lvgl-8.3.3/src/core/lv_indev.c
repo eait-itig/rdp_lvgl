@@ -61,6 +61,14 @@ static lv_obj_t * indev_obj_act = NULL;
  *   GLOBAL FUNCTIONS
  **********************/
 
+void lv_indev_ensure_inactive(lv_indev_t *indev)
+{
+    if (indev_act == indev) {
+        indev_act = NULL;
+        indev_obj_act = NULL;
+    }
+}
+
 void lv_indev_read_timer_cb(lv_timer_t * timer)
 {
     INDEV_TRACE("begin");
