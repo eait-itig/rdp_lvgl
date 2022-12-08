@@ -678,6 +678,7 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	struct fbuf *fb;
 	struct lvinst *inst;
 	lv_disp_drv_t *disp_drv;
+	struct input_event *ev, *nev;
 
 	pthread_mutex_lock(&lv_mtx);
 	pthread_mutex_lock(&lv_flush_mtx);
@@ -710,6 +711,13 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 		lv_indev_delete(inst->lvi_kbd);
 	if (inst->lvi_mouse != NULL)
 		lv_indev_delete(inst->lvi_mouse);
+
+	TAILQ_FOREACH_SAFE(ev, &inst->lvi_mouse_q, ie_entry, nev) {
+		free(ev);
+	}
+	TAILQ_FOREACH_SAFE(ev, &inst->lvi_kbd_q, ie_entry, nev) {
+		free(ev);
+	}
 
 	free(inst);
 
@@ -1336,6 +1344,8 @@ lvk_make_obj(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr,
 	obj->lvko_delevt->lvke_kid = kid;
 	obj->lvko_delevt->lvke_obj = obj;
 	obj->lvko_delevt->lvke_evt = LV_EVENT_DELETE;
+	LIST_INSERT_HEAD(&obj->lvko_events, obj->lvko_delevt, lvke_obj_entry);
+	LIST_INSERT_HEAD(&kid->lvk_evts, obj->lvko_delevt, lvke_kid_entry);
 
 	cd = (struct cdesc){
 		.cd_op = CMD_SET_UDATA,
@@ -2080,7 +2090,8 @@ lvkid_erl_evt_ring(void *arg)
 				evt->lvke_hdl = NULL;
 			}
 			if (obj != NULL)
-				LIST_REMOVE(evt, lvke_kid_entry);
+				LIST_REMOVE(evt, lvke_obj_entry);
+			LIST_REMOVE(evt, lvke_kid_entry);
 			free(evt);
 			goto next;
 		}
@@ -2230,6 +2241,8 @@ lvkid_new(void)
 	assert(kid != NULL);
 	pthread_rwlock_init(&kid->lvk_lock, NULL);
 	LIST_INIT(&kid->lvk_insts);
+	LIST_INIT(&kid->lvk_cmds);
+	LIST_INIT(&kid->lvk_evts);
 
 	kid->lvk_shm = alloc_shmintf();
 	assert(kid->lvk_shm != NULL);
@@ -2501,7 +2514,8 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 			sty->lvks_hdl = NULL;
 		}
 		LIST_REMOVE(sty, lvks_entry);
-		lvk_cast(kid, ARG_NONE, free, ARG_PTR, sty->lvks_ptr, ARG_NONE);
+		lvk_cast(kid, ARG_NONE, lv_style_free, ARG_PTR, sty->lvks_ptr,
+		    ARG_NONE);
 		free(sty);
 	}
 	LIST_FOREACH_SAFE(grp, &inst->lvki_groups, lvkg_entry, ngrp) {

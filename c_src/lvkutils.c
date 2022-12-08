@@ -162,6 +162,13 @@ lv_style_alloc(void)
 }
 
 void
+lv_style_free(lv_style_t *style)
+{
+	lv_style_reset(style);
+	free(style);
+}
+
+void
 lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
     lv_flex_align_t cross_place, lv_flex_align_t track_cross_place)
 {

@@ -58,6 +58,7 @@ start_link(Srv, Inst, Res) ->
     srv :: rdp_server:server(),
     res :: lv:point(),
     inst :: lv:instance(),
+    ssty :: lv:style(),
     flowsty :: lv:style(),
     apsty :: lv:style(),
     rlsty :: lv:style(),
@@ -70,6 +71,11 @@ start_link(Srv, Inst, Res) ->
 
 %% @private
 init([Srv, Inst, {W, H}]) ->
+    {ok, ScreenStyle} = lv_style:create(Inst),
+    ok = lv_style:set_flex_flow(ScreenStyle,
+        if (W > H) -> row; true -> column end),
+    ok = lv_style:set_flex_align(ScreenStyle, center, center, center),
+
     {ok, FlowStyle} = lv_style:create(Inst),
     ok = lv_style:set_flex_flow(FlowStyle, column),
     ok = lv_style:set_flex_align(FlowStyle, center, start,
@@ -92,8 +98,8 @@ init([Srv, Inst, {W, H}]) ->
 
     {ok, Chars} = lv:make_buffer(Inst, "0123456789"),
 
-    S0 = #?MODULE{srv = Srv, inst = Inst, flowsty = FlowStyle,
-                  apsty = APStyle, res = {W, H},
+    S0 = #?MODULE{srv = Srv, inst = Inst, ssty = ScreenStyle,
+                  flowsty = FlowStyle, apsty = APStyle, res = {W, H},
                   chars = Chars, rlsty = RLStyle},
 
     {ok, loading, S0}.
@@ -109,8 +115,10 @@ terminate(_Why, _State, #?MODULE{}) ->
 code_change(_OldVsn, OldState, S0, _Extra) ->
     {ok, OldState, S0}.
 
-make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
+make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, ssty = ScreenStyle, res = {W, H}}) ->
     {ok, Screen} = lv_scr:create(Inst),
+    ok = lv_obj:add_style(Screen, ScreenStyle),
+
     {ok, Logo} = lv_img:create(Screen),
     ok = lv_img:set_src(Logo,
         rdp_lvgl_server:find_image_path("uq-logo.png")),
@@ -120,14 +128,10 @@ make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, res = {W, H}}) ->
 
     if
         (W > H) ->
-            ok = lv_obj:align(Logo, center, {-1 * LogoW div 2 - 10, 0}),
             FlexW = if (W div 3 < 500) -> 500; true -> W div 3 end,
-            ok = lv_obj:set_size(Flex, {FlexW, {percent, 100}}),
-            ok = lv_obj:align(Flex, center, {FlexW div 2 + 10, 0});
+            ok = lv_obj:set_size(Flex, {FlexW, {percent, 100}});
         true ->
-            ok = lv_obj:align(Logo, top_mid, {0, H div 6}),
-            ok = lv_obj:set_size(Flex, {{percent, 100}, {percent, 66}}),
-            ok = lv_obj:align(Flex, bottom_mid)
+            ok = lv_obj:set_size(Flex, {{percent, 80}, {percent, 66}})
     end,
     {Screen, Flex}.
 

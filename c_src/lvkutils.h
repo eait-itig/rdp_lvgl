@@ -50,6 +50,7 @@ void lv_disp_scr_load_anim(lv_disp_t *disp, lv_obj_t *src,
 lv_obj_t *lv_disp_obj_create(lv_disp_t *disp, lv_obj_t *parent);
 void lv_img_set_offset(lv_obj_t *obj, lv_point_t pt);
 lv_style_t *lv_style_alloc(void);
+void lv_style_free(lv_style_t *style);
 void lv_style_set_flex_align(lv_style_t *style, lv_flex_align_t main_place,
     lv_flex_align_t cross_place, lv_flex_align_t track_cross_place);
 lv_point_t lv_obj_get_size(lv_obj_t *obj);
