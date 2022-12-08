@@ -804,7 +804,7 @@ enif_get_color(ErlNifEnv *env, ERL_NIF_TERM term, lv_color_t *pcol)
 		return (0);
 	if (!enif_get_uint(env, ctup[1], &g))
 		return (0);
-	if (!enif_get_uint(env, ctup[1], &b))
+	if (!enif_get_uint(env, ctup[2], &b))
 		return (0);
 
 	*pcol = lv_color_make(r, g, b);

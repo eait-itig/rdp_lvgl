@@ -631,7 +631,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	inst->lvi_disp->theme = lv_theme_default_init(inst->lvi_disp,
 	    lv_color_hex(0x0D6DCD),
 	    lv_color_hex(0x781A96),
-	    true, LV_FONT_DEFAULT);
+	    false, LV_FONT_DEFAULT);
 
 	lv_indev_drv_init(&inst->lvi_mouse_drv);
 	inst->lvi_mouse_drv.type = LV_INDEV_TYPE_POINTER;

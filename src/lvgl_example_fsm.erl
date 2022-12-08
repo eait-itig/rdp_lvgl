@@ -75,6 +75,7 @@ init([Srv, Inst, {W, H}]) ->
     ok = lv_style:set_flex_flow(ScreenStyle,
         if (W > H) -> row; true -> column end),
     ok = lv_style:set_flex_align(ScreenStyle, center, center, center),
+    ok = lv_style:set_bg_color(ScreenStyle, lv_color:make(16#48206c)),
 
     {ok, FlowStyle} = lv_style:create(Inst),
     ok = lv_style:set_flex_flow(FlowStyle, column),
@@ -84,12 +85,12 @@ init([Srv, Inst, {W, H}]) ->
     ok = lv_style:set_border_opa(FlowStyle, 0),
 
     {ok, APStyle} = lv_style:create(Inst),
-    ok = lv_style:set_bg_opa(APStyle, 0.1),
+    ok = lv_style:set_bg_opa(APStyle, 0.7),
     ok = lv_style:set_border_opa(APStyle, 0),
 
     {ok, RLStyle} = lv_style:create(Inst),
     ok = lv_style:set_border_side(RLStyle, [left]),
-    ok = lv_style:set_border_color(RLStyle, lv_color:palette(white)),
+    ok = lv_style:set_border_color(RLStyle, lv_color:palette(black)),
     ok = lv_style:set_border_opa(RLStyle, 0.5),
     ok = lv_style:set_pad_left(RLStyle, 10),
     ok = lv_style:set_pad_top(RLStyle, 0),
@@ -170,10 +171,12 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
 
     {ok, Lbl} = lv_label:create(Flex),
     ok = lv_label:set_text(Lbl, "Faculty of EAIT"),
+    ok = lv_obj:set_style_text_color(Lbl, lv_color:palette(white)),
     ok = lv_obj:set_style_text_font(Lbl, {"roboto", bold, 24}),
 
     {ok, Lbl2} = lv_label:create(Flex),
     ok = lv_label:set_text(Lbl2, "Staff Remote Access"),
+    ok = lv_obj:set_style_text_color(Lbl2, lv_color:palette(white)),
 
     UPwFlex = make_auth_method_flex(Flex, keyboard, S0),
 
