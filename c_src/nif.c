@@ -686,6 +686,7 @@ enter_chartser_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
 	return (0);
 }
 
+#if 0
 static int
 enter_chartcur_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
     struct nif_lock_state *nls, struct lvkchartcur **pccur, uint wrlock)
@@ -704,6 +705,7 @@ enter_chartcur_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
 
 	return (0);
 }
+#endif
 
 static int
 enter_meterind_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
