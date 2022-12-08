@@ -703,12 +703,14 @@ set_style_bg_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, 
 -spec set_style_bg_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_bg_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_color, Value, Selector).
 %% @doc Sets the 'bg_opa' style property as a local style on this object.
--spec set_style_bg_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_bg_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_bg_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_bg_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_opa, round(Value * 255), []).
 %% @doc Sets the 'bg_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_bg_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_bg_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_bg_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_bg_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_opa, round(Value * 255), Selector).
 %% @doc Sets the 'bg_grad_color' style property as a local style on this object.
 %% @see lv:color()
 -spec set_style_bg_grad_color(lv:object(), lv:color()) -> ok | lv:error().
@@ -746,12 +748,14 @@ set_style_bg_grad_stop(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_pr
 -spec set_style_bg_grad_stop(lv:object(), lv:coord(), selector()) -> ok | lv:error().
 set_style_bg_grad_stop(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_grad_stop, Value, Selector).
 %% @doc Sets the 'bg_img_opa' style property as a local style on this object.
--spec set_style_bg_img_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_bg_img_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_bg_img_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_bg_img_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_opa, round(Value * 255), []).
 %% @doc Sets the 'bg_img_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_bg_img_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_bg_img_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_bg_img_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_bg_img_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_opa, round(Value * 255), Selector).
 %% @doc Sets the 'bg_img_recolor' style property as a local style on this object.
 %% @see lv:color()
 -spec set_style_bg_img_recolor(lv:object(), lv:color()) -> ok | lv:error().
@@ -762,12 +766,14 @@ set_style_bg_img_recolor(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_
 -spec set_style_bg_img_recolor(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_bg_img_recolor(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_recolor, Value, Selector).
 %% @doc Sets the 'bg_img_recolor_opa' style property as a local style on this object.
--spec set_style_bg_img_recolor_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_bg_img_recolor_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_recolor_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_bg_img_recolor_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_bg_img_recolor_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_recolor_opa, round(Value * 255), []).
 %% @doc Sets the 'bg_img_recolor_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_bg_img_recolor_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_bg_img_recolor_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_recolor_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_bg_img_recolor_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_bg_img_recolor_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_recolor_opa, round(Value * 255), Selector).
 %% @doc Sets the 'bg_img_tiled' style property as a local style on this object.
 -spec set_style_bg_img_tiled(lv:object(), boolean()) -> ok | lv:error().
 set_style_bg_img_tiled(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, bg_img_tiled, Value, []).
@@ -785,12 +791,14 @@ set_style_border_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_pr
 -spec set_style_border_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_border_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, border_color, Value, Selector).
 %% @doc Sets the 'border_opa' style property as a local style on this object.
--spec set_style_border_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_border_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, border_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_border_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_border_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, border_opa, round(Value * 255), []).
 %% @doc Sets the 'border_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_border_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_border_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, border_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_border_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_border_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, border_opa, round(Value * 255), Selector).
 %% @doc Sets the 'border_width' style property as a local style on this object.
 %% @see lv:coord()
 -spec set_style_border_width(lv:object(), lv:coord()) -> ok | lv:error().
@@ -835,12 +843,14 @@ set_style_outline_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_p
 -spec set_style_outline_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_outline_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, outline_color, Value, Selector).
 %% @doc Sets the 'outline_opa' style property as a local style on this object.
--spec set_style_outline_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_outline_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, outline_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_outline_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_outline_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, outline_opa, round(Value * 255), []).
 %% @doc Sets the 'outline_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_outline_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_outline_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, outline_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_outline_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_outline_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, outline_opa, round(Value * 255), Selector).
 %% @doc Sets the 'outline_pad' style property as a local style on this object.
 %% @see lv:coord()
 -spec set_style_outline_pad(lv:object(), lv:coord()) -> ok | lv:error().
@@ -896,19 +906,23 @@ set_style_shadow_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_pr
 -spec set_style_shadow_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_shadow_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, shadow_color, Value, Selector).
 %% @doc Sets the 'shadow_opa' style property as a local style on this object.
--spec set_style_shadow_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_shadow_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, shadow_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_shadow_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_shadow_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, shadow_opa, round(Value * 255), []).
 %% @doc Sets the 'shadow_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_shadow_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_shadow_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, shadow_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_shadow_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_shadow_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, shadow_opa, round(Value * 255), Selector).
 %% @doc Sets the 'img_opa' style property as a local style on this object.
--spec set_style_img_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_img_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_img_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_img_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_opa, round(Value * 255), []).
 %% @doc Sets the 'img_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_img_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_img_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_img_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_img_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_opa, round(Value * 255), Selector).
 %% @doc Sets the 'img_recolor' style property as a local style on this object.
 %% @see lv:color()
 -spec set_style_img_recolor(lv:object(), lv:color()) -> ok | lv:error().
@@ -919,12 +933,14 @@ set_style_img_recolor(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_pro
 -spec set_style_img_recolor(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_img_recolor(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_recolor, Value, Selector).
 %% @doc Sets the 'img_recolor_opa' style property as a local style on this object.
--spec set_style_img_recolor_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_img_recolor_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_recolor_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_img_recolor_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_img_recolor_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_recolor_opa, round(Value * 255), []).
 %% @doc Sets the 'img_recolor_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_img_recolor_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_img_recolor_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_recolor_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_img_recolor_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_img_recolor_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, img_recolor_opa, round(Value * 255), Selector).
 %% @doc Sets the 'line_width' style property as a local style on this object.
 %% @see lv:coord()
 -spec set_style_line_width(lv:object(), lv:coord()) -> ok | lv:error().
@@ -969,12 +985,14 @@ set_style_line_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop
 -spec set_style_line_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_line_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, line_color, Value, Selector).
 %% @doc Sets the 'line_opa' style property as a local style on this object.
--spec set_style_line_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_line_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, line_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_line_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_line_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, line_opa, round(Value * 255), []).
 %% @doc Sets the 'line_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_line_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_line_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, line_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_line_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_line_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, line_opa, round(Value * 255), Selector).
 %% @doc Sets the 'arc_width' style property as a local style on this object.
 %% @see lv:coord()
 -spec set_style_arc_width(lv:object(), lv:coord()) -> ok | lv:error().
@@ -1001,12 +1019,14 @@ set_style_arc_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop,
 -spec set_style_arc_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_arc_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, arc_color, Value, Selector).
 %% @doc Sets the 'arc_opa' style property as a local style on this object.
--spec set_style_arc_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_arc_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, arc_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_arc_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_arc_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, arc_opa, round(Value * 255), []).
 %% @doc Sets the 'arc_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_arc_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_arc_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, arc_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_arc_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_arc_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, arc_opa, round(Value * 255), Selector).
 %% @doc Sets the 'text_color' style property as a local style on this object.
 %% @see lv:color()
 -spec set_style_text_color(lv:object(), lv:color()) -> ok | lv:error().
@@ -1017,12 +1037,14 @@ set_style_text_color(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop
 -spec set_style_text_color(lv:object(), lv:color(), selector()) -> ok | lv:error().
 set_style_text_color(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, text_color, Value, Selector).
 %% @doc Sets the 'text_opa' style property as a local style on this object.
--spec set_style_text_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_text_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, text_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_text_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_text_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, text_opa, round(Value * 255), []).
 %% @doc Sets the 'text_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_text_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_text_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, text_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_text_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_text_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, text_opa, round(Value * 255), Selector).
 %% @doc Sets the 'text_letter_space' style property as a local style on this object.
 %% @see lv:coord()
 -spec set_style_text_letter_space(lv:object(), lv:coord()) -> ok | lv:error().
@@ -1060,19 +1082,23 @@ set_style_text_align(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop
 -spec set_style_text_align(lv:object(), lv_style:text_align(), selector()) -> ok | lv:error().
 set_style_text_align(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, text_align, Value, Selector).
 %% @doc Sets the 'opa' style property as a local style on this object.
--spec set_style_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, opa, round(Value * 255), []).
 %% @doc Sets the 'opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, opa, round(Value * 255), Selector).
 %% @doc Sets the 'color_filter_opa' style property as a local style on this object.
--spec set_style_color_filter_opa(lv:object(), integer()) -> ok | lv:error().
-set_style_color_filter_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, color_filter_opa, Value, []).
+%% @see lv_color:opacity()
+-spec set_style_color_filter_opa(lv:object(), lv_color:opacity()) -> ok | lv:error().
+set_style_color_filter_opa(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, color_filter_opa, round(Value * 255), []).
 %% @doc Sets the 'color_filter_opa' style property as a local style on this object.
 %% @see selector()
--spec set_style_color_filter_opa(lv:object(), integer(), selector()) -> ok | lv:error().
-set_style_color_filter_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, color_filter_opa, Value, Selector).
+%% @see lv_color:opacity()
+-spec set_style_color_filter_opa(lv:object(), lv_color:opacity(), selector()) -> ok | lv:error().
+set_style_color_filter_opa(Obj, Value, Selector) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, color_filter_opa, round(Value * 255), Selector).
 %% @doc Sets the 'anim_time' style property as a local style on this object.
 -spec set_style_anim_time(lv:object(), integer()) -> ok | lv:error().
 set_style_anim_time(Obj, Value) -> ?async_void_wrapper(obj_set_local_style_prop, Obj, anim_time, Value, []).

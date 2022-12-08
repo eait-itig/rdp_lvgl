@@ -78,13 +78,13 @@ init([Srv, Inst, {W, H}]) ->
     ok = lv_style:set_border_opa(FlowStyle, 0),
 
     {ok, APStyle} = lv_style:create(Inst),
-    ok = lv_style:set_bg_opa(APStyle, 10),
+    ok = lv_style:set_bg_opa(APStyle, 0.1),
     ok = lv_style:set_border_opa(APStyle, 0),
 
     {ok, RLStyle} = lv_style:create(Inst),
     ok = lv_style:set_border_side(RLStyle, [left]),
-    ok = lv_style:set_border_color(RLStyle, lv_color:make(16#FFFFFF)),
-    ok = lv_style:set_border_opa(RLStyle, 110),
+    ok = lv_style:set_border_color(RLStyle, lv_color:palette(white)),
+    ok = lv_style:set_border_opa(RLStyle, 0.5),
     ok = lv_style:set_pad_left(RLStyle, 10),
     ok = lv_style:set_pad_top(RLStyle, 0),
     ok = lv_style:set_pad_bottom(RLStyle, 0),

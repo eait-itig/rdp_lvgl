@@ -40,11 +40,8 @@
 
 -include("async_wrappers.hrl").
 
--type uint8() :: integer().
-%% An integer in the range 0 - 255.
-
--type opacity() :: uint8().
-%% Specifies the opacity of a widget. 0 means fully transparent, while 255
+-type opacity() :: float().
+%% Specifies the opacity of a widget. 0 means fully transparent, while 1.0
 %% means fully opaque.
 
 -type color() :: {Red :: uint8(), Green :: uint8(), Blue :: uint8()}.
@@ -70,15 +67,21 @@
 %%
 %% <b>See also:</b> {@link lv_color:darken/2}
 
+-type uint24() :: integer().
+%% An integer in the range 0 - 2^24-1 (0 - 16777215).
+
+-type uint8() :: integer().
+%% An integer in the range 0 - 2^8-1 (0 - 255).
+
 %% @doc Creates a {@link lv:color()} from a single 24-bit integer.
--spec make(integer()) -> color().
+-spec make(uint24()) -> color().
 make(Hex) ->
     {(Hex band 16#FF0000) bsr 16,
      (Hex band 16#00FF00) bsr 8,
      (Hex band 16#0000FF)}.
 
 %% @doc Creates a {@link lv:color()} from 3 8-bit integers.
--spec make(integer(), integer(), integer()) -> color().
+-spec make(uint8(), uint8(), uint8()) -> color().
 make(R, G, B) -> {R, G, B}.
 
 %% @doc Creates a {@link lv:color()} based on a palette color name.

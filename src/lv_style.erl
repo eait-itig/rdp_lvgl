@@ -228,8 +228,9 @@ set_clip_corner(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, clip
 -spec set_bg_color(lv:style(), lv:color()) -> ok | lv:error().
 set_bg_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_color, Value).
 %% @doc Sets the 'bg_opa' style property.
--spec set_bg_opa(lv:style(), integer()) -> ok | lv:error().
-set_bg_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_opa, Value).
+%% @see lv_color:opacity()
+-spec set_bg_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_bg_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_opa, round(Value * 255)).
 %% @doc Sets the 'bg_grad_color' style property.
 %% @see lv:color()
 -spec set_bg_grad_color(lv:style(), lv:color()) -> ok | lv:error().
@@ -247,15 +248,17 @@ set_bg_main_stop(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_
 -spec set_bg_grad_stop(lv:style(), lv:coord()) -> ok | lv:error().
 set_bg_grad_stop(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_grad_stop, Value).
 %% @doc Sets the 'bg_img_opa' style property.
--spec set_bg_img_opa(lv:style(), integer()) -> ok | lv:error().
-set_bg_img_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_img_opa, Value).
+%% @see lv_color:opacity()
+-spec set_bg_img_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_bg_img_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_img_opa, round(Value * 255)).
 %% @doc Sets the 'bg_img_recolor' style property.
 %% @see lv:color()
 -spec set_bg_img_recolor(lv:style(), lv:color()) -> ok | lv:error().
 set_bg_img_recolor(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_img_recolor, Value).
 %% @doc Sets the 'bg_img_recolor_opa' style property.
--spec set_bg_img_recolor_opa(lv:style(), integer()) -> ok | lv:error().
-set_bg_img_recolor_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_img_recolor_opa, Value).
+%% @see lv_color:opacity()
+-spec set_bg_img_recolor_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_bg_img_recolor_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_img_recolor_opa, round(Value * 255)).
 %% @doc Sets the 'bg_img_tiled' style property.
 -spec set_bg_img_tiled(lv:style(), boolean()) -> ok | lv:error().
 set_bg_img_tiled(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_img_tiled, Value).
@@ -264,8 +267,9 @@ set_bg_img_tiled(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, bg_
 -spec set_border_color(lv:style(), lv:color()) -> ok | lv:error().
 set_border_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, border_color, Value).
 %% @doc Sets the 'border_opa' style property.
--spec set_border_opa(lv:style(), integer()) -> ok | lv:error().
-set_border_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, border_opa, Value).
+%% @see lv_color:opacity()
+-spec set_border_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_border_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, border_opa, round(Value * 255)).
 %% @doc Sets the 'border_width' style property.
 %% @see lv:coord()
 -spec set_border_width(lv:style(), lv:coord()) -> ok | lv:error().
@@ -286,8 +290,9 @@ set_outline_width(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, ou
 -spec set_outline_color(lv:style(), lv:color()) -> ok | lv:error().
 set_outline_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, outline_color, Value).
 %% @doc Sets the 'outline_opa' style property.
--spec set_outline_opa(lv:style(), integer()) -> ok | lv:error().
-set_outline_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, outline_opa, Value).
+%% @see lv_color:opacity()
+-spec set_outline_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_outline_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, outline_opa, round(Value * 255)).
 %% @doc Sets the 'outline_pad' style property.
 %% @see lv:coord()
 -spec set_outline_pad(lv:style(), lv:coord()) -> ok | lv:error().
@@ -313,18 +318,21 @@ set_shadow_spread(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, sh
 -spec set_shadow_color(lv:style(), lv:color()) -> ok | lv:error().
 set_shadow_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, shadow_color, Value).
 %% @doc Sets the 'shadow_opa' style property.
--spec set_shadow_opa(lv:style(), integer()) -> ok | lv:error().
-set_shadow_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, shadow_opa, Value).
+%% @see lv_color:opacity()
+-spec set_shadow_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_shadow_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, shadow_opa, round(Value * 255)).
 %% @doc Sets the 'img_opa' style property.
--spec set_img_opa(lv:style(), integer()) -> ok | lv:error().
-set_img_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, img_opa, Value).
+%% @see lv_color:opacity()
+-spec set_img_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_img_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, img_opa, round(Value * 255)).
 %% @doc Sets the 'img_recolor' style property.
 %% @see lv:color()
 -spec set_img_recolor(lv:style(), lv:color()) -> ok | lv:error().
 set_img_recolor(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, img_recolor, Value).
 %% @doc Sets the 'img_recolor_opa' style property.
--spec set_img_recolor_opa(lv:style(), integer()) -> ok | lv:error().
-set_img_recolor_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, img_recolor_opa, Value).
+%% @see lv_color:opacity()
+-spec set_img_recolor_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_img_recolor_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, img_recolor_opa, round(Value * 255)).
 %% @doc Sets the 'line_width' style property.
 %% @see lv:coord()
 -spec set_line_width(lv:style(), lv:coord()) -> ok | lv:error().
@@ -345,8 +353,9 @@ set_line_rounded(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, lin
 -spec set_line_color(lv:style(), lv:color()) -> ok | lv:error().
 set_line_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, line_color, Value).
 %% @doc Sets the 'line_opa' style property.
--spec set_line_opa(lv:style(), integer()) -> ok | lv:error().
-set_line_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, line_opa, Value).
+%% @see lv_color:opacity()
+-spec set_line_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_line_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, line_opa, round(Value * 255)).
 %% @doc Sets the 'arc_width' style property.
 %% @see lv:coord()
 -spec set_arc_width(lv:style(), lv:coord()) -> ok | lv:error().
@@ -359,15 +368,17 @@ set_arc_rounded(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, arc_
 -spec set_arc_color(lv:style(), lv:color()) -> ok | lv:error().
 set_arc_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, arc_color, Value).
 %% @doc Sets the 'arc_opa' style property.
--spec set_arc_opa(lv:style(), integer()) -> ok | lv:error().
-set_arc_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, arc_opa, Value).
+%% @see lv_color:opacity()
+-spec set_arc_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_arc_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, arc_opa, round(Value * 255)).
 %% @doc Sets the 'text_color' style property.
 %% @see lv:color()
 -spec set_text_color(lv:style(), lv:color()) -> ok | lv:error().
 set_text_color(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, text_color, Value).
 %% @doc Sets the 'text_opa' style property.
--spec set_text_opa(lv:style(), integer()) -> ok | lv:error().
-set_text_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, text_opa, Value).
+%% @see lv_color:opacity()
+-spec set_text_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_text_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, text_opa, round(Value * 255)).
 %% @doc Sets the 'text_letter_space' style property.
 %% @see lv:coord()
 -spec set_text_letter_space(lv:style(), lv:coord()) -> ok | lv:error().
@@ -385,11 +396,13 @@ set_text_decor(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, text_
 -spec set_text_align(lv:style(), lv_style:text_align()) -> ok | lv:error().
 set_text_align(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, text_align, Value).
 %% @doc Sets the 'opa' style property.
--spec set_opa(lv:style(), integer()) -> ok | lv:error().
-set_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, opa, Value).
+%% @see lv_color:opacity()
+-spec set_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, opa, round(Value * 255)).
 %% @doc Sets the 'color_filter_opa' style property.
--spec set_color_filter_opa(lv:style(), integer()) -> ok | lv:error().
-set_color_filter_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, color_filter_opa, Value).
+%% @see lv_color:opacity()
+-spec set_color_filter_opa(lv:style(), lv_color:opacity()) -> ok | lv:error().
+set_color_filter_opa(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, color_filter_opa, round(Value * 255)).
 %% @doc Sets the 'anim_time' style property.
 -spec set_anim_time(lv:style(), integer()) -> ok | lv:error().
 set_anim_time(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, anim_time, Value).
