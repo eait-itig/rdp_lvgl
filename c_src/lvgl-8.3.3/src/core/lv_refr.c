@@ -304,13 +304,6 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
         disp_refr = lv_disp_get_default();
     }
 
-    /*Refresh the screen's layout if required*/
-    lv_obj_update_layout(disp_refr->act_scr);
-    if(disp_refr->prev_scr) lv_obj_update_layout(disp_refr->prev_scr);
-
-    lv_obj_update_layout(disp_refr->top_layer);
-    lv_obj_update_layout(disp_refr->sys_layer);
-
     /*Do nothing if there is no active screen*/
     if(disp_refr->act_scr == NULL) {
         disp_refr->inv_p = 0;
@@ -318,6 +311,13 @@ void _lv_disp_refr_timer(lv_timer_t * tmr)
         REFR_TRACE("finished");
         return;
     }
+
+    /*Refresh the screen's layout if required*/
+    lv_obj_update_layout(disp_refr->act_scr);
+    if(disp_refr->prev_scr) lv_obj_update_layout(disp_refr->prev_scr);
+
+    lv_obj_update_layout(disp_refr->top_layer);
+    lv_obj_update_layout(disp_refr->sys_layer);
 
     lv_refr_join_area();
 
