@@ -29,6 +29,8 @@
 #include "lvcall.h"
 #include "lvkutils.h"
 
+#include <string.h>
+
 struct ibuf {
 	uint8_t	 ib_buf[512];
 	uint8_t *ib_ptrs[4];
@@ -151,7 +153,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	switch (rt) {
 	case ARG_INLINE_STR:
 		rem = strlen((const char *)rv);
-		assert(rem < UINT8_MAX);
+		assert(rem < UINT32_MAX);
 		cdc->cdc_rbuflen = rem;
 		/* FALL THROUGH */
 	case ARG_INLINE_BUF:
@@ -191,6 +193,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			off += take;
 			++i;
 		}
+		rd[0].rd_return_buf.rdrb_len = off;
 
 		shm_produce_rsp(shm, rd, i);
 		break;
