@@ -1381,7 +1381,7 @@ rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	struct lvkhdl *bhdl;
 	struct nif_lock_state nls;
 	struct nif_call_data *ncd = NULL;
-	struct cdesc cd[8];
+	struct cdesc cd[RING_MAX_CHAIN];
 	struct lvkid *kid;
 	ERL_NIF_TERM rv, msgref;
 	uint do_release;
@@ -1441,7 +1441,7 @@ rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	off += take;
 
 	nc = 1;
-	while (nc < 8 && rem > 0) {
+	while (nc < RING_MAX_CHAIN && rem > 0) {
 		cd[nc - 1].cd_chain = 1;
 		cd[nc] = (struct cdesc){
 			.cd_op = CMD_COPY_BUF,

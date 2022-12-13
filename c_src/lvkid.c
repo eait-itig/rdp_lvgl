@@ -1021,12 +1021,12 @@ static void *
 lvkid_lv_cmd_ring(void *arg)
 {
 	struct lvkid *kid = arg;
-	struct cdesc *cd[8];
+	struct cdesc *cd[RING_MAX_CHAIN];
 	struct shmintf *shm = kid->lvk_shm;
 	uint ncd, i;
 
 	while (1) {
-		ncd = shm_consume_cmd(shm, cd, 8);
+		ncd = shm_consume_cmd(shm, cd, RING_MAX_CHAIN);
 
 		if (atomic_load(&shm->si_dead))
 			return (NULL);
@@ -1653,8 +1653,8 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	struct lvkmeterind *mi;
 	struct lvkmeterscl *ms;
 	struct lvkbuf *buf;
-	struct cdesc cd[8];
-	struct cdesc *pcd[8];
+	struct cdesc cd[RING_MAX_CHAIN];
+	struct cdesc *pcd[RING_MAX_CHAIN];
 	uint ncd;
 	uint8_t argtype;
 	lv_color_t *col;
@@ -1680,13 +1680,13 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 		},
 	};
 
-	for (i = 0; i < 8; ++i)
+	for (i = 0; i < RING_MAX_CHAIN; ++i)
 		pcd[i] = &cd[i];
 
-	inl = cdi_init(pcd, 8, FOFFSET_CALL);
+	inl = cdi_init(pcd, RING_MAX_CHAIN, FOFFSET_CALL);
 	assert(inl != NULL);
 
-	for (i = 0; i < 8; ++i) {
+	for (i = 0; i < MAX_ARGS; ++i) {
 		argtype = va_arg(ap, enum arg_type);
 		if (argtype == ARG_NONE)
 			break;
@@ -2209,13 +2209,13 @@ static void *
 lvkid_erl_rsp_ring(void *arg)
 {
 	struct lvkid *kid = arg;
-	struct rdesc *rd[8];
+	struct rdesc *rd[RING_MAX_CHAIN];
 	struct shmintf *shm = kid->lvk_shm;
 	struct lvkcmd *cmd;
 	uint nrd, i;
 
 	while (1) {
-		nrd = shm_consume_rsp(shm, rd, 8);
+		nrd = shm_consume_rsp(shm, rd, RING_MAX_CHAIN);
 
 		if (atomic_load(&shm->si_dead))
 			return (NULL);

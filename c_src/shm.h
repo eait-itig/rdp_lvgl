@@ -153,6 +153,8 @@ struct cdesc_teardown {
 	uint64_t		cdt_disp_drv;
 };
 
+#define MAX_ARGS		8
+
 enum arg_type {
 	ARG_NONE		= 0,
 	ARG_PTR,
@@ -178,8 +180,8 @@ enum arg_type {
 
 struct cdesc_call {
 	uint64_t		cdc_func;
-	uint64_t		cdc_arg[8];
-	uint8_t			cdc_argtype[8];
+	uint64_t		cdc_arg[MAX_ARGS];
+	uint8_t			cdc_argtype[MAX_ARGS];
 	uint16_t		cdc_rbuflen;
 	uint8_t			cdc_rettype;
 	uint8_t			cdc_ibuf[29];
@@ -287,7 +289,7 @@ struct rdesc_return {
 
 struct rdesc_retbuf {
 	uint32_t	rdrb_len;
-	char		rdrb_data[44];
+	char		rdrb_data[108];
 };
 
 struct rdesc_setupev {
@@ -305,13 +307,15 @@ struct rdesc {
 		struct rdesc_setupev	rd_setup_event;
 		struct rdesc_return	rd_return;
 		struct rdesc_retbuf	rd_return_buf;
-		uint8_t			rd_data[48];
+		uint8_t			rd_data[112];
 	};
 };
 
 #define	FRAMEBUFS_PER_CHILD	32
 #define	FRAMEBUFFER_MAX_SIZE	(64*1024*1024)
 #define	RING_SIZE		16384
+
+#define	RING_MAX_CHAIN		16
 
 #define	RING_BUSYWAIT_ITERS	16384
 

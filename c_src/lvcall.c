@@ -38,7 +38,7 @@ struct ibuf {
 	uint	 ib_idx;
 };
 
-static struct ibuf ibuf[8];
+static struct ibuf ibuf[MAX_ARGS];
 
 #define	LVCALL_DEBUG	0
 
@@ -52,7 +52,7 @@ void
 lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 {
 	struct cdesc_call *cdc = &cd[0]->cd_call;
-	struct rdesc rd[8];
+	struct rdesc rd[RING_MAX_CHAIN];
 	uint64_t rv;
 	lv_obj_t *obj;
 	lv_group_t *grp;
@@ -73,7 +73,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	inl = cdi_init(cd, ncd, FOFFSET_CALL);
 	assert(inl != NULL);
 
-	for (i = 0; i < 8; ++i) {
+	for (i = 0; i < MAX_ARGS; ++i) {
 		if (cdc->cdc_argtype[i] != ARG_INLINE_BUF &&
 		    cdc->cdc_argtype[i] != ARG_INLINE_STR &&
 		    cdc->cdc_argtype[i] != ARG_INL_BUF_ARR)
@@ -138,7 +138,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		cdc->cdc_rettype = ARG_PTR_BUFFER;
 
 #if LVCALL_DEBUG == 1
-	for (i = 0; i < 8; ++i) {
+	for (i = 0; i < MAX_ARGS; ++i) {
 		debug("arg%u type = %u, val = %lx",
 		    i, cdc->cdc_argtype[i], cdc->cdc_arg[i]);
 		if (cdc->cdc_argtype[i] == ARG_NONE)
@@ -179,7 +179,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		off += take;
 
 		i = 1;
-		while (i < 8 && rem > 0) {
+		while (i < RING_MAX_CHAIN && rem > 0) {
 			rd[i - 1].rd_chain = 1;
 			rd[i] = (struct rdesc){
 				.rd_chain = 0,
