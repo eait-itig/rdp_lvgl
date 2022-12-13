@@ -853,7 +853,7 @@ ObjFunc.new('refresh_ext_draw_size', Void)
 
 LvFunc.new('group_create', Group, Inst.new('inst'))
 LvFunc.new('group_add_obj', Void, Group.new('group'), Obj.new('obj'))
-LvFunc.new('group_focus_obj', Void, Group.new('group'), Obj.new('obj'))
+LvFunc.new('group_focus_obj', Void, Obj.new('obj'))
 LvFunc.new('group_remove_obj', Void, Group.new('group'), Obj.new('obj'))
 LvFunc.new('group_remove_all_objs', Void, Group.new('group'))
 LvFunc.new('group_focus_next', Void, Group.new('group'))

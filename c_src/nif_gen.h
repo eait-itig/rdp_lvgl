@@ -8868,26 +8868,20 @@ out:
 }
 
 static ERL_NIF_TERM
-rlvgl_group_focus_obj2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+rlvgl_group_focus_obj1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
 	struct nif_call_data *ncd = NULL;
 	ERL_NIF_TERM msgref, rv;
 	int rc;
-	struct lvkgroup *group;
 	struct lvkobj *obj;
 
 	bzero(&nls, sizeof (nls));
 
-	if (argc != 2)
+	if (argc != 1)
 		return (enif_make_badarg(env));
 
-	rc = enter_group_hdl(env, argv[0], &nls, &group, 0);
-	if (rc != 0) {
-		rv = make_errno(env, rc);
-		goto out;
-	}
-	rc = enter_obj_hdl(env, argv[1], &nls, &obj, 0);
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
 		goto out;
@@ -8902,7 +8896,6 @@ rlvgl_group_focus_obj2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_group_focus_obj,
-	    ARG_PTR_GROUP, group,
 	    ARG_PTR_OBJ, obj,
 	    ARG_NONE);
 
@@ -10426,7 +10419,7 @@ out:
 { "obj_refresh_ext_draw_size",		1, rlvgl_obj_refresh_ext_draw_size1 }, \
 { "group_create",			1, rlvgl_group_create1 }, \
 { "group_add_obj",			2, rlvgl_group_add_obj2 }, \
-{ "group_focus_obj",			2, rlvgl_group_focus_obj2 }, \
+{ "group_focus_obj",			1, rlvgl_group_focus_obj1 }, \
 { "group_remove_obj",			2, rlvgl_group_remove_obj2 }, \
 { "group_remove_all_objs",		1, rlvgl_group_remove_all_objs1 }, \
 { "group_focus_next",			1, rlvgl_group_focus_next1 }, \

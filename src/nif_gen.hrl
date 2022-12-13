@@ -298,8 +298,8 @@ obj_refresh_ext_draw_size(_Obj) -> error(no_nif).
 group_create(_Inst) -> error(no_nif).
 -spec group_add_obj(group(), object()) -> async_return().
 group_add_obj(_Group, _Obj) -> error(no_nif).
--spec group_focus_obj(group(), object()) -> async_return().
-group_focus_obj(_Group, _Obj) -> error(no_nif).
+-spec group_focus_obj(object()) -> async_return().
+group_focus_obj(_Obj) -> error(no_nif).
 -spec group_remove_obj(group(), object()) -> async_return().
 group_remove_obj(_Group, _Obj) -> error(no_nif).
 -spec group_remove_all_objs(group()) -> async_return().
