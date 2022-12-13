@@ -45,6 +45,7 @@ struct lv_event_udata {
 	struct lvkid			*leu_kid;
 	struct shmintf			*leu_shm;
 	lv_obj_t			*leu_obj;
+	struct _lv_event_dsc_t		*leu_dsc;
 	LIST_ENTRY(lv_event_udata)	 leu_entry;
 	uint64_t			 leu_udata;
 };
@@ -848,7 +849,8 @@ lvkid_lv_cmd_setup_event(struct lvkid *kid, struct shmintf *shm,
 	leu->leu_obj = obj;
 
 	pthread_mutex_lock(&lv_mtx);
-	lv_obj_add_event_cb(obj, lvkid_lv_event_cb, cdse->cdse_event, leu);
+	leu->leu_dsc = lv_obj_add_event_cb(obj, lvkid_lv_event_cb,
+	    cdse->cdse_event, leu);
 	LIST_INSERT_HEAD(&leus, leu, leu_entry);
 	pthread_mutex_unlock(&lv_mtx);
 
@@ -883,11 +885,12 @@ lvkid_lv_cmd_teardown_event(struct lvkid *kid, struct shmintf *shm,
 	}
 	assert(leu->leu_udata == cdte->cdte_udata);
 	obj = (lv_obj_t *)cdte->cdte_obj;
+	if (obj == NULL)
+		obj = leu->leu_obj;
 	if (obj != NULL) {
 		assert(obj == leu->leu_obj);
 		obj_udata = lv_obj_get_user_data(obj);
-		lv_obj_remove_event_cb_with_user_data(obj, lvkid_lv_event_cb,
-		    (void *)cdte->cdte_udata);
+		lv_obj_remove_event_dsc(obj, leu->leu_dsc);
 	}
 	LIST_REMOVE(leu, leu_entry);
 	pthread_mutex_unlock(&lv_mtx);
