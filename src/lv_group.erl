@@ -50,14 +50,22 @@ remove_all_objs(Group) ->
 set_wrap(Group, State) ->
     ?async_void_wrapper(group_set_wrap, Group, State).
 
--spec focus_freeze(lv:group(), boolean()) -> ok | lv:error().
-focus_freeze(Group, State) ->
-    ?async_void_wrapper(group_focus_freeze, Group, State).
-
 -spec get_focused(lv:group()) -> {ok, lv:object()} | lv:error().
 get_focused(Group) ->
     ?async_wrapper(group_get_focused, Group).
 
 -spec focus_obj(lv:object()) -> ok | lv:error().
 focus_obj(Obj) ->
-    ?async_wrapper(group_focus_obj, Obj).
+    ?async_void_wrapper(group_focus_obj, Obj).
+
+-spec focus_next(lv:group()) -> ok | lv:error().
+focus_next(Group) ->
+    ?async_void_wrapper(group_focus_next, Group).
+
+-spec focus_prev(lv:group()) -> ok | lv:error().
+focus_prev(Group) ->
+    ?async_void_wrapper(group_focus_prev, Group).
+
+-spec focus_freeze(lv:group(), boolean()) -> ok | lv:error().
+focus_freeze(Group, Frozen) ->
+    ?async_void_wrapper(group_focus_freeze, Group, Frozen).

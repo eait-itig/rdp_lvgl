@@ -298,6 +298,22 @@ obj_refresh_ext_draw_size(_Obj) -> error(no_nif).
 group_create(_Inst) -> error(no_nif).
 -spec group_add_obj(group(), object()) -> async_return().
 group_add_obj(_Group, _Obj) -> error(no_nif).
+-spec group_focus_obj(group(), object()) -> async_return().
+group_focus_obj(_Group, _Obj) -> error(no_nif).
+-spec group_remove_obj(group(), object()) -> async_return().
+group_remove_obj(_Group, _Obj) -> error(no_nif).
+-spec group_remove_all_objs(group()) -> async_return().
+group_remove_all_objs(_Group) -> error(no_nif).
+-spec group_focus_next(group()) -> async_return().
+group_focus_next(_Group) -> error(no_nif).
+-spec group_focus_prev(group()) -> async_return().
+group_focus_prev(_Group) -> error(no_nif).
+-spec group_set_wrap(group(), boolean()) -> async_return().
+group_set_wrap(_Group, _Wrap) -> error(no_nif).
+-spec group_focus_freeze(group(), boolean()) -> async_return().
+group_focus_freeze(_Group, _Freeze) -> error(no_nif).
+-spec group_get_focused(group()) -> async_return(object()).
+group_get_focused(_Group) -> error(no_nif).
 -spec style_create(instance()) -> async_return(style()).
 style_create(_Inst) -> error(no_nif).
 -spec style_set_flex_align(style(), lv_style:flex_align(), lv_style:flex_align(), lv_style:flex_align()) -> async_return().
