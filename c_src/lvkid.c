@@ -885,8 +885,6 @@ lvkid_lv_cmd_teardown_event(struct lvkid *kid, struct shmintf *shm,
 	}
 	assert(leu->leu_udata == cdte->cdte_udata);
 	obj = (lv_obj_t *)cdte->cdte_obj;
-	if (obj == NULL)
-		obj = leu->leu_obj;
 	if (obj != NULL) {
 		assert(obj == leu->leu_obj);
 		obj_udata = lv_obj_get_user_data(obj);
