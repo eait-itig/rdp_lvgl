@@ -87,9 +87,14 @@ class Dummy < Arg
 end
 
 class Handle < Arg
+  def initialize(name, nullable = false)
+    super(name)
+    @nullable = nullable
+  end
   def stem; nil; end
   def struct; stem.gsub('_', ''); end
   def arg_type; "ARG_PTR_#{stem.upcase}"; end
+  def mprefix; "lvk" + stem.split('_').map { |p| p[0] }.join(''); end
   def declare
     write "struct lvk#{struct} *#{@name};"
   end
@@ -98,6 +103,18 @@ class Handle < Arg
     write "if (rc != 0) {"
     write parse_error_rc
     write "}"
+    if @idx > 0 and stem == 'obj' and not @nullable
+      write "if (#{@name} == NULL) {"
+      write "\trc = ENOENT;"
+      write parse_error_rc
+      write "}"
+    end
+    if not @nullable
+      write "if (#{@name}->#{mprefix}_ptr == 0) {"
+      write "\trc = ENOENT;"
+      write parse_error_rc
+      write "}"
+    end
   end
 end
 
@@ -820,7 +837,7 @@ WidgetFunc.new('chart', 'set_all_value', Void, ChartSeries.new('series'), ChartV
 WidgetFunc.new('chart', 'set_next_value', Void, ChartSeries.new('series'), ChartValue.new('y'))
 WidgetFunc.new('chart', 'set_next_value2', Void, ChartSeries.new('series'), ChartValue.new('x'), ChartValue.new('y'))
 
-Func.new('obj_create', 'lv_disp_obj_create', Obj, InstMember.new('inst', 'lvki_disp'), Obj.new('parent'))
+Func.new('obj_create', 'lv_disp_obj_create', Obj, InstMember.new('inst', 'lvki_disp'), Obj.new('parent', true))
 ObjFunc.new('center', Void)
 ObjFunc.new('add_flag', Void, ObjFlags.new('flags'))
 ObjFunc.new('clear_flag', Void, ObjFlags.new('flags'))
@@ -840,7 +857,7 @@ ObjFunc.new('set_local_style_prop', Void, StylePropVal.new('sty'), Dummy.new('va
 ObjFunc.new('move_foreground', Void)
 ObjFunc.new('move_background', Void)
 ObjFunc.new('swap', Void, Obj.new('other'))
-ObjFunc.new('set_parent', Void, Obj.new('parent'))
+ObjFunc.new('set_parent', Void, Obj.new('parent', true))
 ObjFunc.new('move_to_index', Void, Int32.new('index'))
 ObjFunc.new('get_index', Int32)
 ObjFunc.new('get_child_cnt', UInt32)
