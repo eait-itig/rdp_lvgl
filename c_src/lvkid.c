@@ -78,12 +78,13 @@ struct lvinst {
 	lv_obj_t		*lvi_cursor;
 };
 
+
 #define	lvi_debug(inst, fmt, ...) \
-    log_debug("%p: " fmt, (inst)->lvi_udata __VA_OPT__(,) __VA_ARGS__)
+    log_debug("%p: " fmt, (inst)->lvi_udata, ##__VA_ARGS__)
 #define	lvi_warn(inst, fmt, ...) \
-    log_warn("%p: " fmt, (inst)->lvi_udata __VA_OPT__(,) __VA_ARGS__)
+    log_warn("%p: " fmt, (inst)->lvi_udata, ##__VA_ARGS__)
 #define	lvi_error(inst, fmt, ...) \
-    log_error("%p: " fmt, (inst)->lvi_udata __VA_OPT__(,) __VA_ARGS__)
+    log_error("%p: " fmt, (inst)->lvi_udata, ##__VA_ARGS__)
 
 ErlNifResourceType *lvkid_hdl_rsrc;
 ErlNifResourceType *lvkid_fbhdl_rsrc;

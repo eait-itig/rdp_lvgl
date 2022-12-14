@@ -46,6 +46,10 @@ enum log_level {
 void _log_write(enum log_level lvl, const char *func, const char *file,
     uint line, const char *fmt, ...);
 
+#if !defined(__FILE_NAME__)
+#define __FILE_NAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif /* !__FILE_NAME__ */
+
 #define log_debug(fmt...)	\
 	_log_write(LOG_DEBUG, __func__, __FILE_NAME__, __LINE__, fmt)
 #define log_warn(fmt...)	\

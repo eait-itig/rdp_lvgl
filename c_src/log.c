@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <poll.h>
 #include <errno.h>
-#include <threads.h>
 #include <string.h>
 #include <strings.h>
 
@@ -102,7 +101,7 @@ struct logbuf {
 
 static struct logshm *logshm = NULL;
 static struct logerl *logerl = NULL;
-static tss_t log_buf_key;
+static pthread_key_t log_buf_key;
 
 static void
 logbuf_free(void *arg)
@@ -122,8 +121,8 @@ log_setup(void)
 	uint i;
 	int rc;
 
-	rc = tss_create(&log_buf_key, logbuf_free);
-	assert(rc == thrd_success);
+	rc = pthread_key_create(&log_buf_key, logbuf_free);
+	assert(rc == 0);
 
 	logshm = mmap(NULL, sizeof (struct logshm), PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
@@ -257,15 +256,15 @@ _log_write(enum log_level lvl, const char *func, const char *file, uint line,
 	pid = logerl->le_pid;
 	pthread_mutex_unlock(&logerl->le_mtx);
 
-	lb = tss_get(log_buf_key);
+	lb = pthread_getspecific(log_buf_key);
 	if (lb == NULL) {
 		lb = calloc(1, sizeof (*lb));
 		assert(lb != NULL);
 		lb->lb_len = 1024;
 		lb->lb_buf = malloc(lb->lb_len);
 		assert(lb->lb_buf != NULL);
-		rc = tss_set(log_buf_key, lb);
-		assert(rc == thrd_success);
+		rc = pthread_setspecific(log_buf_key, lb);
+		assert(rc == 0);
 	}
 
 again:
