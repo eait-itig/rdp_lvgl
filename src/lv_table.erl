@@ -65,3 +65,7 @@ clear_cell_ctrl(Table, Row, Col, Ctrls) ->
 -spec get_selected_cell(lv:table()) -> {ok, {row(), col()}} | lv:error().
 get_selected_cell(Table) ->
     ?async_wrapper(table_get_selected_cell_pt, Table).
+
+-spec set_col_width(lv:table(), col(), lv:coord()) -> ok | lv:error().
+set_col_width(Table, Col, Width) ->
+    ?async_void_wrapper(table_set_col_width, Table, Col, Width).
