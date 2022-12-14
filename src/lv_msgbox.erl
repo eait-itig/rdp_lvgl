@@ -34,3 +34,15 @@
     {ok, lv:msgbox()} | lv:error().
 create(Parent, Title, Txt, BtnTxts, CloseBtn) ->
     ?async_wrapper(msgbox_create, Parent, Title, Txt, BtnTxts, CloseBtn).
+
+-spec get_active_btn(lv:msgbox()) -> {ok, integer()} | lv:error().
+get_active_btn(Obj) ->
+    ?async_wrapper(msgbox_get_active_btn, Obj).
+
+-spec get_active_btn_text(lv:msgbox()) -> {ok, string()} | lv:error().
+get_active_btn_text(Obj) ->
+    ?async_wrapper(msgbox_get_active_btn_text, Obj).
+
+-spec close(lv:msgbox()) -> ok | lv:error().
+close(Obj) ->
+    ?async_void_wrapper(msgbox_close, Obj).
