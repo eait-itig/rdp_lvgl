@@ -36,6 +36,16 @@
 
 static pthread_rwlock_t lvkids_lock = PTHREAD_RWLOCK_INITIALIZER;
 static struct lvkid_list lvkids = TAILQ_HEAD_INITIALIZER(lvkids);
+static size_t nlvkids = 0;
+static size_t maxlvkids = 4;
+
+void
+set_max_lvkids(size_t max)
+{
+	pthread_rwlock_wrlock(&lvkids_lock);
+	maxlvkids = max;
+	pthread_rwlock_unlock(&lvkids_lock);
+}
 
 static pthread_mutex_t lv_mtx;
 static pthread_mutex_t lv_flush_mtx;
@@ -1791,7 +1801,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 				cd[0].cd_call.cdc_arg[i] <<= 8;
 				cd[0].cd_call.cdc_arg[i] |= alen[ai - 1];
 			}
-			log_debug("inline buf arr of %zu members, cdc_arg = %llx",
+			log_debug("inline buf arr of %u members, cdc_arg = %llx",
 			    sz, cd[0].cd_call.cdc_arg[i]);
 			break;
 		}
@@ -2260,6 +2270,7 @@ lvkid_new(void)
 	}
 
 	TAILQ_INSERT_TAIL(&lvkids, kid, lvk_entry);
+	++nlvkids;
 
 	pthread_create(&kid->lvk_rsp_th, NULL, lvkid_erl_rsp_ring, kid);
 	pthread_setname_np(kid->lvk_rsp_th, "lvkid_rsp_ring");
@@ -2325,6 +2336,8 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	struct cdesc cd;
 	struct lvkinst *inst;
 	struct shmintf *shm;
+	struct fbuf *fb;
+	size_t needfb;
 	uint i;
 
 	while (nkid == NULL) {
@@ -2346,9 +2359,38 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 			break;
 		}
 		if (nkid == NULL) {
-			lvkid_new();
+			if (nlvkids < maxlvkids) {
+				lvkid_new();
+			} else {
+				ErlNifEnv *env = enif_alloc_env();
+				log_warn("%T wants an fbuf, but %u lvkids "
+				    "already running and no slots available",
+				    enif_make_pid(env, &owner),
+				    nlvkids);
+				enif_free_env(env);
+				pthread_rwlock_unlock(&lvkids_lock);
+				return (NULL);
+			}
 		}
 		pthread_rwlock_unlock(&lvkids_lock);
+	}
+
+	shm = nkid->lvk_shm;
+	for (i = 0; i < shm->si_nfbuf; ++i) {
+		if (shm->si_fbuf[i].fb_state == FBUF_FREE)
+			break;
+	}
+	assert(shm->si_fbuf[i].fb_state == FBUF_FREE);
+	fb = &shm->si_fbuf[i];
+
+	needfb = width * height * 2;
+	if (fb->fb_sz < needfb) {
+		ErlNifEnv *env = enif_alloc_env();
+		log_warn("%T requested %u x %u res; too large for fbuf",
+		    enif_make_pid(env, &owner), width, height);
+		enif_free_env(env);
+		pthread_rwlock_unlock(&nkid->lvk_lock);
+		return (NULL);
 	}
 
 	inst = calloc(1, sizeof(struct lvkinst));
@@ -2358,18 +2400,11 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	pthread_rwlock_init(&inst->lvki_lock, NULL);
 	pthread_rwlock_wrlock(&inst->lvki_lock);
 
-	shm = nkid->lvk_shm;
-	for (i = 0; i < shm->si_nfbuf; ++i) {
-		if (shm->si_fbuf[i].fb_state == FBUF_FREE)
-			break;
-	}
-	assert(shm->si_fbuf[i].fb_state == FBUF_FREE);
-	inst->lvki_fbuf = &shm->si_fbuf[i];
-
-	inst->lvki_fbuf->fb_w = width;
-	inst->lvki_fbuf->fb_h = height;
-	inst->lvki_fbuf->fb_priv = inst;
-	inst->lvki_fbuf->fb_state = FBUF_SETTING_UP;
+	inst->lvki_fbuf = fb;
+	fb->fb_w = width;
+	fb->fb_h = height;
+	fb->fb_priv = inst;
+	fb->fb_state = FBUF_SETTING_UP;
 
 	LIST_INSERT_HEAD(&nkid->lvk_insts, inst, lvki_entry);
 	pthread_rwlock_unlock(&nkid->lvk_lock);

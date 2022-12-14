@@ -43,6 +43,44 @@
 #include "shm.h"
 #include "log.h"
 
+struct shm_settings {
+	pthread_rwlock_t	ss_lock;
+	size_t			ss_nfbuf;
+	size_t			ss_ringsz;
+	size_t			ss_fbsize;
+};
+static struct shm_settings settings = {
+	.ss_lock = PTHREAD_RWLOCK_INITIALIZER,
+	.ss_nfbuf = FRAMEBUFS_PER_CHILD,
+	.ss_ringsz = RING_SIZE,
+	.ss_fbsize = FRAMEBUFFER_MAX_SIZE,
+};
+
+void
+set_fbufs_per_child(size_t nfbuf)
+{
+	pthread_rwlock_wrlock(&settings.ss_lock);
+	settings.ss_nfbuf = nfbuf;
+	pthread_rwlock_unlock(&settings.ss_lock);
+}
+
+void
+set_ring_size(size_t ringsz)
+{
+	pthread_rwlock_wrlock(&settings.ss_lock);
+	settings.ss_ringsz = ringsz;
+	pthread_rwlock_unlock(&settings.ss_lock);
+}
+
+void
+set_fb_max_res(size_t w, size_t h)
+{
+	size_t fbsize = w * h * 2;
+	pthread_rwlock_wrlock(&settings.ss_lock);
+	settings.ss_fbsize = fbsize;
+	pthread_rwlock_unlock(&settings.ss_lock);
+}
+
 struct shmintf *
 alloc_shmintf(void)
 {
@@ -51,12 +89,25 @@ alloc_shmintf(void)
 	int rc;
 	pthread_mutexattr_t mattr;
 	pthread_condattr_t cattr;
+	size_t ringsz, fbsize;
 
 	shm = calloc(1, sizeof (*shm));
 	if (shm == NULL)
 		goto err;
 
 	atomic_store(&shm->si_dead, 0);
+
+	pthread_rwlock_rdlock(&settings.ss_lock);
+	shm->si_ringsz = (ringsz = settings.ss_ringsz);
+	fbsize = settings.ss_fbsize;
+	shm->si_nfbuf = settings.ss_nfbuf;
+	pthread_rwlock_unlock(&settings.ss_lock);
+
+	shm->si_ncmd = ringsz / sizeof (struct cdesc);
+	shm->si_nresp = ringsz / sizeof (struct rdesc);
+	shm->si_nev = ringsz / sizeof (struct edesc);
+	shm->si_nfl = ringsz / sizeof (struct fdesc);
+	shm->si_nph = ringsz / sizeof (struct pdesc);
 
 	rc = pthread_mutex_init(&shm->si_cc_mtx, NULL);
 	if (rc)
@@ -102,21 +153,13 @@ alloc_shmintf(void)
 	if (rc)
 		goto err;
 
-	shm->si_nfbuf = FRAMEBUFS_PER_CHILD;
-
-	shm->si_ncmd = RING_SIZE / sizeof (struct cdesc);
-	shm->si_nresp = RING_SIZE / sizeof (struct rdesc);
-	shm->si_nev = RING_SIZE / sizeof (struct edesc);
-	shm->si_nfl = RING_SIZE / sizeof (struct fdesc);
-	shm->si_nph = RING_SIZE / sizeof (struct pdesc);
-
 	shm->si_fbuf = calloc(shm->si_nfbuf, sizeof (struct fbuf));
 	if (shm->si_fbuf == NULL)
 		goto err;
 	for (i = 0; i < shm->si_nfbuf; ++i) {
 		struct fbuf *f = &shm->si_fbuf[i];
 		f->fb_idx = i;
-		f->fb_sz = FRAMEBUFFER_MAX_SIZE;
+		f->fb_sz = fbsize;
 		f->fb_a = mmap(NULL, f->fb_sz, PROT_READ | PROT_WRITE,
 		    MAP_SHARED | MAP_ANON, -1, 0);
 		if (f->fb_a == MAP_FAILED)
@@ -127,35 +170,35 @@ alloc_shmintf(void)
 			goto err;
 	}
 
-	shm->si_cmdr = mmap(NULL, RING_SIZE, PROT_READ | PROT_WRITE,
+	shm->si_cmdr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_cmdr == MAP_FAILED)
 		goto err;
 	for (i = 0; i < shm->si_ncmd; ++i)
 		atomic_store(&shm->si_cmdr[i].cd_owner, OWNER_ERL);
 
-	shm->si_respr = mmap(NULL, RING_SIZE, PROT_READ | PROT_WRITE,
+	shm->si_respr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_respr == MAP_FAILED)
 		goto err;
 	for (i = 0; i < shm->si_nresp; ++i)
 		atomic_store(&shm->si_respr[i].rd_owner, OWNER_LV);
 
-	shm->si_evr = mmap(NULL, RING_SIZE, PROT_READ | PROT_WRITE,
+	shm->si_evr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_evr == MAP_FAILED)
 		goto err;
 	for (i = 0; i < shm->si_nev; ++i)
 		atomic_store(&shm->si_evr[i].ed_owner, OWNER_LV);
 
-	shm->si_flr = mmap(NULL, RING_SIZE, PROT_READ | PROT_WRITE,
+	shm->si_flr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_flr == MAP_FAILED)
 		goto err;
 	for (i = 0; i < shm->si_nfl; ++i)
 		atomic_store(&shm->si_flr[i].fd_owner, OWNER_LV);
 
-	shm->si_phr = mmap(NULL, RING_SIZE, PROT_READ | PROT_WRITE,
+	shm->si_phr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_phr == MAP_FAILED)
 		goto err;
@@ -181,15 +224,15 @@ free_shmintf(struct shmintf *shm)
 	pthread_mutex_destroy(&shm->si_fc_mtx);
 	pthread_mutex_destroy(&shm->si_pc_mtx);
 	if (shm->si_cmdr != MAP_FAILED)
-		munmap(shm->si_cmdr, RING_SIZE);
+		munmap(shm->si_cmdr, shm->si_ringsz);
 	if (shm->si_respr != MAP_FAILED)
-		munmap(shm->si_respr, RING_SIZE);
+		munmap(shm->si_respr, shm->si_ringsz);
 	if (shm->si_evr != MAP_FAILED)
-		munmap(shm->si_evr, RING_SIZE);
+		munmap(shm->si_evr, shm->si_ringsz);
 	if (shm->si_flr != MAP_FAILED)
-		munmap(shm->si_flr, RING_SIZE);
+		munmap(shm->si_flr, shm->si_ringsz);
 	if (shm->si_phr != MAP_FAILED)
-		munmap(shm->si_phr, RING_SIZE);
+		munmap(shm->si_phr, shm->si_ringsz);
 	if (shm->si_lockpg != MAP_FAILED) {
 		pthread_mutex_destroy(&shm->si_lockpg->lp_mtx);
 		pthread_cond_destroy(&shm->si_lockpg->lp_erl_db_cond);

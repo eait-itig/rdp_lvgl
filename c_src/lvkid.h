@@ -302,5 +302,7 @@ void lv_ieq_push_mouse(lv_indev_drv_t *drv, lv_indev_state_t state,
 void lv_ieq_push_kbd(lv_indev_drv_t *drv, lv_indev_state_t state,
     uint32_t key);
 
+void set_max_lvkids(size_t max);
+
 #endif /* _LVKID_H */
 

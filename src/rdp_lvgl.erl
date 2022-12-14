@@ -32,7 +32,16 @@
 
 start(_StartType, _StartArgs) ->
     os:set_signal(sigchld, handle),
-    rdp_lvgl_nif:prefork(2),
+    DispPerChild = application:get_env(rdp_lvgl, displays_per_child, 16),
+    ChildProcsMax = application:get_env(rdp_lvgl, child_procs_max, 8),
+    ChildProcsInit = application:get_env(rdp_lvgl, child_procs_init, 2),
+    DisplayMaxRes = application:get_env(rdp_lvgl, display_max_res, {3840, 2160}),
+    RingSize = application:get_env(rdp_lvgl, ring_size, 16384),
+    rdp_lvgl_nif:configure(fbufs_per_child, DispPerChild),
+    rdp_lvgl_nif:configure(max_lvkids, ChildProcsMax),
+    rdp_lvgl_nif:configure(ring_size, RingSize),
+    rdp_lvgl_nif:configure(fb_max_res, DisplayMaxRes),
+    rdp_lvgl_nif:prefork(ChildProcsInit),
     rdp_lvgl_sup:start_link().
 
 stop(_State) ->

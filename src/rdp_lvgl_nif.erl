@@ -91,6 +91,10 @@ init() ->
 -type style_generic_val() :: integer() | lv:coord() |
     atom() | boolean() | lv:color().
 
+-type config_prop() :: fbufs_per_child | ring_size | fb_max_res | max_lvkids.
+-spec configure(config_prop(), integer() | {integer(), integer()}) -> ok.
+configure(_Prop, _Value) -> error(no_nif).
+
 -spec setup_instance(lv:size()) ->
     {ok, instance(), msgref()} | lv:error().
 setup_instance(_Size) -> error(no_nif).

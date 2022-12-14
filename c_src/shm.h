@@ -89,6 +89,7 @@ struct shmintf {
 
 	size_t		 si_nfbuf;
 	struct fbuf	*si_fbuf;
+	size_t		 si_ringsz;
 
 	size_t		 si_ncmd;	/* general commands */
 	pthread_mutex_t	 si_cc_mtx;	/* protects si_cc outbound */
@@ -311,7 +312,7 @@ struct rdesc {
 	};
 };
 
-#define	FRAMEBUFS_PER_CHILD	32
+#define	FRAMEBUFS_PER_CHILD	16
 #define	FRAMEBUFFER_MAX_SIZE	(64*1024*1024)
 #define	RING_SIZE		16384
 
@@ -348,5 +349,9 @@ void shm_await_doorbell(struct shmintf *shm);
 void shm_ring_doorbell(struct shmintf *shm);
 uint shm_read_doorbell(struct shmintf *shm);
 void shm_await_doorbell_v(struct shmintf *shm, uint orig);
+
+void set_fbufs_per_child(size_t nfbuf);
+void set_ring_size(size_t ringsz);
+void set_fb_max_res(size_t w, size_t h);
 
 #endif /* _SHM_H */

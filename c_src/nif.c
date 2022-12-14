@@ -345,6 +345,53 @@ rlvgl_take_log_ownership(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 }
 
 static ERL_NIF_TERM
+rlvgl_configure(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	char atom[32];
+	uint uval, uval2;
+	int tuplen;
+	const ERL_NIF_TERM *tup;
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	if (!enif_get_atom(env, argv[0], atom, sizeof (atom), ERL_NIF_LATIN1))
+		return (enif_make_badarg(env));
+
+	if (strcmp(atom, "fbufs_per_child") == 0) {
+		if (!enif_get_uint(env, argv[1], &uval))
+			return (enif_make_badarg(env));
+		set_fbufs_per_child(uval);
+
+	} else if (strcmp(atom, "ring_size") == 0) {
+		if (!enif_get_uint(env, argv[1], &uval))
+			return (enif_make_badarg(env));
+		set_ring_size(uval);
+
+	} else if (strcmp(atom, "fb_max_res") == 0) {
+		if (!enif_get_tuple(env, argv[1], &tuplen, &tup))
+			return (enif_make_badarg(env));
+		if (tuplen != 2)
+			return (enif_make_badarg(env));
+		if (!enif_get_uint(env, tup[0], &uval))
+			return (enif_make_badarg(env));
+		if (!enif_get_uint(env, tup[1], &uval2))
+			return (enif_make_badarg(env));
+		set_fb_max_res(uval, uval2);
+
+	} else if (strcmp(atom, "max_lvkids") == 0) {
+		if (!enif_get_uint(env, argv[1], &uval))
+			return (enif_make_badarg(env));
+		set_max_lvkids(uval);
+
+	} else {
+		return (enif_make_badarg(env));
+	}
+
+	return (enif_make_atom(env, "ok"));
+}
+
+static ERL_NIF_TERM
 rlvgl_setup_instance(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	const ERL_NIF_TERM *sztup;
@@ -1877,6 +1924,7 @@ rlvgl_nif_unload(ErlNifEnv *env, void *priv_data)
 
 static ErlNifFunc nif_funcs[] = {
 	/* control commands */
+	{ "configure",		2, rlvgl_configure },
 	{ "setup_instance", 	1, rlvgl_setup_instance },
 	{ "setup_event",	2, rlvgl_setup_event },
 	{ "setup_event",	3, rlvgl_setup_event },
