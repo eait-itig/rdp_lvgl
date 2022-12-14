@@ -705,11 +705,20 @@ shm_parent_pipewatch(void *arg)
 	}
 }
 
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__sun) || defined(LIBBSD_OVERLAY)
+# define HAVE_CLOSEFROM	1
+#else
+# define HAVE_CLOSEFROM	0
+#endif
+
 pid_t
 shm_fork(struct shmintf *shm)
 {
 	pid_t kid;
 	int fd, maxfd;
+#if !HAVE_CLOSEFROM
+	int fdlimit;
+#endif
 
 	pthread_mutex_lock(&shm->si_cc_mtx);
 	assert(shm->si_role == ROLE_NONE);
@@ -743,7 +752,17 @@ shm_fork(struct shmintf *shm)
 				continue;
 			close(fd);
 		}
+#if HAVE_CLOSEFROM
 		closefrom(maxfd + 1);
+#else
+# if defined(_SC_OPEN_MAX)
+		fdlimit = sysconf(_SC_OPEN_MAX);
+# else
+		fdlimit = getdtablesize();
+# endif
+		for (fd = maxfd + 1; fd < fdlimit; ++fd)
+			close(fd);
+#endif
 		pthread_create(&shm->si_pipewatch, NULL, shm_pipewatch, shm);
 		pthread_setname_np(shm->si_pipewatch, "shm_pipewatch");
 		break;
