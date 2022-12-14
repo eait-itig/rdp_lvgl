@@ -357,7 +357,7 @@ handle_event(#ts_refresh_rect{rects = [R | Rest]}, Srv, S0 = #?MODULE{}) ->
     handle_event(#ts_refresh_rect{rects = Rest}, Srv, S1);
 
 handle_event(Other, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
-    case Mod:handle_Event(Other, Srv, MS0) of
+    case Mod:handle_event(Other, Srv, MS0) of
         {ok, MS1} ->
             {ok, S0#?MODULE{modstate = MS1}};
         {stop, Reason, MS1} ->
