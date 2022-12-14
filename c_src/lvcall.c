@@ -32,7 +32,7 @@
 #include <string.h>
 
 struct ibuf {
-	uint8_t	 ib_buf[512];
+	uint8_t	 ib_buf[4096];
 	uint8_t *ib_ptrs[4];
 	size_t	 ib_len;
 	uint	 ib_idx;
