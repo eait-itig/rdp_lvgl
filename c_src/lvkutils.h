@@ -35,6 +35,14 @@
 
 extern lv_font_t roboto_20;
 extern lv_font_t roboto_24;
+extern lv_font_t scp_reg_10;
+extern lv_font_t scp_reg_12;
+extern lv_font_t scp_reg_14;
+extern lv_font_t scp_reg_16;
+extern lv_font_t scp_bold_10;
+extern lv_font_t scp_bold_12;
+extern lv_font_t scp_bold_14;
+extern lv_font_t scp_bold_16;
 
 uint lvk_next_tile(const lv_area_t *area, lv_area_t *tile);
 

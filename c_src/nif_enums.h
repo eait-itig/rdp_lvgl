@@ -436,17 +436,25 @@ struct font_spec {
 	const lv_font_t	*fs_font;
 };
 const static struct font_spec font_specs[] = {
-	{ "montserrat", NULL, 	10, &lv_font_montserrat_10 },
-	{ "montserrat", NULL, 	12, &lv_font_montserrat_12 },
-	{ "montserrat", NULL, 	14, &lv_font_montserrat_14 },
-	{ "montserrat", NULL, 	16, &lv_font_montserrat_16 },
-	{ "montserrat", NULL, 	18, &lv_font_montserrat_18 },
-	{ "montserrat", NULL, 	20, &lv_font_montserrat_20 },
-	{ "montserrat", NULL, 	22, &lv_font_montserrat_22 },
-	{ "montserrat", NULL, 	24, &lv_font_montserrat_24 },
-	{ "montserrat", NULL, 	36, &lv_font_montserrat_36 },
-	{ "roboto", 	"bold",	20, &roboto_20 },
-	{ "roboto", 	"bold",	24, &roboto_24 },
+	{ "montserrat", 	NULL, 	10, &lv_font_montserrat_10 },
+	{ "montserrat", 	NULL, 	12, &lv_font_montserrat_12 },
+	{ "montserrat", 	NULL, 	14, &lv_font_montserrat_14 },
+	{ "montserrat", 	NULL, 	16, &lv_font_montserrat_16 },
+	{ "montserrat", 	NULL, 	18, &lv_font_montserrat_18 },
+	{ "montserrat", 	NULL, 	20, &lv_font_montserrat_20 },
+	{ "montserrat", 	NULL, 	22, &lv_font_montserrat_22 },
+	{ "montserrat", 	NULL, 	24, &lv_font_montserrat_24 },
+	{ "montserrat", 	NULL, 	36, &lv_font_montserrat_36 },
+	{ "roboto", 		"bold",	20, &roboto_20 },
+	{ "roboto", 		"bold",	24, &roboto_24 },
+	{ "source code pro",	NULL, 	10, &scp_reg_10 },
+	{ "source code pro",	NULL, 	12, &scp_reg_12 },
+	{ "source code pro",	NULL, 	14, &scp_reg_14 },
+	{ "source code pro",	NULL, 	16, &scp_reg_16 },
+	{ "source code pro",	"bold",	10, &scp_bold_10 },
+	{ "source code pro",	"bold",	12, &scp_bold_12 },
+	{ "source code pro",	"bold",	14, &scp_bold_14 },
+	{ "source code pro",	"bold",	16, &scp_bold_16 },
 	{ NULL, NULL, 0, NULL }
 };
 
