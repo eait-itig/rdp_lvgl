@@ -4,7 +4,7 @@
  * Opts: 
  ******************************************************************************/
 
-#include "lvgl/lvgl.h"
+#include "lvgl.h"
 
 #ifndef SCP_REG_10
 #define SCP_REG_10 1
