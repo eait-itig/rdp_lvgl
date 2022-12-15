@@ -442,18 +442,13 @@ lvkid_lv_flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	struct fdesc fd;
 	lv_disp_t *disp = _lv_refr_get_disp_refreshing();
 	uint32_t fbidx_flag;
-	uint i, last;
+	int i, last;
 	uint y;
-	const lv_area_t *a;
+	lv_area_t *a;
 	lv_color_t *obuf;
 	struct shmintf *shm = inst->lvi_shm;
 
 	assert(disp == inst->lvi_disp);
-
-	if (inst->lvi_stalled) {
-		lv_disp_flush_ready(disp_drv);
-		return;
-	}
 
 	fbidx_flag = inst->lvi_fbidx;
 	if (buf == fb->fb_a) {
@@ -465,6 +460,39 @@ lvkid_lv_flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 	} else {
 		assert(0);
 		return;
+	}
+
+	/* If we're currently stalled, exit out now. We'll drop this frame. */
+	if (inst->lvi_stalled == 1) {
+		/* Still need to update the other buffer! */
+		for (i = 0; i < disp->inv_p; ++i) {
+			a = &disp->inv_areas[i];
+			if (disp->inv_area_joined[i])
+				continue;
+			for (y = a->y1; y <= a->y2; ++y) {
+				bcopy(&buf[fb->fb_w * y + a->x1],
+				    &obuf[fb->fb_w * y + a->x1],
+				    sizeof (lv_color_t) * (a->x2 - a->x1 + 1));
+			}
+		}
+		lv_disp_flush_ready(disp_drv);
+		return;
+	}
+
+	/*
+	 * We're recovering from a stall: change this invalidation to cover
+	 * the entire screen.
+	 */
+	if (inst->lvi_stalled == 2) {
+		disp->inv_p = 1;
+		disp->inv_area_joined[0] = 0;
+		a = &disp->inv_areas[0];
+		a->x1 = 0;
+		a->y1 = 0;
+		a->x2 = fb->fb_w - 1;
+		a->y2 = fb->fb_h - 1;
+		/* Next redraw will be back to normal operation. */
+		inst->lvi_stalled = 0;
 	}
 
 	if (disp->inv_p == 0) {
@@ -502,10 +530,10 @@ lvkid_lv_flush_cb(lv_disp_drv_t *disp_drv, const lv_area_t *area,
 		a = &disp->inv_areas[i];
 		if (disp->inv_area_joined[i])
 			continue;
-		for (y = a->y1; y < a->y2; ++y) {
+		for (y = a->y1; y <= a->y2; ++y) {
 			bcopy(&buf[fb->fb_w * y + a->x1],
 			    &obuf[fb->fb_w * y + a->x1],
-			    sizeof (lv_color_t) * (a->x2 - a->x1));
+			    sizeof (lv_color_t) * (a->x2 - a->x1 + 1));
 		}
 	}
 }
@@ -951,7 +979,7 @@ lvkid_lv_phlush_ring(void *arg)
 		}
 
 		if (inst->lvi_stalled) {
-			inst->lvi_stalled = 0;
+			inst->lvi_stalled = 2;
 		} else {
 			lv_disp_flush_ready(drv);
 			pthread_cond_broadcast(&lv_flush_cond);
