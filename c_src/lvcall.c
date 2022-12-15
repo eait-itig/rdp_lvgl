@@ -170,7 +170,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 				.rd_error = ENOSPC,
 				.rd_cookie = cd[0]->cd_cookie,
 			};
-			shm_produce_rsp(shm, rd, i);
+			shm_produce_rsp(shm, rd, 1);
 			break;
 		}
 
