@@ -32,6 +32,9 @@ class Arg
     write "// no parse for #{@name}"
   end
 
+  def parse_defer
+  end
+
   def precall
   end
 
@@ -198,11 +201,23 @@ class InlineStr < Arg
   def arg_type; 'ARG_INLINE_STR'; end
   def declare
     write "ErlNifBinary #{@name};"
+    @func.if_not_flag('inline_len_check_decl') do
+      write "size_t total_inline = 0;"
+    end
   end
   def parse
     write "if (!enif_inspect_iolist_as_binary(env, argv[#{@idx}], &#{@name})) {"
     write parse_error
     write "}"
+    write "total_inline += #{@name}.size;"
+  end
+  def parse_defer
+    @func.if_not_flag('inline_len_check') do
+      write "if (total_inline > CDESC_MAX_INLINE) {"
+      write "\trv = make_errno(env, ENOSPC);"
+      write "\tgoto out;"
+      write "}"
+    end
   end
   def call
     write "    ARG_INLINE_BUF, &#{@name},"
@@ -216,6 +231,9 @@ class InlineStrArray < Arg
     write "ErlNifBinary #{@name}[16];"
     write "size_t #{@name}_n = 0;"
     write "ERL_NIF_TERM #{@name}_list, #{@name}_hd;"
+    @func.if_not_flag('inline_len_check_decl') do
+      write "size_t total_inline = 0;"
+    end
   end
   def parse
     write "#{@name}_list = argv[#{@idx}];"
@@ -224,8 +242,17 @@ class InlineStrArray < Arg
     write "\tif (!enif_inspect_iolist_as_binary(env, #{@name}_hd, &#{@name}[#{@name}_n])) {"
     write "\t" + parse_error
     write "\t}"
+    write "\ttotal_inline += #{@name}[#{@name}_n].size;"
     write "\t++#{@name}_n;"
     write "}"
+  end
+  def parse_defer
+    @func.if_not_flag('inline_len_check') do
+      write "if (total_inline > CDESC_MAX_INLINE) {"
+      write "\trv = make_errno(env, ENOSPC);"
+      write "\tgoto out;"
+      write "}"
+    end
   end
   def call
     write "    ARG_INL_BUF_ARR, #{@name}, #{@name}_n,"
@@ -591,6 +618,7 @@ class Func
 
   def parse
     @args.each { |a| a.parse }
+    @args.each { |a| a.parse_defer }
   end
 
   def precall

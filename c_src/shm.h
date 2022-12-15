@@ -320,6 +320,16 @@ struct rdesc {
 
 #define	RING_BUSYWAIT_ITERS	16384
 
+#define CDESC_FIRST_INLINE	(sizeof ( ((struct cdesc_call *)0)->cdc_ibuf ))
+#define CDESC_REST_INLINE	(sizeof ( ((struct cdesc *)0)->cd_data ))
+#define	CDESC_MAX_INLINE	\
+	(CDESC_FIRST_INLINE + (RING_MAX_CHAIN - 1) * CDESC_REST_INLINE)
+
+#define RDESC_FIRST_INLINE	(sizeof ( ((struct rdesc_retbuf *)0)->rdrb_data ))
+#define RDESC_REST_INLINE	(sizeof ( ((struct rdesc *)0)->rd_data ))
+#define	RDESC_MAX_INLINE	\
+	(RDESC_FIRST_INLINE + (RING_MAX_CHAIN - 1) * RDESC_REST_INLINE)
+
 struct shmintf *alloc_shmintf(void);
 void free_shmintf(struct shmintf *);
 

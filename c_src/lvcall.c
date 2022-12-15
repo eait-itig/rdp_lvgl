@@ -30,6 +30,7 @@
 #include "lvkutils.h"
 
 #include <string.h>
+#include <sys/errno.h>
 
 struct ibuf {
 	uint8_t	 ib_buf[4096];
@@ -153,7 +154,6 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	switch (rt) {
 	case ARG_INLINE_STR:
 		rem = strlen((const char *)rv);
-		assert(rem < UINT32_MAX);
 		cdc->cdc_rbuflen = rem;
 		/* FALL THROUGH */
 	case ARG_INLINE_BUF:
@@ -161,6 +161,18 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 		rem = cdc->cdc_rbuflen;
 		off = 0;
+
+		if (rem > RDESC_MAX_INLINE) {
+			log_warn("call returned buffer of len %u > max "
+			    "inline which is %u. returning ENOSPC",
+			    rem, RDESC_MAX_INLINE);
+			rd[0] = (struct rdesc){
+				.rd_error = ENOSPC,
+				.rd_cookie = cd[0]->cd_cookie,
+			};
+			shm_produce_rsp(shm, rd, i);
+			break;
+		}
 
 		rd[0] = (struct rdesc){
 			.rd_error = 0,

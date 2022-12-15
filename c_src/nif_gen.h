@@ -516,6 +516,7 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -534,6 +535,11 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -691,6 +697,7 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -709,6 +716,11 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -813,6 +825,7 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -831,6 +844,11 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -1873,6 +1891,7 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -1891,6 +1910,11 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -2120,6 +2144,7 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	ErlNifBinary map[16];
 	size_t map_n = 0;
 	ERL_NIF_TERM map_list, map_hd;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -2143,7 +2168,12 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 			rv = enif_make_badarg2(env, "map", argv[1]);
 		goto out;
 		}
+		total_inline += map[map_n].size;
 		++map_n;
+	}
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
+		goto out;
 	}
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
@@ -2909,6 +2939,7 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary opts;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -2927,6 +2958,11 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &opts)) {
 		rv = enif_make_badarg2(env, "opts", argv[1]);
+		goto out;
+	}
+	total_inline += opts.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -2973,6 +3009,7 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 	int index;
 
 	bzero(&nls, sizeof (nls));
@@ -2994,8 +3031,13 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
 	}
+	total_inline += text.size;
 	if (!enif_get_int(env, argv[2], &index)) {
 		rv = enif_make_badarg2(env, "index", argv[2]);
+		goto out;
+	}
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -3800,6 +3842,7 @@ rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -3818,6 +3861,11 @@ rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -3867,6 +3915,7 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	enum arg_type icon_type;
 	void *icon;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -3891,6 +3940,11 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[2], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[2]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -4066,6 +4120,7 @@ rlvgl_menu_page_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *obj;
 	ErlNifBinary title;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -4084,6 +4139,11 @@ rlvgl_menu_page_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &title)) {
 		rv = enif_make_badarg2(env, "title", argv[1]);
+		goto out;
+	}
+	total_inline += title.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -5071,6 +5131,7 @@ rlvgl_table_set_cell_value4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	uint row;
 	uint col;
 	ErlNifBinary text;
+	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
 
@@ -5097,6 +5158,11 @@ rlvgl_table_set_cell_value4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_inspect_iolist_as_binary(env, argv[3], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[3]);
+		goto out;
+	}
+	total_inline += text.size;
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 
@@ -5355,6 +5421,7 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	int rc;
 	struct lvkobj *parent;
 	ErlNifBinary title;
+	size_t total_inline = 0;
 	ErlNifBinary text;
 	ErlNifBinary btns[16];
 	size_t btns_n = 0;
@@ -5381,10 +5448,12 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "title", argv[1]);
 		goto out;
 	}
+	total_inline += title.size;
 	if (!enif_inspect_iolist_as_binary(env, argv[2], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[2]);
 		goto out;
 	}
+	total_inline += text.size;
 	btns_list = argv[3];
 	while (enif_get_list_cell(env, btns_list, &btns_hd, &btns_list)) {
 		assert(btns_n < 16);
@@ -5392,6 +5461,7 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 			rv = enif_make_badarg2(env, "btns", argv[3]);
 		goto out;
 		}
+		total_inline += btns[btns_n].size;
 		++btns_n;
 	}
 	if (!enif_get_atom(env, argv[4], atom, sizeof (atom), ERL_NIF_LATIN1)) {
@@ -5404,6 +5474,10 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		add_close = 0;
 	} else {
 		rv = enif_make_badarg2(env, "add_close", argv[4]);
+		goto out;
+	}
+	if (total_inline > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
 		goto out;
 	}
 

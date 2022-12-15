@@ -1445,6 +1445,11 @@ rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
 		return (enif_make_badarg(env));
 
+	if (bin.size > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1727,6 +1732,11 @@ rlvgl_send_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
 		return (enif_make_badarg(env));
+
+	if (bin.size > CDESC_MAX_INLINE) {
+		rv = make_errno(env, ENOSPC);
+		goto out;
+	}
 
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
