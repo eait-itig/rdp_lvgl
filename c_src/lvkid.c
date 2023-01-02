@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <sys/errno.h>
+#include <sys/mman.h>
 
 #include "lvkid.h"
 #include "lvkutils.h"
@@ -739,6 +740,9 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	fb = inst->lvi_fbuf;
 	fb->fb_state = FBUF_FREE;
 	fb->fb_priv = NULL;
+
+	madvise(fb->fb_a, fb->fb_sz, MADV_DONTNEED);
+	madvise(fb->fb_b, fb->fb_sz, MADV_DONTNEED);
 
 	/* lv_disp_remove doesn't free this memory :( */
 	disp_drv->draw_ctx_deinit(disp_drv, disp_drv->draw_ctx);
@@ -2550,6 +2554,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkchartcur *ccur, *nccur;
 	struct lvkmeterind *mi, *nmi;
 	struct lvkmeterscl *ms, *nms;
+	struct fbuf *fb;
 
 	assert(nrd == 1);
 	log_debug("inst %p teardown cb", inst);
@@ -2558,8 +2563,11 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	pthread_rwlock_wrlock(&inst->lvki_lock);
 	--kid->lvk_busy;
 	inst->lvki_state = LVKINST_FREE;
-	inst->lvki_fbuf->fb_state = FBUF_FREE;
-	inst->lvki_fbuf->fb_priv = NULL;
+	fb = inst->lvki_fbuf;
+	fb->fb_state = FBUF_FREE;
+	fb->fb_priv = NULL;
+	madvise(fb->fb_a, fb->fb_sz, MADV_DONTNEED);
+	madvise(fb->fb_b, fb->fb_sz, MADV_DONTNEED);
 	inst->lvki_fbuf = NULL;
 	LIST_FOREACH_SAFE(obj, &inst->lvki_objs, lvko_entry, nobj) {
 		if (obj->lvko_hdl) {
