@@ -216,8 +216,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_class = (uint64_t)lv_obj_get_class(obj),
-				.rdr_udata = (uint64_t)lv_obj_get_user_data(obj),
+				.rdr_class = (obj == NULL) ? 0 : (uint64_t)lv_obj_get_class(obj),
+				.rdr_udata = (obj == NULL) ? 0 : (uint64_t)lv_obj_get_user_data(obj),
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
@@ -229,7 +229,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_udata = (uint64_t)grp->user_data,
+				.rdr_udata = (grp == NULL) ? 0 : (uint64_t)grp->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
@@ -241,7 +241,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_udata = (uint64_t)sty->user_data,
+				.rdr_udata = (sty == NULL) ? 0 : (uint64_t)sty->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
@@ -253,7 +253,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_udata = (uint64_t)chartcur->user_data,
+				.rdr_udata = (chartcur == NULL) ? 0 : (uint64_t)chartcur->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
@@ -265,7 +265,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_udata = (uint64_t)chartser->user_data,
+				.rdr_udata = (chartser == NULL) ? 0 : (uint64_t)chartser->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
@@ -277,7 +277,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_udata = (uint64_t)meterind->user_data,
+				.rdr_udata = (meterind == NULL) ? 0 : (uint64_t)meterind->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
@@ -289,7 +289,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_cookie = cd[0]->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
-				.rdr_udata = (uint64_t)meterscl->user_data,
+				.rdr_udata = (meterscl == NULL) ? 0 : (uint64_t)meterscl->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);
