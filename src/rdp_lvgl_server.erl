@@ -50,7 +50,10 @@
     paste_proc/2
     ]).
 
--export([find_image_path/1]).
+-export([
+    find_image_path/1,
+    find_image_path/2
+    ]).
 
 -type modkey() :: alt | ctrl | shift | capslock | numlock.
 
@@ -171,12 +174,15 @@ try_paths([Path | Next], BaseName) ->
     end.
 
 find_image_path(Name) ->
+    find_image_path(rdp_lvgl, Name).
+
+find_image_path(App, Name) ->
     Paths0 = [
-        filename:join(["..", lib, rdp_lvgl, priv]),
+        filename:join(["..", lib, App, priv]),
         filename:join(["..", priv]),
         filename:join([priv])
     ],
-    Paths1 = case code:priv_dir(rdp_lvgl) of
+    Paths1 = case code:priv_dir(App) of
         {error, bad_name} -> Paths0;
         Dir -> [Dir | Paths0]
     end,
