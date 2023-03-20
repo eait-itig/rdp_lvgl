@@ -509,6 +509,16 @@ class ObjStates < Enum32
   def multi; true; end
   def erl_flag_type; 'lv_obj:state()'; end
 end
+class ScrollbarMode < Enum8
+  def enum; 'scrollbar_modes'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_obj:scrollbar_mode()'; end
+end
+class DirSpec < Enum8
+  def enum; 'dir_specs'; end
+  def multi; true; end
+  def erl_flag_type; 'lv_obj:dir_spec()'; end
+end
 class StyleSelector < Enum32
   def enum; 'style_selector_specs'; end
   def multi; true; end
@@ -895,6 +905,9 @@ ObjFunc.new('get_screen', Obj)
 ObjFunc.new('clean', Void)
 ObjFunc.new('del', Void)
 ObjFunc.new('refresh_ext_draw_size', Void)
+ObjFunc.new('set_scrollbar_mode', Void, ScrollbarMode.new('mode'))
+ObjFunc.new('set_scroll_dir', Void, DirSpec.new('dir'))
+ObjFunc.new('scroll_to_view', Void, AnimEnable.new('anim'))
 
 LvFunc.new('group_create', Group, Inst.new('inst'))
 LvFunc.new('group_add_obj', Void, Group.new('group'), Obj.new('obj'))

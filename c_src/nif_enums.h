@@ -291,6 +291,13 @@ const static struct enum_spec chart_axes[] = {
 	{ "secondary_x",	LV_CHART_AXIS_SECONDARY_Y },
 	{ NULL, 0 }
 };
+const static struct enum_spec scrollbar_modes[] = {
+	{ "off",		LV_SCROLLBAR_MODE_OFF },
+	{ "on",			LV_SCROLLBAR_MODE_ON },
+	{ "active",		LV_SCROLLBAR_MODE_ACTIVE },
+	{ "auto",		LV_SCROLLBAR_MODE_AUTO },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

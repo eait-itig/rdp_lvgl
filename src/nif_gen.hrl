@@ -294,6 +294,12 @@ obj_clean(_Obj) -> error(no_nif).
 obj_del(_Obj) -> error(no_nif).
 -spec obj_refresh_ext_draw_size(object()) -> async_return().
 obj_refresh_ext_draw_size(_Obj) -> error(no_nif).
+-spec obj_set_scrollbar_mode(object(), lv_obj:scrollbar_mode()) -> async_return().
+obj_set_scrollbar_mode(_Obj, _Mode) -> error(no_nif).
+-spec obj_set_scroll_dir(object(), lv:flags(lv_obj:dir_spec())) -> async_return().
+obj_set_scroll_dir(_Obj, _Dir) -> error(no_nif).
+-spec obj_scroll_to_view(object(), lv_anim:enable()) -> async_return().
+obj_scroll_to_view(_Obj, _Anim) -> error(no_nif).
 -spec group_create(instance()) -> async_return(group()).
 group_create(_Inst) -> error(no_nif).
 -spec group_add_obj(group(), object()) -> async_return().

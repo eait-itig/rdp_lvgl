@@ -223,7 +223,7 @@
 
 -export_type([
     flag/0, align_spec/0, dir_spec/0, state/0, part/0,
-    selector/0
+    selector/0, scrollbar_mode/0
     ]).
 
 -type flag() :: hidden | clickable | click_focusable | checkable |
@@ -237,6 +237,8 @@
 
 -type part() :: main | scrollbar | indicator | knob | selected | items |
     ticks | cursor.
+
+-type scrollbar_mode() :: on | off | auto | active.
 
 -type selector() :: [state() | part() | any_state | any_part].
 %% Determines what combination of states and parts of a widget a style should
