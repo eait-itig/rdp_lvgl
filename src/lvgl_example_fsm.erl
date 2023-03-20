@@ -152,6 +152,7 @@ make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
     {ok, Outer} = lv_obj:create(Inst, TopLevel),
     ok = lv_obj:add_style(Outer, APStyle),
     ok = lv_obj:set_size(Outer, {{percent, 100}, content}),
+    ok = lv_obj:set_scrollbar_mode(Outer, off),
 
     {ok, Sym} = lv_img:create(Outer),
     ok = lv_img:set_src(Sym, Symbol),
@@ -159,9 +160,10 @@ make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
 
     {ok, InnerFlex} = lv_obj:create(Inst, Outer),
     ok = lv_obj:add_style(InnerFlex, FlowStyle),
-    ok = lv_obj:set_size(InnerFlex, {content, content}),
+    ok = lv_obj:set_size(InnerFlex, {{percent, 100}, content}),
     ok = lv_obj:align(InnerFlex, top_left, {30, 0}),
     ok = lv_obj:add_style(InnerFlex, RLStyle),
+    ok = lv_obj:set_scroll_dir(InnerFlex, [right, vertical]),
     InnerFlex.
 
 %% @private

@@ -64,6 +64,10 @@
     get_screen/1,
     clean/1,
     del/1,
+    set_scroll_dir/2,
+    set_scrollbar_mode/2,
+    scroll_to_view/2,
+    scroll_to_view/1,
     refresh_ext_draw_size/1,
     set_style_width/2,
     set_style_width/3,
@@ -492,6 +496,37 @@ get_parent(Obj) ->
 -spec get_screen(lv:object()) -> {ok, lv:scr()} | lv:error().
 get_screen(Obj) ->
     ?async_wrapper(obj_get_screen, Obj).
+
+%% @doc Sets the scrollbar mode of a widget.
+%%
+%% @see scrollbar_mode()
+-spec set_scrollbar_mode(lv:object(), scrollbar_mode()) -> ok | lv:error().
+set_scrollbar_mode(Obj, Mode) ->
+    ?async_void_wrapper(obj_set_scrollbar_mode, Obj, Mode).
+
+%% @doc Sets the direction of scrollbars on a widget.
+%%
+%% @see lv:flags()
+%% @see dir_spec()
+-spec set_scroll_dir(lv:object(), lv:flags(dir_spec())) -> ok | lv:error().
+set_scroll_dir(Obj, Dirn) ->
+    ?async_void_wrapper(obj_set_scroll_dir, Obj, Dirn).
+
+%% @doc Scrolls the parent widget to ensure child is visible.
+%%
+%% @see lv_anim:enable()
+-spec scroll_to_view(lv:object(), lv_anim:enable()) -> ok | lv:error().
+scroll_to_view(Obj, Anim) ->
+    ?async_void_wrapper(obj_scroll_to_view, Obj, Anim).
+
+%% @doc Scrolls the parent widget to ensure child is visible.
+%%
+%% Equivalent to calling <code>lv_obj:scroll_to_view(Obj, on)</code>.
+%%
+%% @see scroll_to_view/2
+-spec scroll_to_view(lv:object()) -> ok | lv:error().
+scroll_to_view(Obj) ->
+    scroll_to_view(Obj, on).
 
 %% @doc Deletes all children of a widget.
 %%
