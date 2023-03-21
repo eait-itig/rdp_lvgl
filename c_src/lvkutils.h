@@ -33,8 +33,18 @@
 #include <stdint.h>
 #include "shm.h"
 
+extern lv_font_t roboto_12;
+extern lv_font_t roboto_14;
+extern lv_font_t roboto_16;
+extern lv_font_t roboto_18;
 extern lv_font_t roboto_20;
+extern lv_font_t roboto_22;
 extern lv_font_t roboto_24;
+extern lv_font_t roboto_36;
+extern lv_font_t roboto_bold_20;
+extern lv_font_t roboto_bold_24;
+extern lv_font_t roboto_bold_28;
+extern lv_font_t roboto_bold_36;
 extern lv_font_t scp_reg_10;
 extern lv_font_t scp_reg_12;
 extern lv_font_t scp_reg_14;
@@ -43,6 +53,8 @@ extern lv_font_t scp_bold_10;
 extern lv_font_t scp_bold_12;
 extern lv_font_t scp_bold_14;
 extern lv_font_t scp_bold_16;
+extern lv_font_t fa_regular_16;
+extern lv_font_t fa_regular_20;
 
 uint lvk_next_tile(const lv_area_t *area, lv_area_t *tile);
 

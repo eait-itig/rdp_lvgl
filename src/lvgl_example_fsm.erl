@@ -154,8 +154,9 @@ make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
     ok = lv_obj:set_size(Outer, {{percent, 100}, content}),
     ok = lv_obj:set_scrollbar_mode(Outer, off),
 
-    {ok, Sym} = lv_img:create(Outer),
-    ok = lv_img:set_src(Sym, Symbol),
+    {ok, Sym} = lv_label:create(Outer),
+    ok = lv_obj:set_style_text_font(Sym, {"fontawesome", regular, 20}),
+    ok = lv_label:set_text(Sym, unicode:characters_to_binary([Symbol], utf8)),
     ok = lv_obj:align(Sym, left_mid),
 
     {ok, InnerFlex} = lv_obj:create(Inst, Outer),
@@ -189,7 +190,7 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     ok = lv_span:set_text(Subtitle, "\nStaff Remote Access"),
     ok = lv_span:set_style(Subtitle, SubtitleSty),
 
-    UPwFlex = make_auth_method_flex(Flex, keyboard, S0),
+    UPwFlex = make_auth_method_flex(Flex, 16#f11c, S0),
 
     {ok, Text} = lv_textarea:create(UPwFlex),
     ok = lv_textarea:set_one_line(Text, true),
@@ -211,7 +212,7 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, BtnEvent, _} = lv_event:setup(Btn, pressed, {login, Text, PwText}),
     {ok, AcEvent, _} = lv_event:setup(PwText, ready, {login, Text, PwText}),
 
-    YkFlex = make_auth_method_flex(Flex, sd_card, S0),
+    YkFlex = make_auth_method_flex(Flex, 16#f2c2, S0),
 
     {ok, UserLbl} = lv_label:create(YkFlex),
     ok = lv_label:set_text(UserLbl, "chemlabs@eait.uq.edu.au"),
