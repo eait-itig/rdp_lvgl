@@ -823,6 +823,7 @@ WidgetFunc.new('textarea', 'set_text_selection', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_password_mode', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_one_line', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_accepted_chars', Void, Buffer.new('buf'))
+WidgetFunc.new('textarea', 'set_max_length', Void, UInt32.new('len'))
 WidgetFunc.new('textarea', 'get_label', Obj)
 WidgetFunc.new('textarea', 'set_password_show_time', Void, UInt16.new('time'))
 

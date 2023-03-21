@@ -34,6 +34,8 @@ textarea_set_password_mode(_Obj, _State) -> error(no_nif).
 textarea_set_one_line(_Obj, _State) -> error(no_nif).
 -spec textarea_set_accepted_chars(object(), buffer()) -> async_return().
 textarea_set_accepted_chars(_Obj, _Buf) -> error(no_nif).
+-spec textarea_set_max_length(object(), integer()) -> async_return().
+textarea_set_max_length(_Obj, _Len) -> error(no_nif).
 -spec textarea_get_label(object()) -> async_return(object()).
 textarea_get_label(_Obj) -> error(no_nif).
 -spec textarea_set_password_show_time(object(), integer()) -> async_return().
