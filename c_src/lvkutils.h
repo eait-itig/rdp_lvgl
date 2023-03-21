@@ -53,8 +53,8 @@ extern lv_font_t scp_bold_10;
 extern lv_font_t scp_bold_12;
 extern lv_font_t scp_bold_14;
 extern lv_font_t scp_bold_16;
-extern lv_font_t fa_regular_16;
-extern lv_font_t fa_regular_20;
+extern lv_font_t la_solid_16;
+extern lv_font_t la_solid_20;
 
 uint lvk_next_tile(const lv_area_t *area, lv_area_t *tile);
 

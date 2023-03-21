@@ -483,8 +483,8 @@ const static struct font_spec font_specs[] = {
 	{ "source code pro",	"bold",	12, &scp_bold_12 },
 	{ "source code pro",	"bold",	14, &scp_bold_14 },
 	{ "source code pro",	"bold",	16, &scp_bold_16 },
-	{ "fontawesome",	NULL,	16, &fa_regular_16 },
-	{ "fontawesome",	NULL,	20, &fa_regular_20 },
+	{ "lineawesome",	NULL,	16, &la_solid_16 },
+	{ "lineawesome",	NULL,	20, &la_solid_20 },
 	{ NULL, NULL, 0, NULL }
 };
 

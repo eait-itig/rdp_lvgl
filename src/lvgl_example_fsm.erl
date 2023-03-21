@@ -155,7 +155,7 @@ make_auth_method_flex(TopLevel, Symbol, #?MODULE{inst = Inst,
     ok = lv_obj:set_scrollbar_mode(Outer, off),
 
     {ok, Sym} = lv_label:create(Outer),
-    ok = lv_obj:set_style_text_font(Sym, {"fontawesome", regular, 20}),
+    ok = lv_obj:set_style_text_font(Sym, {"lineawesome", regular, 20}),
     ok = lv_label:set_text(Sym, unicode:characters_to_binary([Symbol], utf8)),
     ok = lv_obj:align(Sym, left_mid),
 
