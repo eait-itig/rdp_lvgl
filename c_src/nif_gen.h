@@ -3914,7 +3914,10 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	ErlNifBinary icon_bin;
 	enum arg_type icon_type;
 	void *icon;
-	ErlNifBinary text;
+	ErlNifBinary text_buf;
+	enum arg_type text_type;
+	void *text;
+	char atom[32];
 	size_t total_inline = 0;
 
 	bzero(&nls, sizeof (nls));
@@ -3938,11 +3941,22 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = make_errno(env, rc);
 		goto out;
 	}
-	if (!enif_inspect_iolist_as_binary(env, argv[2], &text)) {
+	if (enif_get_atom(env, argv[2], atom, sizeof (atom), ERL_NIF_LATIN1)) {
+		if (strcmp(atom, "none") == 0) {
+			text_type = ARG_PTR;
+			text = NULL;
+		} else {
+			rv = enif_make_badarg2(env, "text", argv[2]);
+		goto out;
+		}
+	} else if (enif_inspect_iolist_as_binary(env, argv[2], &text_buf)) {
+		text_type = ARG_INLINE_BUF;
+		text = &text_buf;
+		total_inline += text_buf.size;
+	} else {
 		rv = enif_make_badarg2(env, "text", argv[2]);
 		goto out;
 	}
-	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
 		goto out;
@@ -3964,7 +3978,7 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_PTR_OBJ, lv_list_add_btn,
 	    ARG_PTR_OBJ, obj,
 	    icon_type, icon,
-	    ARG_INLINE_BUF, &text,
+	    text_type, text,
 	    ARG_NONE);
 
 	if (rc != 0) {

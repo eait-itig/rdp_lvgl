@@ -231,6 +231,50 @@ class InlineStr < Arg
   def erl_type; 'iolist()'; end
 end
 
+class OptInlineStr < Arg
+  def arg_type; 'ARG_INLINE_STR'; end
+  def declare
+    write "ErlNifBinary #{@name}_buf;"
+    write "enum arg_type #{@name}_type;"
+    write "void *#{@name};"
+    @func.if_not_flag('atom_decl') do
+      write "char atom[32];"
+    end
+    @func.if_not_flag('inline_len_check_decl') do
+      write "size_t total_inline = 0;"
+    end
+  end
+  def parse
+    write "if (enif_get_atom(env, argv[#{@idx}], atom, sizeof (atom), ERL_NIF_LATIN1)) {"
+    write "\tif (strcmp(atom, \"none\") == 0) {"
+    write "\t\t#{@name}_type = ARG_PTR;"
+    write "\t\t#{@name} = NULL;"
+    write "\t} else {"
+    write "\t#{parse_error}"
+    write "\t}"
+    write "} else if (enif_inspect_iolist_as_binary(env, argv[#{@idx}], &#{@name}_buf)) {"
+    write "\t#{@name}_type = ARG_INLINE_BUF;"
+    write "\t#{@name} = &#{@name}_buf;"
+    write "\ttotal_inline += #{@name}_buf.size;"
+    write "} else {"
+    write parse_error
+    write "}"
+
+  end
+  def parse_defer
+    @func.if_not_flag('inline_len_check') do
+      write "if (total_inline > CDESC_MAX_INLINE) {"
+      write "\trv = make_errno(env, ENOSPC);"
+      write "\tgoto out;"
+      write "}"
+    end
+  end
+  def call
+    write "    #{@name}_type, #{@name},"
+  end
+  def erl_type; 'iolist() | none'; end
+end
+
 class InlineStrArray < Arg
   def arg_type; 'ARG_INL_BUF_ARR'; end
   def declare
@@ -829,7 +873,7 @@ WidgetFunc.new('led', 'get_brightness', UInt8)
 
 WidgetCreateFunc.new('list')
 WidgetFunc.new('list', 'add_text', Obj, InlineStr.new('text'))
-WidgetFunc.new('list', 'add_btn', Obj, ImgSrc.new('icon'), InlineStr.new('text'))
+WidgetFunc.new('list', 'add_btn', Obj, ImgSrc.new('icon'), OptInlineStr.new('text'))
 WidgetFunc.new('list', 'get_btn_text', InlineStr, Obj.new('btn'))
 
 WidgetCreateFunc.new('menu')

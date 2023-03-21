@@ -41,7 +41,7 @@ create(Parent) ->
 add_text(Widget, Text) ->
     ?async_wrapper(list_add_text, Widget, Text).
 
--spec add_btn(lv:listview(), lv_img:src(), string()) -> {ok, btn()} | lv:error().
+-spec add_btn(lv:listview(), lv_img:src(), string() | none) -> {ok, btn()} | lv:error().
 add_btn(Widget, Icon, Text) ->
     ?async_wrapper(list_add_btn, Widget, Icon, Text).
 

@@ -120,7 +120,7 @@ led_get_brightness(_Obj) -> error(no_nif).
 list_create(_Parent) -> error(no_nif).
 -spec list_add_text(object(), iolist()) -> async_return(object()).
 list_add_text(_Obj, _Text) -> error(no_nif).
--spec list_add_btn(object(), lv_img:src(), iolist()) -> async_return(object()).
+-spec list_add_btn(object(), lv_img:src(), iolist() | none) -> async_return(object()).
 list_add_btn(_Obj, _Icon, _Text) -> error(no_nif).
 -spec list_get_btn_text(object(), object()) -> async_return(iolist()).
 list_get_btn_text(_Obj, _Btn) -> error(no_nif).
