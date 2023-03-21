@@ -254,6 +254,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 		case ARG_PTR_CHART_CUR:
 		case ARG_PTR_METER_IND:
 		case ARG_PTR_METER_SCL:
+		case ARG_PTR_SPAN:
 			retp = (*(lv_call_func0_p_t)cdc->cdc_func)(
 			    );
 			return ((uint64_t)retp);
@@ -284,6 +285,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 	case ARG_PTR_CHART_CUR:
 	case ARG_PTR_METER_IND:
 	case ARG_PTR_METER_SCL:
+	case ARG_PTR_SPAN:
 		a0p = (void *)cdc->cdc_arg[0];
 		switch (cdc->cdc_argtype[1]) {
 		case ARG_NONE:
@@ -301,6 +303,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				retp = (*(lv_call_func1_pp_t)cdc->cdc_func)(
 				    a0p);
 				return ((uint64_t)retp);
@@ -350,6 +353,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					retp = (*(lv_call_func2_ppl_t)cdc->cdc_func)(
 					    a0p,
 					    a1l);
@@ -415,6 +419,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_ppll_t)cdc->cdc_func)(
 						    a0p,
 						    a1l,
@@ -462,6 +467,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_UINT8:
@@ -495,6 +501,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -521,6 +528,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_NONE:
@@ -540,6 +548,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_pplp_t)cdc->cdc_func)(
 						    a0p,
 						    a1l,
@@ -562,6 +571,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_UINT32:
@@ -590,6 +600,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -785,6 +796,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					retp = (*(lv_call_func2_ppc_t)cdc->cdc_func)(
 					    a0p,
 					    a1c);
@@ -877,6 +889,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_ppcw_t)cdc->cdc_func)(
 						    a0p,
 						    a1c,
@@ -913,6 +926,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_ppccc_t)cdc->cdc_func)(
 							    a0p,
 							    a1c,
@@ -934,6 +948,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_PTR:
@@ -945,6 +960,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_PTR:
@@ -956,6 +972,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -1018,6 +1035,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_ppcp_t)cdc->cdc_func)(
 						    a0p,
 						    a1c,
@@ -1078,6 +1096,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					retp = (*(lv_call_func2_ppw_t)cdc->cdc_func)(
 					    a0p,
 					    a1w);
@@ -1126,6 +1145,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_ppww_t)cdc->cdc_func)(
 						    a0p,
 						    a1w,
@@ -1160,6 +1180,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_NONE:
@@ -1212,6 +1233,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								a6p = (void *)cdc->cdc_arg[6];
 								switch (cdc->cdc_argtype[7]) {
 								case ARG_NONE:
@@ -1243,6 +1265,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_PTR:
@@ -1254,6 +1277,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_NONE:
@@ -1328,6 +1352,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_ppwww_t)cdc->cdc_func)(
 							    a0p,
 							    a1w,
@@ -1364,6 +1389,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_PTR:
@@ -1375,6 +1401,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -1437,6 +1464,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_ppwwp_t)cdc->cdc_func)(
 							    a0p,
 							    a1w,
@@ -1542,6 +1570,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_COLOR:
@@ -1611,6 +1640,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_ppwCC_t)cdc->cdc_func)(
 							    a0p,
 							    a1w,
@@ -1634,6 +1664,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 		case ARG_PTR_CHART_CUR:
 		case ARG_PTR_METER_IND:
 		case ARG_PTR_METER_SCL:
+		case ARG_PTR_SPAN:
 			a1p = (void *)cdc->cdc_arg[1];
 			switch (cdc->cdc_argtype[2]) {
 			case ARG_NONE:
@@ -1663,6 +1694,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					retp = (*(lv_call_func2_ppp_t)cdc->cdc_func)(
 					    a0p,
 					    a1p);
@@ -1791,6 +1823,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_pppw_t)cdc->cdc_func)(
 						    a0p,
 						    a1p,
@@ -1807,6 +1840,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -1829,6 +1863,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_UINT8:
@@ -1880,6 +1915,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								a6p = (void *)cdc->cdc_arg[6];
 								switch (cdc->cdc_argtype[7]) {
 								case ARG_NONE:
@@ -1909,6 +1945,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_UINT8:
@@ -2002,6 +2039,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								retp = (*(lv_call_func5_pppwww_t)cdc->cdc_func)(
 								    a0p,
 								    a1p,
@@ -2020,6 +2058,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_NONE:
@@ -2100,6 +2139,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_PTR:
@@ -2111,6 +2151,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								a6p = (void *)cdc->cdc_arg[6];
 								switch (cdc->cdc_argtype[7]) {
 								case ARG_UINT8:
@@ -2195,6 +2236,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								retp = (*(lv_call_func5_pppwCw_t)cdc->cdc_func)(
 								    a0p,
 								    a1p,
@@ -2219,6 +2261,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_NONE:
@@ -2244,6 +2287,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_pppp_t)cdc->cdc_func)(
 						    a0p,
 						    a1p,
@@ -2272,6 +2316,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_ppppw_t)cdc->cdc_func)(
 							    a0p,
 							    a1p,
@@ -2331,6 +2376,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								retp = (*(lv_call_func5_ppppww_t)cdc->cdc_func)(
 								    a0p,
 								    a1p,
@@ -2392,6 +2438,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_UINT8:
@@ -2416,6 +2463,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								retp = (*(lv_call_func5_pppppc_t)cdc->cdc_func)(
 								    a0p,
 								    a1p,
@@ -2434,6 +2482,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_PTR:
@@ -2445,6 +2494,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								a6p = (void *)cdc->cdc_arg[6];
 								switch (cdc->cdc_argtype[7]) {
 								case ARG_PTR:
@@ -2456,6 +2506,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								case ARG_PTR_CHART_CUR:
 								case ARG_PTR_METER_IND:
 								case ARG_PTR_METER_SCL:
+								case ARG_PTR_SPAN:
 									a7p = (void *)cdc->cdc_arg[7];
 									switch (cdc->cdc_rettype) {
 									case ARG_UINT8:
@@ -2504,6 +2555,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -2534,6 +2586,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -2579,6 +2632,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -2633,6 +2687,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								case ARG_PTR_CHART_CUR:
 								case ARG_PTR_METER_IND:
 								case ARG_PTR_METER_SCL:
+								case ARG_PTR_SPAN:
 									retp = (*(lv_call_func6_pppCCcw_t)cdc->cdc_func)(
 									    a0p,
 									    a1p,
@@ -2735,6 +2790,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_pppl_t)cdc->cdc_func)(
 						    a0p,
 						    a1p,
@@ -2763,6 +2819,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -2823,6 +2880,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -2836,6 +2894,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_pppqp_t)cdc->cdc_func)(
 							    a0p,
 							    a1p,
@@ -2887,6 +2946,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_pppq_t)cdc->cdc_func)(
 						    a0p,
 						    a1p,
@@ -2913,6 +2973,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -2979,6 +3040,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_ppCc_t)cdc->cdc_func)(
 						    a0p,
 						    a1C,
@@ -3038,6 +3100,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_NONE:
@@ -3051,6 +3114,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							case ARG_PTR_CHART_CUR:
 							case ARG_PTR_METER_IND:
 							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
 								retp = (*(lv_call_func5_ppCCcp_t)cdc->cdc_func)(
 								    a0p,
 								    a1C,
@@ -3082,6 +3146,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					retp = (*(lv_call_func2_ppq_t)cdc->cdc_func)(
 					    a0p,
 					    a1q);
@@ -3105,6 +3170,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -3136,6 +3202,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_ppqq_t)cdc->cdc_func)(
 						    a0p,
 						    a1q,
@@ -3227,6 +3294,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				retp = (*(lv_call_func1_pl_t)cdc->cdc_func)(
 				    a0l);
 				return ((uint64_t)retp);
@@ -3258,6 +3326,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 		case ARG_PTR_CHART_CUR:
 		case ARG_PTR_METER_IND:
 		case ARG_PTR_METER_SCL:
+		case ARG_PTR_SPAN:
 			a1p = (void *)cdc->cdc_arg[1];
 			switch (cdc->cdc_argtype[2]) {
 			case ARG_NONE:
@@ -3278,6 +3347,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_NONE:
@@ -3291,6 +3361,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_plpp_t)cdc->cdc_func)(
 						    a0l,
 						    a1p,
@@ -3348,6 +3419,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_PTR:
@@ -3359,6 +3431,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -3402,6 +3475,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				retp = (*(lv_call_func1_pw_t)cdc->cdc_func)(
 				    a0w);
 				return ((uint64_t)retp);
@@ -3453,6 +3527,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								case ARG_PTR_CHART_CUR:
 								case ARG_PTR_METER_IND:
 								case ARG_PTR_METER_SCL:
+								case ARG_PTR_SPAN:
 									a7p = (void *)cdc->cdc_arg[7];
 									switch (cdc->cdc_rettype) {
 									case ARG_NONE:
@@ -3507,6 +3582,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						retp = (*(lv_call_func3_pwwc_t)cdc->cdc_func)(
 						    a0w,
 						    a1w,
@@ -3601,6 +3677,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_CHART_CUR:
 					case ARG_PTR_METER_IND:
 					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
 						case ARG_PTR:
@@ -3612,6 +3689,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							a5p = (void *)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_NONE:
@@ -3644,6 +3722,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_NONE:
@@ -3720,6 +3799,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				retp = (*(lv_call_func1_pc_t)cdc->cdc_func)(
 				    a0c);
 				return ((uint64_t)retp);
@@ -3757,6 +3837,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				retp = (*(lv_call_func1_pq_t)cdc->cdc_func)(
 				    a0q);
 				return ((uint64_t)retp);
@@ -3774,6 +3855,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_CHART_CUR:
 			case ARG_PTR_METER_IND:
 			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
 				case ARG_PTR:
@@ -3785,6 +3867,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_CHART_CUR:
 				case ARG_PTR_METER_IND:
 				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
 					case ARG_NONE:
@@ -3798,6 +3881,7 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						case ARG_PTR_CHART_CUR:
 						case ARG_PTR_METER_IND:
 						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
 							retp = (*(lv_call_func4_pqqpp_t)cdc->cdc_func)(
 							    a0q,
 							    a1q,

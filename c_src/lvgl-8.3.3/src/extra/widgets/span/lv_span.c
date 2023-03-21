@@ -108,6 +108,7 @@ lv_span_t * lv_spangroup_new_span(lv_obj_t * obj)
     span->txt = (char *)"";
     span->static_flag = 1;
     span->spangroup = obj;
+    span->user_data = NULL;
 
     refresh_self_size(obj);
 

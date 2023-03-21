@@ -62,6 +62,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	lv_chart_series_t *chartser;
 	lv_meter_indicator_t *meterind;
 	lv_meter_scale_t *meterscl;
+	lv_span_t *span;
 	struct cdinline *inl;
 	uint ib = 0, i;
 	size_t rem, off, take;
@@ -290,6 +291,18 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (meterscl == NULL) ? 0 : (uint64_t)meterscl->user_data,
+			}
+		};
+		shm_produce_rsp(shm, rd, 1);
+		break;
+	case ARG_PTR_SPAN:
+		span = (lv_span_t *)rv;
+		rd[0] = (struct rdesc){
+			.rd_error = 0,
+			.rd_cookie = cd[0]->cd_cookie,
+			.rd_return = (struct rdesc_return){
+				.rdr_val = rv,
+				.rdr_udata = (span == NULL) ? 0 : (uint64_t)span->user_data,
 			}
 		};
 		shm_produce_rsp(shm, rd, 1);

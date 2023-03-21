@@ -67,6 +67,7 @@ void lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
     lv_anim_enable_t anim);
 lv_point_t lv_table_get_selected_cell_pt(lv_obj_t *obj);
 lv_obj_t *lv_indev_get_focused(lv_indev_t *indev);
+void lv_span_set_style(lv_span_t *span, lv_style_t *sty);
 
 bool lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base);
 

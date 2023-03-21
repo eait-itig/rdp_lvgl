@@ -60,8 +60,8 @@
 -type value() :: none | integer().
 
 -type zoom() :: float().
-%% Zoom factor. 1.0 is 1:1 scaled against the data (no zoom). <1.0 shrinks
-%% the data, while >1.0 enlarges it.
+%% Zoom factor. 1.0 is 1:1 scaled against the data (no zoom). &lt;1.0 shrinks
+%% the data, while &gt;1.0 enlarges it.
 
 -opaque series() :: reference().
 -opaque cursor() :: reference().

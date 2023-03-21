@@ -171,14 +171,23 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {Screen, Flex} = make_flex(S0),
     {ok, Group} = lv_group:create(Inst),
 
-    {ok, Lbl} = lv_label:create(Flex),
-    ok = lv_label:set_text(Lbl, "Faculty of EAIT"),
-    ok = lv_obj:set_style_text_color(Lbl, lv_color:palette(white)),
-    ok = lv_obj:set_style_text_font(Lbl, {"roboto", bold, 24}),
+    {ok, SG} = lv_span:create(Flex),
+    ok = lv_obj:set_size(SG, {{percent, 100}, content}),
+    ok = lv_span:set_mode(SG, break),
 
-    {ok, Lbl2} = lv_label:create(Flex),
-    ok = lv_label:set_text(Lbl2, "Staff Remote Access"),
-    ok = lv_obj:set_style_text_color(Lbl2, lv_color:palette(white)),
+    {ok, TitleSty} = lv_style:create(Inst),
+    ok = lv_style:set_text_color(TitleSty, lv_color:palette(white)),
+    ok = lv_style:set_text_font(TitleSty, {"roboto", bold, 24}),
+    {ok, SubtitleSty} = lv_style:create(Inst),
+    ok = lv_style:set_text_color(SubtitleSty, lv_color:palette(white)),
+
+    {ok, Title} = lv_span:new_span(SG),
+    ok = lv_span:set_text(Title, "Faculty of EAIT"),
+    ok = lv_span:set_style(Title, TitleSty),
+
+    {ok, Subtitle} = lv_span:new_span(SG),
+    ok = lv_span:set_text(Subtitle, "\nStaff Remote Access"),
+    ok = lv_span:set_style(Subtitle, SubtitleSty),
 
     UPwFlex = make_auth_method_flex(Flex, keyboard, S0),
 

@@ -151,6 +151,7 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 	struct lvkchartcur *chartcur;
 	struct lvkmeterind *meterind;
 	struct lvkmeterscl *meterscl;
+	struct lvkspan *span;
 	struct fbuf *fb;
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
@@ -220,6 +221,10 @@ lvkid_hdl_dtor(ErlNifEnv *env, void *arg)
 		assert(meterscl->lvkms_hdl == hdl);
 		meterscl->lvkms_hdl = NULL;
 		break;
+	case LVK_SPAN:
+		span = hdl->lvkh_ptr;
+		assert(span->lvksp_hdl == hdl);
+		span->lvksp_hdl = NULL;
 	}
 
 	bzero(hdl, sizeof (*hdl));
@@ -298,6 +303,7 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 	struct lvkchartcur *chartcur;
 	struct lvkmeterind *meterind;
 	struct lvkmeterscl *meterscl;
+	struct lvkspan *span;
 	struct fbuf *fb;
 	struct lvkhdl **phdl = NULL;
 	ErlNifResourceType *rtype = lvkid_hdl_rsrc;
@@ -370,6 +376,12 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 		kid = meterscl->lvkms_kid;
 		phdl = &meterscl->lvkms_hdl;
 		inst = meterscl->lvkms_inst;
+		break;
+	case LVK_SPAN:
+		span = ptr;
+		kid = span->lvksp_kid;
+		phdl = &span->lvksp_hdl;
+		inst = span->lvksp_inst;
 		break;
 	}
 	assert(phdl != NULL);
@@ -788,6 +800,7 @@ lvkid_lv_cmd_set_udata(struct lvkid *kid, struct shmintf *shm,
 	lv_chart_cursor_t *ccs;
 	lv_meter_indicator_t *mi;
 	lv_meter_scale_t *ms;
+	lv_span_t *span;
 
 	pthread_mutex_lock(&lv_mtx);
 	switch (cdsu->cdsu_type) {
@@ -826,6 +839,10 @@ lvkid_lv_cmd_set_udata(struct lvkid *kid, struct shmintf *shm,
 		if (ms != NULL)
 			ms->user_data = (void *)cdsu->cdsu_udata;
 		break;
+	case ARG_PTR_SPAN:
+		span = (lv_span_t *)cdsu->cdsu_ptr;
+		if (span != NULL)
+			span->user_data = (void *)cdsu->cdsu_udata;
 	}
 	pthread_mutex_unlock(&lv_mtx);
 
@@ -1297,6 +1314,38 @@ lvk_make_meter_scale(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 	return (ms);
 }
 
+static struct lvkspan *
+lvk_make_span(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
+{
+	struct lvkspan *sp;
+	struct cdesc cd;
+
+	LIST_FOREACH(sp, &inst->lvki_spans, lvksp_entry) {
+		if (ptr == sp->lvksp_ptr) {
+			return (sp);
+		}
+	}
+
+	sp = calloc(1, sizeof (*sp));
+	sp->lvksp_kid = kid;
+	sp->lvksp_inst = inst;
+	LIST_INSERT_HEAD(&inst->lvki_spans, sp, lvksp_entry);
+
+	sp->lvksp_ptr = ptr;
+
+	cd = (struct cdesc){
+		.cd_op = CMD_SET_UDATA,
+		.cd_set_udata = (struct cdesc_setudata){
+			.cdsu_type = ARG_PTR_SPAN,
+			.cdsu_ptr = ptr,
+			.cdsu_udata = (uint64_t)sp
+		}
+	};
+	lvk_cmd(kid, &cd, 1, NULL, NULL);
+
+	return (sp);
+}
+
 static struct lvkstyle *
 lvk_make_style(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 {
@@ -1593,6 +1642,24 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 		return;
 	}
 
+	if (call->lvkc_rt == ARG_PTR_SPAN) {
+		struct lvkspan *sp;
+
+		assert(inst != NULL);
+		sp = (struct lvkspan *)rdr->rdr_udata;
+		if (sp == NULL) {
+			pthread_rwlock_wrlock(&inst->lvki_lock);
+			sp = lvk_make_span(kid, inst, rdr->rdr_val);
+			pthread_rwlock_unlock(&inst->lvki_lock);
+		}
+
+		(*call->lvkc_cb)(kid, 0, ARG_PTR_SPAN, sp,
+		    call->lvkc_priv);
+
+		free(call);
+		return;
+	}
+
 	if (call->lvkc_rt == ARG_PTR_CHART_SER) {
 		assert(inst != NULL);
 		cser = (struct lvkchartser *)rdr->rdr_udata;
@@ -1639,6 +1706,7 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	case ARG_PTR_CHART_SER:
 	case ARG_PTR_METER_IND:
 	case ARG_PTR_METER_SCL:
+	case ARG_PTR_SPAN:
 	case ARG_INLINE_STR:
 	case ARG_INLINE_BUF:
 	case ARG_INL_BUF_ARR:
@@ -1693,6 +1761,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	struct lvkchartcur *ccur;
 	struct lvkmeterind *mi;
 	struct lvkmeterscl *ms;
+	struct lvkspan *sp;
 	struct lvkbuf *buf;
 	struct cdesc cd[RING_MAX_CHAIN];
 	struct cdesc *pcd[RING_MAX_CHAIN];
@@ -1780,6 +1849,12 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 			if (ms == NULL)
 				break;
 			cd[0].cd_call.cdc_arg[i] = ms->lvkms_ptr;
+			break;
+		case ARG_PTR_SPAN:
+			sp = va_arg(ap, struct lvkspan *);
+			if (sp == NULL)
+				break;
+			cd[0].cd_call.cdc_arg[i] = sp->lvksp_ptr;
 			break;
 		case ARG_PTR:
 			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uintptr_t);
@@ -2448,6 +2523,7 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	LIST_INIT(&inst->lvki_chart_cursors);
 	LIST_INIT(&inst->lvki_meter_inds);
 	LIST_INIT(&inst->lvki_meter_scales);
+	LIST_INIT(&inst->lvki_spans);
 
 	inst->lvki_env = enif_alloc_env();
 	inst->lvki_owner = owner;
@@ -2554,6 +2630,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkchartcur *ccur, *nccur;
 	struct lvkmeterind *mi, *nmi;
 	struct lvkmeterscl *ms, *nms;
+	struct lvkspan *sp, *nsp;
 	struct fbuf *fb;
 
 	assert(nrd == 1);
@@ -2630,6 +2707,16 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 		}
 		LIST_REMOVE(mi, lvkmi_entry);
 		free(mi);
+	}
+	LIST_FOREACH_SAFE(sp, &inst->lvki_spans, lvksp_entry, nsp) {
+		if (sp->lvksp_hdl) {
+			sp->lvksp_hdl->lvkh_type = LVK_NONE;
+			sp->lvksp_hdl->lvkh_ptr = NULL;
+			sp->lvksp_hdl->lvkh_inst = NULL;
+			sp->lvksp_hdl = NULL;
+		}
+		LIST_REMOVE(sp, lvksp_entry);
+		free(sp);
 	}
 	LIST_FOREACH_SAFE(ms, &inst->lvki_meter_scales, lvkms_entry, nms) {
 		if (ms->lvkms_hdl) {

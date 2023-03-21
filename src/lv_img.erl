@@ -49,8 +49,8 @@
 %% An integer number of degrees in the range 0 - 360.
 
 -type zoom() :: float().
-%% Zoom factor. 1.0 is 1:1 scaled against source image (no zoom). <1.0 shrinks
-%% the image, while >1.0 enlarges it.
+%% Zoom factor. 1.0 is 1:1 scaled against source image (no zoom). &lt;1.0 shrinks
+%% the image, while &gt;1.0 enlarges it.
 
 -spec create(lv:object()) -> {ok, lv:img()} | lv:error().
 create(Parent) ->

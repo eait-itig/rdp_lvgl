@@ -45,6 +45,7 @@ typedef struct {
     lv_obj_t * spangroup;   /* a pointer to spangroup */
     lv_style_t style;       /* display text style */
     uint8_t static_flag : 1;/* the text is static flag */
+    void * user_data;
 } lv_span_t;
 
 /** Data of label*/

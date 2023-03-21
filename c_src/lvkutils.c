@@ -356,3 +356,9 @@ lv_table_get_selected_cell_pt(lv_obj_t *obj)
 
 	return (pt);
 }
+
+void
+lv_span_set_style(lv_span_t *span, lv_style_t *sty)
+{
+	span->style = *sty;
+}

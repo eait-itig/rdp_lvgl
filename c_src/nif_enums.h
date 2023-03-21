@@ -298,6 +298,17 @@ const static struct enum_spec scrollbar_modes[] = {
 	{ "auto",		LV_SCROLLBAR_MODE_AUTO },
 	{ NULL, 0 }
 };
+const static struct enum_spec span_modes[] = {
+	{ "fixed",		LV_SPAN_MODE_FIXED },
+	{ "expand",		LV_SPAN_MODE_EXPAND },
+	{ "break",		LV_SPAN_MODE_BREAK },
+	{ NULL, 0 }
+};
+const static struct enum_spec span_overflow_modes[] = {
+	{ "clip",		LV_SPAN_OVERFLOW_CLIP },
+	{ "ellipsis",		LV_SPAN_OVERFLOW_ELLIPSIS },
+	{ NULL, 0 }
+};
 
 enum style_prop_type {
 	SPT_INT32,

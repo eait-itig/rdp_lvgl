@@ -174,6 +174,7 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 	struct lvkchartcur *ccur;
 	struct lvkmeterind *mi;
 	struct lvkmeterscl *ms;
+	struct lvkspan *sp;
 	uint64_t *u64;
 	uint32_t *u32;
 	uint16_t *u16;
@@ -264,6 +265,15 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		pthread_rwlock_wrlock(&ms->lvkms_inst->lvki_lock);
 		hdl = lvkid_make_hdl(LVK_METER_SCL, ms, &do_release);
 		pthread_rwlock_unlock(&ms->lvkms_inst->lvki_lock);
+		rterm = enif_make_resource(env, hdl);
+		if (do_release)
+			enif_release_resource(hdl);
+		break;
+	case ARG_PTR_SPAN:
+		sp = rv;
+		pthread_rwlock_wrlock(&sp->lvksp_inst->lvki_lock);
+		hdl = lvkid_make_hdl(LVK_SPAN, sp, &do_release);
+		pthread_rwlock_unlock(&sp->lvksp_inst->lvki_lock);
 		rterm = enif_make_resource(env, hdl);
 		if (do_release)
 			enif_release_resource(hdl);
@@ -788,6 +798,25 @@ enter_meterscl_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
 	assert(ms->lvkms_inst == nls->nls_inst);
 
 	*pms = ms;
+
+	return (0);
+}
+
+static int
+enter_span_hdl(ErlNifEnv *env, ERL_NIF_TERM term,
+    struct nif_lock_state *nls, struct lvkspan **psp, uint wrlock)
+{
+	int rc;
+	struct lvkspan *sp;
+
+	rc = enter_hdl(env, term, LVK_SPAN, nls, (void **)&sp, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(sp->lvksp_kid == nls->nls_kid);
+	assert(sp->lvksp_inst == nls->nls_inst);
+
+	*psp = sp;
 
 	return (0);
 }

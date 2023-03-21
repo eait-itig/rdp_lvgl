@@ -156,6 +156,12 @@ class MeterScale < Handle
   def erl_type; 'lv_meter:scale()'; end
 end
 
+class Span < Handle
+  def stem; 'span'; end
+  def mprefix; 'lvksp'; end
+  def erl_type; 'lv_span:span()'; end
+end
+
 class Buffer < Arg
   def arg_type; 'ARG_PTR_BUFFER'; end
   def declare
@@ -579,6 +585,21 @@ class ChartAxis < Enum8
   def multi; false; end
   def erl_flag_type; 'lv_chart:axis()'; end
 end
+class TextAlign < Enum8
+  def enum; 'text_align_specs'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_style:text_align()'; end
+end
+class SpanMode < Enum8
+  def enum; 'span_modes'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_span:mode()'; end
+end
+class SpanOverflow < Enum8
+  def enum; 'span_overflow_modes'; end
+  def multi; false; end
+  def erl_flag_type; 'lv_span:overflow_mode()'; end
+end
 
 class Func
   attr_reader :flags
@@ -855,6 +876,18 @@ WidgetFunc.new('meter', 'add_arc', MeterInd, MeterScale.new('scale'), UInt16.new
 WidgetFunc.new('meter', 'set_indicator_value', Void, MeterInd.new('ind'), Int32.new('value'))
 WidgetFunc.new('meter', 'set_indicator_start_value', Void, MeterInd.new('ind'), Int32.new('value'))
 WidgetFunc.new('meter', 'set_indicator_end_value', Void, MeterInd.new('ind'), Int32.new('value'))
+
+WidgetCreateFunc.new('spangroup')
+WidgetFunc.new('spangroup', 'set_align', Void, TextAlign.new('align'))
+WidgetFunc.new('spangroup', 'new_span', Span)
+WidgetFunc.new('spangroup', 'get_child_cnt', UInt32)
+WidgetFunc.new('spangroup', 'get_child', Span, Int32.new('id'))
+WidgetFunc.new('spangroup', 'del_span', Void, Span.new('span'))
+WidgetFunc.new('spangroup', 'set_mode', Void, SpanMode.new('mode'))
+WidgetFunc.new('spangroup', 'set_overflow', Void, SpanOverflow.new('mode'))
+WidgetFunc.new('spangroup', 'refr_mode', Void)
+LvFunc.new('span_set_text', Void, Span.new('span'), InlineStr.new('text'))
+LvFunc.new('span_set_style', Void, Span.new('span'), Style.new('sty'))
 
 WidgetCreateFunc.new('chart')
 WidgetFunc.new('chart', 'set_type', Void, ChartType.new('type'))

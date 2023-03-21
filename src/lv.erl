@@ -42,7 +42,7 @@
     checkbox/0, dropdown/0, imgbtn/0, led/0, listview/0, menu/0, msgbox/0,
     roller/0, slider/0, switch/0, table/0, bar/0,
     flags/1, font/0, group/0, coord/0, flush_msg/0,
-    chart/0, calendar/0, meter/0
+    chart/0, calendar/0, meter/0, spangroup/0
 	]).
 
 -opaque object() :: rdp_lvgl_nif:object().
@@ -160,6 +160,8 @@
 %% A widget of type {@link lv_calendar}
 -type meter() :: object().
 %% A widget of type {@link lv_meter}
+-type spangroup() :: object().
+%% A widget of type {@link lv_spangroup}
 
 -type flags(T) :: T | [T].
 

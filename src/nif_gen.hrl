@@ -198,6 +198,28 @@ meter_set_indicator_value(_Obj, _Ind, _Value) -> error(no_nif).
 meter_set_indicator_start_value(_Obj, _Ind, _Value) -> error(no_nif).
 -spec meter_set_indicator_end_value(object(), lv_meter:indicator(), integer()) -> async_return().
 meter_set_indicator_end_value(_Obj, _Ind, _Value) -> error(no_nif).
+-spec spangroup_create(object()) -> async_return(object()).
+spangroup_create(_Parent) -> error(no_nif).
+-spec spangroup_set_align(object(), lv_style:text_align()) -> async_return().
+spangroup_set_align(_Obj, _Align) -> error(no_nif).
+-spec spangroup_new_span(object()) -> async_return(lv_span:span()).
+spangroup_new_span(_Obj) -> error(no_nif).
+-spec spangroup_get_child_cnt(object()) -> async_return(integer()).
+spangroup_get_child_cnt(_Obj) -> error(no_nif).
+-spec spangroup_get_child(object(), integer()) -> async_return(lv_span:span()).
+spangroup_get_child(_Obj, _Id) -> error(no_nif).
+-spec spangroup_del_span(object(), lv_span:span()) -> async_return().
+spangroup_del_span(_Obj, _Span) -> error(no_nif).
+-spec spangroup_set_mode(object(), lv_span:mode()) -> async_return().
+spangroup_set_mode(_Obj, _Mode) -> error(no_nif).
+-spec spangroup_set_overflow(object(), lv_span:overflow_mode()) -> async_return().
+spangroup_set_overflow(_Obj, _Mode) -> error(no_nif).
+-spec spangroup_refr_mode(object()) -> async_return().
+spangroup_refr_mode(_Obj) -> error(no_nif).
+-spec span_set_text(lv_span:span(), iolist()) -> async_return().
+span_set_text(_Span, _Text) -> error(no_nif).
+-spec span_set_style(lv_span:span(), style()) -> async_return().
+span_set_style(_Span, _Sty) -> error(no_nif).
 -spec chart_create(object()) -> async_return(object()).
 chart_create(_Parent) -> error(no_nif).
 -spec chart_set_type(object(), lv_chart:type()) -> async_return().

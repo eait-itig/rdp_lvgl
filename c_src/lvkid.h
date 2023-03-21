@@ -51,6 +51,7 @@ struct lvkchartser;
 struct lvkchartcur;
 struct lvkmeterind;
 struct lvkmeterscl;
+struct lvkspan;
 TAILQ_HEAD(lvkid_list, lvkid);
 LIST_HEAD(lvkcmd_list, lvkcmd);
 LIST_HEAD(lvkinst_list, lvkinst);
@@ -64,6 +65,7 @@ LIST_HEAD(lvkchartser_list, lvkchartser);
 LIST_HEAD(lvkchartcur_list, lvkchartcur);
 LIST_HEAD(lvkmeterind_list, lvkmeterind);
 LIST_HEAD(lvkmeterscl_list, lvkmeterscl);
+LIST_HEAD(lvkspan_list, lvkspan);
 
 enum lvkh_type {
 	LVK_NONE	= 0,
@@ -78,6 +80,7 @@ enum lvkh_type {
 	LVK_CHART_CUR,
 	LVK_METER_IND,
 	LVK_METER_SCL,
+	LVK_SPAN,
 };
 
 struct lvkhdl {
@@ -152,6 +155,7 @@ struct lvkinst {
 	struct lvkchartcur_list	 lvki_chart_cursors;
 	struct lvkmeterind_list	 lvki_meter_inds;
 	struct lvkmeterscl_list	 lvki_meter_scales;
+	struct lvkspan_list	 lvki_spans;
 
 	ErlNifEnv		*lvki_env;
 	ERL_NIF_TERM		 lvki_msgref;
@@ -216,6 +220,16 @@ struct lvkmeterscl {
 	struct lvkhdl		*lvkms_hdl;
 
 	lvaddr_t		 lvkms_ptr;
+};
+
+struct lvkspan {
+	struct lvkid		*lvksp_kid;
+	LIST_ENTRY(lvkspan)	 lvksp_entry;
+	struct lvkinst		*lvksp_inst;
+
+	struct lvkhdl		*lvksp_hdl;
+
+	lvaddr_t		 lvksp_ptr;
 };
 
 struct lvkbuf {
