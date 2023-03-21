@@ -97,7 +97,7 @@ init([Srv, Inst, {W, H}]) ->
     ok = lv_style:set_pad_bottom(RLStyle, 0),
     ok = lv_style:set_radius(RLStyle, 0),
 
-    {ok, Chars} = lv:make_buffer(Inst, "0123456789"),
+    {ok, Chars} = lv:make_buffer(Inst, <<"0123456789", 0>>),
 
     S0 = #?MODULE{srv = Srv, inst = Inst, ssty = ScreenStyle,
                   flowsty = FlowStyle, apsty = APStyle, res = {W, H},

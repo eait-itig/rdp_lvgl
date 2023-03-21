@@ -69,6 +69,11 @@ lv_point_t lv_table_get_selected_cell_pt(lv_obj_t *obj);
 lv_obj_t *lv_indev_get_focused(lv_indev_t *indev);
 void lv_span_set_style(lv_span_t *span, lv_style_t *sty);
 
+typedef int (*style_prop_iter_cb)(
+    lv_style_prop_t, lv_style_value_t, void *);
+int lv_style_prop_iter(lv_style_t *style, style_prop_iter_cb cb, void *cookie);
+void lv_style_copy(lv_style_t *from, lv_style_t *to);
+
 bool lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base);
 
 struct cdinline;

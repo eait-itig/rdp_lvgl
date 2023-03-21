@@ -357,8 +357,83 @@ lv_table_get_selected_cell_pt(lv_obj_t *obj)
 	return (pt);
 }
 
+int
+lv_style_prop_iter(lv_style_t *style, style_prop_iter_cb cb, void *cookie)
+{
+	uint32_t i;
+	lv_style_prop_t prop_id;
+	lv_style_value_t value;
+	int res;
+
+	if (style->prop1 == LV_STYLE_PROP_ANY) {
+		const lv_style_const_prop_t *const_prop;
+
+		for (i = 0; i < style->prop_cnt; i++) {
+			const_prop = style->v_p.const_props + i;
+			prop_id = LV_STYLE_PROP_ID_MASK(const_prop->prop);
+			if (const_prop->prop & LV_STYLE_PROP_META_INHERIT)
+				continue;
+			value =
+			    (const_prop->prop & LV_STYLE_PROP_META_INITIAL) ?
+			    lv_style_prop_get_default(prop_id) :
+			    const_prop->value;
+			res = (*cb)(prop_id, value, cookie);
+			if (res != 0)
+				return (res);
+		}
+		return (0);
+	}
+	if (style->prop_cnt > 1) {
+		uint8_t * tmp = style->v_p.values_and_props +
+		    style->prop_cnt * sizeof(lv_style_value_t);
+		uint16_t * props = (uint16_t *)tmp;
+		for (i = 0; i < style->prop_cnt; i++) {
+			prop_id = LV_STYLE_PROP_ID_MASK(props[i]);
+			if (props[i] & LV_STYLE_PROP_META_INHERIT)
+				continue;
+			if (props[i] & LV_STYLE_PROP_META_INITIAL) {
+				value = lv_style_prop_get_default(prop_id);
+			} else {
+				lv_style_value_t * values = (lv_style_value_t *)
+				    style->v_p.values_and_props;
+				value = values[i];
+			}
+			res = (*cb)(prop_id, value, cookie);
+			if (res != 0)
+				return (res);
+		}
+	} else if (style->prop_cnt == 1) {
+		prop_id = LV_STYLE_PROP_ID_MASK(style->prop1);
+		if (style->prop1 & LV_STYLE_PROP_META_INHERIT)
+			return (0);
+		value = (style->prop1 & LV_STYLE_PROP_META_INITIAL) ?
+		    lv_style_prop_get_default(prop_id) :
+		    style->v_p.value1;
+		res = (*cb)(prop_id, value, cookie);
+		if (res != 0)
+			return (res);
+	}
+	return (0);
+}
+
+static int
+lv_style_copy_iter_cb(lv_style_prop_t prop, lv_style_value_t value,
+    void *arg)
+{
+	lv_style_t *target = arg;
+	lv_style_set_prop(target, prop, value);
+	return (0);
+}
+
+void
+lv_style_copy(lv_style_t *from, lv_style_t *to)
+{
+	lv_style_reset(to);
+	lv_style_prop_iter(from, lv_style_copy_iter_cb, to);
+}
+
 void
 lv_span_set_style(lv_span_t *span, lv_style_t *sty)
 {
-	span->style = *sty;
+	lv_style_copy(sty, &span->style);
 }
