@@ -41,6 +41,7 @@
     handle_connect/4,
     init_ui/2,
     handle_event/3,
+    handle_raw_data/3,
     terminate/2,
     choose_format/3,
     handle_info/3
@@ -65,6 +66,7 @@
     flushref :: undefined | reference(),
     frame = 1 :: integer(),
     sent_sof = false :: boolean(),
+    mousedown = false :: boolean(),
     keydown = none :: none | term(),
     modkeys = #{alt => false, ctrl => false, shift => false,
         capslock => false, numlock => false} :: #{modkey() => boolean()},
@@ -98,6 +100,14 @@ handle_connect(Cookie, Protocols, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0})
             {reject, S0#?MODULE{modstate = MS1}};
         {reject, MS1} ->
             {reject, S0#?MODULE{modstate = MS1}};
+        {stop, Reason, MS1} ->
+            {stop, Reason, S0#?MODULE{modstate = MS1}}
+    end.
+
+handle_raw_data(Data, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
+    case Mod:handle_raw_data(Data, Srv, MS0) of
+        {ok, MS1} ->
+            {ok, S0#?MODULE{modstate = MS1}};
         {stop, Reason, MS1} ->
             {stop, Reason, S0#?MODULE{modstate = MS1}}
     end.
@@ -264,19 +274,20 @@ handle_select_all(_Srv, S = #?MODULE{inst = Inst}) ->
     end.
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, _Srv, S = #?MODULE{}) ->
-    #?MODULE{inst = Inst} = S,
-    ok = lv_indev:send_pointer_event(Inst, Pt, released),
+    #?MODULE{inst = Inst, mousedown = Down} = S,
+    ok = lv_indev:send_pointer_event(Inst, Pt,
+        if Down -> pressed; true -> released end),
     {ok, S};
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = down}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_pointer_event(Inst, Pt, pressed),
-    {ok, S};
+    {ok, S#?MODULE{mousedown = true}};
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = up}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
     ok = lv_indev:send_pointer_event(Inst, Pt, released),
-    {ok, S};
+    {ok, S#?MODULE{mousedown = false}};
 
 handle_event(#ts_inpevt_mouse{}, _Srv, S = #?MODULE{}) ->
     {ok, S};

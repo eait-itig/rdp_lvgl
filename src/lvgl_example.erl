@@ -34,7 +34,8 @@
 -compile([{parse_transform, lager_transform}]).
 
 -export([
-    start/0
+    start/0,
+    start/1
     ]).
 
 -export([
@@ -50,8 +51,11 @@
 -include_lib("rdp_proto/include/rdpdr.hrl").
 
 %% @doc Starts a <code>rdp_server_sup</code> on port 3389 for the example.
-start() ->
-    rdp_server_sup:start_link(3389, {rdp_lvgl_server, ?MODULE}).
+start() -> start(3389).
+
+%% @doc Starts a <code>rdp_server_sup</code> for the example.
+start(Port) ->
+    rdp_server_sup:start_link(Port, {rdp_lvgl_server, ?MODULE}).
 
 -record(?MODULE, {
     inst :: lv:instance(),
