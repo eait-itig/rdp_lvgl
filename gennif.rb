@@ -215,6 +215,10 @@ class InlineStr < Arg
     write "if (!enif_inspect_iolist_as_binary(env, argv[#{@idx}], &#{@name})) {"
     write parse_error
     write "}"
+    write "if (#{@name}.size == 0) {"
+    write "\t#{@name}.data = (unsigned char *)\"\\0\";"
+    write "\t#{@name}.size = 1;"
+    write "}"
     write "total_inline += #{@name}.size;"
   end
   def parse_defer

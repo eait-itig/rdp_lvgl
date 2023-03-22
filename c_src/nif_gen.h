@@ -537,6 +537,10 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
 	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
+	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
@@ -718,6 +722,10 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
 	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
+	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
@@ -845,6 +853,10 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
+	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
 	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
@@ -1976,6 +1988,10 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
 	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
+	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
@@ -3024,6 +3040,10 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "opts", argv[1]);
 		goto out;
 	}
+	if (opts.size == 0) {
+		opts.data = (unsigned char *)"\0";
+		opts.size = 1;
+	}
 	total_inline += opts.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
@@ -3094,6 +3114,10 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
+	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
 	}
 	total_inline += text.size;
 	if (!enif_get_int(env, argv[2], &index)) {
@@ -3927,6 +3951,10 @@ rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
 	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
+	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
@@ -4218,6 +4246,10 @@ rlvgl_menu_page_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &title)) {
 		rv = enif_make_badarg2(env, "title", argv[1]);
 		goto out;
+	}
+	if (title.size == 0) {
+		title.data = (unsigned char *)"\0";
+		title.size = 1;
 	}
 	total_inline += title.size;
 	if (total_inline > CDESC_MAX_INLINE) {
@@ -5238,6 +5270,10 @@ rlvgl_table_set_cell_value4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "text", argv[3]);
 		goto out;
 	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
+	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);
@@ -5526,10 +5562,18 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = enif_make_badarg2(env, "title", argv[1]);
 		goto out;
 	}
+	if (title.size == 0) {
+		title.data = (unsigned char *)"\0";
+		title.size = 1;
+	}
 	total_inline += title.size;
 	if (!enif_inspect_iolist_as_binary(env, argv[2], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[2]);
 		goto out;
+	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
 	}
 	total_inline += text.size;
 	btns_list = argv[3];
@@ -7273,6 +7317,10 @@ rlvgl_span_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &text)) {
 		rv = enif_make_badarg2(env, "text", argv[1]);
 		goto out;
+	}
+	if (text.size == 0) {
+		text.data = (unsigned char *)"\0";
+		text.size = 1;
 	}
 	total_inline += text.size;
 	if (total_inline > CDESC_MAX_INLINE) {
