@@ -412,13 +412,19 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 static void
 lvkid_lv_rounder_cb(lv_disp_drv_t *disp_drv, lv_area_t *area)
 {
+	struct lvinst *inst = disp_drv->user_data;
+	struct fbuf *fb = inst->lvi_fbuf;
 	area->x1 &= ~0x03;
 	area->x2 &= ~0x03;
 	area->x2 += 3;
+	if (area->x2 >= fb->fb_w)
+		area->x2 = fb->fb_w - 1;
 
 	area->y1 &= ~0x03;
 	area->y2 &= ~0x03;
 	area->y2 += 3;
+	if (area->y2 >= fb->fb_h)
+		area->y2 = fb->fb_h - 1;
 }
 
 static void
