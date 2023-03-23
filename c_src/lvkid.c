@@ -2103,8 +2103,12 @@ lvkid_erl_flush_ring(void *arg)
 
 		rect.x1 = fd->fd_x1;
 		rect.x2 = fd->fd_x2;
+		if (rect.x2 >= fb->fb_w)
+			rect.x2 = fb->fb_w - 1;
 		rect.y1 = fd->fd_y1;
 		rect.y2 = fd->fd_y2;
+		if (rect.y2 >= fb->fb_h)
+			rect.y2 = fb->fb_h - 1;
 		bzero(&tile, sizeof (tile));
 		while (lvk_next_tile(&rect, &tile)) {
 			env = inst->lvki_env;
