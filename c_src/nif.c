@@ -1931,14 +1931,11 @@ out:
 }
 
 static ERL_NIF_TERM
-rlvgl_prefork(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+rlvgl_fork(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	uint n;
 
-	if (argc != 1)
-		return (enif_make_badarg(env));
-
-	if (!enif_get_uint(env, argv[0], &n))
+	if (argc != 0)
 		return (enif_make_badarg(env));
 
 	lvkid_prefork(n);
@@ -1964,23 +1961,9 @@ rlvgl_nif_unload(ErlNifEnv *env, void *priv_data)
 static ErlNifFunc nif_funcs[] = {
 	/* control commands */
 	{ "configure",		2, rlvgl_configure },
-	{ "setup_instance", 	1, rlvgl_setup_instance },
-	{ "setup_event",	2, rlvgl_setup_event },
-	{ "setup_event",	3, rlvgl_setup_event },
-	{ "send_text",		2, rlvgl_send_text },
-	{ "send_pointer_event", 3, rlvgl_send_pointer_event },
-	{ "send_key_event", 	3, rlvgl_send_key_event },
-	{ "send_wheel_event",	2, rlvgl_send_wheel_event },
-	{ "flush_done", 	1, rlvgl_flush_done },
-	{ "prefork",		1, rlvgl_prefork },
+	{ "fork",		0, rlvgl_fork },
 	{ "read_framebuffer",	2, rlvgl_read_framebuffer },
-	{ "make_buffer",	2, rlvgl_make_buffer },
 	{ "take_log_ownership",	0, rlvgl_take_log_ownership },
-
-	/* lvgl APIs */
-	AUTOGEN_NIFS,
-	{ "obj_get_class",		1, rlvgl_obj_get_class1 },
-	{ "obj_has_class",		2, rlvgl_obj_has_class2 },
 };
 
 ERL_NIF_INIT(rdp_lvgl_nif, nif_funcs, rlvgl_nif_load, NULL, NULL,

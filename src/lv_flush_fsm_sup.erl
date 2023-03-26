@@ -1,7 +1,7 @@
 %%
 %% RDP UI framework using LVGL
 %%
-%% Copyright 2022 Alex Wilson <alex@uq.edu.au>, The University of Queensland
+%% Copyright 2023 Alex Wilson <alex@uq.edu.au>, The University of Queensland
 %%
 %% Redistribution and use in source and binary forms, with or without
 %% modification, are permitted provided that the following conditions
@@ -24,7 +24,7 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 %% @private
--module(rdp_lvgl_sup).
+-module(lv_flush_fsm_sup).
 
 -behaviour(supervisor).
 
@@ -47,19 +47,13 @@ start_link() ->
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
 init([]) ->
-    SupFlags = #{strategy => one_for_one,
+    SupFlags = #{strategy => simple_one_for_one,
         intensity => 2,
         period => 1},
     ChildSpecs = [
-        #{id => rdp_lvgl_logger,
-          start => {rdp_lvgl_logger, start_link, []},
-          type => worker},
-        #{id => lv_instance_sup,
-          start => {lv_instance_sup, start_link, []},
-          type => supervisor},
-        #{id => lvkid_sup,
-          start => {lvkid_sup, start_link, []},
-          type => supervisor}
+        #{id => undefined,
+          start => {lv_flush_fsm, start_link, []},
+          type => worker}
     ],
     {ok, {SupFlags, ChildSpecs}}.
 

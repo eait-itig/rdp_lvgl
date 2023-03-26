@@ -14,9 +14,7 @@ Types = {
   'P' => 'lv_point_t'}
 Cases = {
   'v' => %w{ARG_NONE},
-  'p' => %w{ARG_PTR ARG_PTR_BUFFER ARG_PTR_OBJ ARG_PTR_STYLE ARG_PTR_GROUP
-            ARG_PTR_CHART_SER ARG_PTR_CHART_CUR ARG_PTR_METER_IND
-            ARG_PTR_METER_SCL ARG_PTR_SPAN},
+  'p' => %w{ARG_PTR ARG_CSTRING ARG_BUFFER ARG_CSTRING_ARRAY ARG_BUFFER_ARRAY},
   'q' => %w{ARG_UINT64},
   'l' => %w{ARG_UINT32},
   'w' => %w{ARG_UINT16},
@@ -104,7 +102,7 @@ class RetLayer
     ind = "\t"*level
     args = []
     @typepath.each_with_index { |t,i| args << "a#{i}#{t}" }
-    puts "#{ind}switch (cdc->cdc_rettype) {"
+    puts "#{ind}switch (cc->cc_return_type) {"
     @cases.each do |type|
       ctype = Types[type]
       Cases[type].each do |c|
@@ -113,11 +111,11 @@ class RetLayer
       path = [type] + @typepath
       cbtype = "lv_call_func#{@typepath.size}_#{path.join('')}_t"
       if type == 'v'
-        puts "#{ind}\t(*(#{cbtype})cdc->cdc_func)("
+        puts "#{ind}\t(*(#{cbtype})cc_func)("
         puts "#{ind}\t    #{args.join(",\n#{ind}\t    ")});"
         puts "#{ind}\treturn (0);"
       else
-        puts "#{ind}\tret#{type} = (*(#{cbtype})cdc->cdc_func)("
+        puts "#{ind}\tret#{type} = (*(#{cbtype})cc_func)("
         puts "#{ind}\t    #{args.join(",\n#{ind}\t    ")});"
         if type == 'C'
           puts "#{ind}\treturn ((uint64_t)ret#{type}.full);"
@@ -161,19 +159,34 @@ class ArgLayer
       layer.print(level) if layer
       return
     end
-    puts "#{ind}switch (cdc->cdc_argtype[#{@idx}]) {"
+    if @idx == 0
+      puts "#{ind}cc_arg = SLIST_FIRST(&cc->cc_args);"
+    else
+      puts "#{ind}cc_arg = SLIST_NEXT(cc_arg, ca_entry);"
+    end
+    puts "#{ind}switch (cc_arg->ca_type) {"
     @cases.each do |type,layer|
       ctype = Types[type]
       Cases[type].each do |c|
         puts "#{ind}case #{c}:"
       end
       if type != 'v'
-        if type == 'C'
-          puts "#{ind}\ta#{@idx}#{type}.full = cdc->cdc_arg[#{@idx}];"
-        elsif type.upcase == type
-          puts "#{ind}\tbcopy(&cdc->cdc_arg[#{@idx}], &a#{@idx}#{type}, sizeof (a#{@idx}#{type}));"
-        else
-          puts "#{ind}\ta#{@idx}#{type} = (#{ctype})cdc->cdc_arg[#{@idx}];"
+        if type == 'p'
+          puts "#{ind}\ta#{@idx}#{type} = rref_deref(cc_arg->ca_ref._ref, REF_ANY);"
+        elsif type == 'q'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_u64;"
+        elsif type == 'l'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_u32;"
+        elsif type == 'w'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_u16;"
+        elsif type == 'c'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_u8;"
+        elsif type == 'C'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_color;"
+        elsif type == 'S'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_style_val;"
+        elsif type == 'P'
+          puts "#{ind}\ta#{@idx}#{type} = cc_arg->ca_point;"
         end
       end
       layer.print(level + 1)
@@ -185,6 +198,7 @@ end
 
 puts '/* Auto-generated file. */'
 puts '#include "lvcall.h"'
+puts '#include <dlfcn.h>'
 
 combos.each do |ts,_|
   tr = ts.first
@@ -198,7 +212,7 @@ combos.each do |ts,_|
 end
 
 puts "uint64_t"
-puts "lv_do_real_call(const struct cdesc_call *cdc)"
+puts "lv_do_real_call(const struct cmd_call *cc)"
 puts "{"
 
 Types.each do |type,ctype|
@@ -219,6 +233,9 @@ Types.each do |type,ctype|
   end
   puts "\t#{ctype} #{vars.join(", ")};"
 end
+
+puts "\tvoid *cc_func = dlsym(RTLD_DEFAULT, cc->cc_func_name);"
+puts "\tconst struct cmd_arg *cc_arg;"
 
 root = ArgLayer.new(0)
 combos.each do |ts,_|

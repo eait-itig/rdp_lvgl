@@ -36,46 +36,62 @@
     ]).
 
 -export_type([
-    object/0, instance/0, event/0, style/0, error/0, rect/0, point/0, size/0,
-    color/0, buffer/0,
+    rref/0, object/0, instance/0, event/0, style/0, error/0, rect/0, point/0,
+    size/0, color/0, buffer/0,
     btn/0, label/0, scr/0, img/0, spinner/0, textarea/0, tabview/0, btnmatrix/0,
     checkbox/0, dropdown/0, imgbtn/0, led/0, listview/0, menu/0, msgbox/0,
     roller/0, slider/0, switch/0, table/0, bar/0,
     flags/1, font/0, group/0, coord/0, flush_msg/0,
-    chart/0, calendar/0, meter/0, spangroup/0
+    chart/0, calendar/0, meter/0, spangroup/0, msgref/0
 	]).
 
--opaque object() :: rdp_lvgl_nif:object().
+-record(lv_instance, {
+    cmd_fsm :: pid(),
+    flush_fsm :: pid(),
+    evmux :: pid(),
+    gen :: integer(),
+    idx :: integer()
+    }).
+
+-record(lv_rref, {
+    cmd_fsm :: pid(),
+    evmux :: pid(),
+    gen :: integer(),
+    idx :: integer()
+    }).
+
+-opaque rref() :: #lv_rref{}.
+
+-opaque object() :: rref().
 %% An lv_obj instance.
 %%
 %% <b>See also:</b> {@link lv_obj}
 
--opaque instance() :: rdp_lvgl_nif:instance().
+-opaque instance() :: #lv_instance{}.
 %% An instance of LVGL, consisting of display, input devices, and all of the
 %% objects related to them.
 %%
 %% <b>See also:</b> {@link rdp_lvgl_server}, {@link lv:setup/1}
 
--opaque event() :: rdp_lvgl_nif:event().
-%% A handle for an LVGL event handler. As long as the handle is not garbage
-%% collected, messages will be sent to the process which created it when
-%% matching LVGL events occur.
+-opaque event() :: rref().
+%% A handle for an LVGL event handler. Messages will be sent to the process
+%% which created it when matching LVGL events occur.
 %%
 %% <b>See also:</b> {@link lv_event}
 
--opaque style() :: rdp_lvgl_nif:style().
+-opaque style() :: rref().
 %% A handle to a <code>lv_style_t</code> instance. Styles are sets of cosmetic
 %% properties which can be created and then applied to multiple widgets.
 %%
 %% <b>See also:</b> {@link lv_style}
 
--opaque group() :: rdp_lvgl_nif:group().
+-opaque group() :: rref().
 %% A handle to a <code>lv_group_t</code> instance. Groups are used to map
 %% input devices to widgets which can accept input.
 %%
 %% <b>See also:</b> {@link lv_group}, {@link lv_indev:set_group/3}
 
--opaque buffer() :: rdp_lvgl_nif:buffer().
+-opaque buffer() :: rref().
 %% A handle to a buffer of bytes with a lifetime equal to the lifetime of the
 %% entire LVGL instance. Used in place of <code>static</code> data in C when
 %% calling certain functions.
@@ -233,8 +249,8 @@ setup(Size) ->
 %% returned, and the <code>flush_done()</code> will not be processed. You will
 %% need to call it again once the references are gone.
 -spec flush_done(instance()) -> ok | {error, busy} | {error, teardown}.
-flush_done(Inst) ->
-    rdp_lvgl_nif:flush_done(Inst).
+flush_done(#lv_instance{flush_fsm = Fsm}) ->
+    lv_flush_fsm:flush_done(Fsm).
 
 %% @doc Creates a byte buffer whose liftime is tied to an LVGL instance.
 %%

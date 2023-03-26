@@ -28,12 +28,14 @@
 #if !defined(_LVCALL_H)
 #define _LVCALL_H
 
+#include "cmddef.h"
+#include "rbuf.h"
 #include "shm.h"
 #include "lvkid.h"
 
 void lv_do_call(struct shmintf *, struct cdesc **, uint);
 
 /* auto-generated dispatch */
-uint64_t lv_do_real_call(const struct cdesc_call *cdc);
+uint64_t lv_do_real_call(const struct cmd_call *cc);
 
 #endif /* !_LVCALL_H */
