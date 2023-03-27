@@ -428,8 +428,8 @@ end
 
 class SplitPoint < Point
   def call
-    write "    ARG_UINT32, #{@name}.x,"
-    write "    ARG_UINT32, #{@name}.y,"
+    write "    ARG_UINT16, #{@name}.x,"
+    write "    ARG_UINT16, #{@name}.y,"
   end
 end
 

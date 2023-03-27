@@ -1690,8 +1690,8 @@ rlvgl_img_set_pivot2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_img_set_pivot,
 	    ARG_PTR_OBJ, obj,
-	    ARG_UINT32, pivot.x,
-	    ARG_UINT32, pivot.y,
+	    ARG_UINT16, pivot.x,
+	    ARG_UINT16, pivot.y,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -9383,8 +9383,8 @@ rlvgl_obj_align3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_obj_align,
 	    ARG_PTR_OBJ, obj,
 	    ARG_UINT32, align,
-	    ARG_UINT32, offset.x,
-	    ARG_UINT32, offset.y,
+	    ARG_UINT16, offset.x,
+	    ARG_UINT16, offset.y,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -9539,8 +9539,8 @@ rlvgl_obj_align_to4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_PTR_OBJ, obj,
 	    ARG_PTR_OBJ, tobj,
 	    ARG_UINT32, align,
-	    ARG_UINT32, offset.x,
-	    ARG_UINT32, offset.y,
+	    ARG_UINT16, offset.x,
+	    ARG_UINT16, offset.y,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -9719,8 +9719,8 @@ rlvgl_obj_set_size2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_set_size,
 	    ARG_PTR_OBJ, obj,
-	    ARG_UINT32, size.x,
-	    ARG_UINT32, size.y,
+	    ARG_UINT16, size.x,
+	    ARG_UINT16, size.y,
 	    ARG_NONE);
 
 	if (rc != 0) {
