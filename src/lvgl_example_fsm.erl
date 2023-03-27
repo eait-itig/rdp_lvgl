@@ -56,6 +56,7 @@ start_link(Srv, Inst, Res) ->
 
 -record(?MODULE, {
     srv :: rdp_server:server(),
+    mref :: reference(),
     res :: lv:point(),
     inst :: lv:instance(),
     ssty :: lv:style(),
@@ -71,6 +72,9 @@ start_link(Srv, Inst, Res) ->
 
 %% @private
 init([Srv, Inst, {W, H}]) ->
+    {Pid, _} = Srv,
+    MRef = monitor(process, Pid),
+
     {ok, ScreenStyle} = lv_style:create(Inst),
     ok = lv_style:set_flex_flow(ScreenStyle,
         if (W > H) -> row; true -> column end),
@@ -99,7 +103,7 @@ init([Srv, Inst, {W, H}]) ->
 
     {ok, Chars} = lv:make_buffer(Inst, <<"0123456789", 0>>),
 
-    S0 = #?MODULE{srv = Srv, inst = Inst, ssty = ScreenStyle,
+    S0 = #?MODULE{srv = Srv, mref = MRef, inst = Inst, ssty = ScreenStyle,
                   flowsty = FlowStyle, apsty = APStyle, res = {W, H},
                   chars = Chars, rlsty = RLStyle},
 
@@ -142,6 +146,8 @@ loading(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
     {ok, _Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 100, 0, true),
     {keep_state_and_data, [{state_timeout, 1000, advance}]};
+loading(info, {'DOWN', MRef, process, _, _}, S0 = #?MODULE{mref = MRef}) ->
+    {stop, normal, S0};
 loading(state_timeout, advance, S0 = #?MODULE{}) ->
     {next_state, login, S0}.
 
@@ -248,6 +254,9 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
 
     {keep_state, S0#?MODULE{evs = [BtnEvent, AcEvent, YkBtnEvent, YkAcEvent]}};
 
+login(info, {'DOWN', MRef, process, _, _}, S0 = #?MODULE{mref = MRef}) ->
+    {stop, normal, S0};
+
 login(info, {_Ref, {login, LoginInp, PwInp}}, S0 = #?MODULE{}) ->
     {ok, Login} = lv_textarea:get_text(LoginInp),
     {ok, Pw} = lv_textarea:get_text(PwInp),
@@ -266,6 +275,10 @@ checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
 
     {keep_state_and_data, [{state_timeout, 1000, advance}]};
+
+checking_login(info, {'DOWN', MRef, process, _, _}, S0 = #?MODULE{mref = MRef}) ->
+    {stop, normal, S0};
+
 checking_login(state_timeout, advance, S0 = #?MODULE{login = L, password = P}) ->
     case {L, P} of
         {<<"user">>, <<"password">>} ->
@@ -285,4 +298,7 @@ done(enter, _PrevState, #?MODULE{inst = Inst}) ->
     ok = lv_label:set_text(Lbl, "End of demo!"),
     ok = lv_obj:center(Lbl),
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
-    keep_state_and_data.
+    keep_state_and_data;
+
+done(info, {'DOWN', MRef, process, _, _}, S0 = #?MODULE{mref = MRef}) ->
+    {stop, normal, S0}.

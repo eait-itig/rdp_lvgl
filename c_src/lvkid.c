@@ -55,6 +55,7 @@ static pthread_cond_t lv_flush_cond;
 struct lv_event_udata {
 	struct lvkid			*leu_kid;
 	struct shmintf			*leu_shm;
+	int				 leu_deleted;
 	lv_obj_t			*leu_obj;
 	struct _lv_event_dsc_t		*leu_dsc;
 	LIST_ENTRY(lv_event_udata)	 leu_entry;
@@ -864,6 +865,7 @@ lvkid_lv_event_cb(lv_event_t *ev)
 {
 	struct lv_event_udata *leu = lv_event_get_user_data(ev);
 	struct shmintf *shm = leu->leu_shm;
+	struct lv_event_udata *tleu;
 	struct edesc ed;
 	lv_obj_t *target, *ctarget;
 	void *t_udata, *ct_udata;
@@ -877,6 +879,16 @@ lvkid_lv_event_cb(lv_event_t *ev)
 	param = lv_event_get_param(ev);
 
 	switch (lv_event_get_code(ev)) {
+	case LV_EVENT_DELETE:
+		/*
+		 * Note on other LEUs that this object is gone, so the event
+		 * teardown command won't try to deref them.
+		 */
+		LIST_FOREACH(tleu, &leus, leu_entry) {
+			if (tleu->leu_obj == target)
+				tleu->leu_deleted = 1;
+		}
+		break;
 	case LV_EVENT_KEY:
 		pdata = *(uint32_t *)param;
 		break;
@@ -953,8 +965,10 @@ lvkid_lv_cmd_teardown_event(struct lvkid *kid, struct shmintf *shm,
 	obj = (lv_obj_t *)cdte->cdte_obj;
 	if (obj != NULL) {
 		assert(obj == leu->leu_obj);
-		obj_udata = lv_obj_get_user_data(obj);
-		lv_obj_remove_event_dsc(obj, leu->leu_dsc);
+		if (!leu->leu_deleted) {
+			obj_udata = lv_obj_get_user_data(obj);
+			lv_obj_remove_event_dsc(obj, leu->leu_dsc);
+		}
 	}
 	LIST_REMOVE(leu, leu_entry);
 	pthread_mutex_unlock(&lv_mtx);
