@@ -59,8 +59,8 @@ CFLAGS += -fno-omit-frame-pointer -O2 -fno-inline-functions
 LDLIBS += -L$(ERL_INTERFACE_LIB_DIR) -lei
 LDFLAGS += -shared
 
-CFLAGS += -fsanitize=address
-LDFLAGS += -fsanitize=address
+#CFLAGS += -fsanitize=address
+#LDFLAGS += -fsanitize=address
 
 LVGL_DIR_NAME = lvgl-8.3.3
 LVGL_DIR = $(CURDIR)
