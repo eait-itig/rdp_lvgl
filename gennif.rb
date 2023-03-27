@@ -548,7 +548,7 @@ class Enum32 < EnumBase
   def arg_type; 'ARG_UINT32'; end
 end
 
-class AlignSpec < Enum32
+class AlignSpec < Enum8
   def enum; 'align_specs'; end
   def multi; false; end
   def erl_flag_type; 'lv_obj:align_spec()'; end

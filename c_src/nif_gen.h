@@ -9382,7 +9382,7 @@ rlvgl_obj_align3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_align,
 	    ARG_PTR_OBJ, obj,
-	    ARG_UINT32, align,
+	    ARG_UINT8, align,
 	    ARG_UINT16, offset.x,
 	    ARG_UINT16, offset.y,
 	    ARG_NONE);
@@ -9443,7 +9443,7 @@ rlvgl_obj_align2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_obj_set_align,
 	    ARG_PTR_OBJ, obj,
-	    ARG_UINT32, align,
+	    ARG_UINT8, align,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -9538,7 +9538,7 @@ rlvgl_obj_align_to4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	    ARG_NONE, lv_obj_align_to,
 	    ARG_PTR_OBJ, obj,
 	    ARG_PTR_OBJ, tobj,
-	    ARG_UINT32, align,
+	    ARG_UINT8, align,
 	    ARG_UINT16, offset.x,
 	    ARG_UINT16, offset.y,
 	    ARG_NONE);
