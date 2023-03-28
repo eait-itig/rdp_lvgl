@@ -416,7 +416,8 @@ ts_key_to_lv(pgup, false, #{numlock := true}) -> $9;
 ts_key_to_lv(del, false, #{numlock := true}) -> $.;
 ts_key_to_lv('gray+', _, _) -> $+;
 ts_key_to_lv('gray-', _, _) -> $-;
-ts_key_to_lv(prisc, _, _) -> $*;
+ts_key_to_lv(prisc, false, _) -> $*;
+ts_key_to_lv(prisc, true, _) -> null;
 ts_key_to_lv({Plain, _Shifted}, true, _MK) -> Plain;
 ts_key_to_lv({Plain, Shifted}, false, MK) ->
     case {maps:get(capslock, MK, false), maps:get(shift, MK, false)} of
