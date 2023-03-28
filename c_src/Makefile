@@ -62,7 +62,7 @@ LDFLAGS += -shared
 #CFLAGS += -fsanitize=address
 #LDFLAGS += -fsanitize=address
 
-LVGL_DIR_NAME = lvgl-8.3.3
+LVGL_DIR_NAME = lvgl-8.3.5
 LVGL_DIR = $(CURDIR)
 include $(LVGL_DIR)/$(LVGL_DIR_NAME)/src/core/lv_core.mk
 include $(LVGL_DIR)/$(LVGL_DIR_NAME)/src/draw/lv_draw.mk
