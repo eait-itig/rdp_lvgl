@@ -893,6 +893,8 @@ static void lv_textarea_event(const lv_obj_class_t * class_p, lv_event_t * e)
             lv_textarea_set_cursor_pos(obj, LV_TEXTAREA_CURSOR_LAST);
         else if(c == LV_KEY_ENTER && lv_textarea_get_one_line(obj))
             lv_event_send(obj, LV_EVENT_READY, NULL);
+        else if(c == LV_KEY_PREV || c == LV_KEY_ESC)
+            return;
         else {
             lv_textarea_add_char(obj, c);
         }
