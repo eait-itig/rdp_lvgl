@@ -1271,7 +1271,7 @@ parse_img_src(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary *bin,
 		return (0);
 	}
 
-	if (enif_inspect_iolist_as_binary(env, term, bin)) {
+	if (enif_inspect_iolist_as_binary(env, term, bin) && bin->size > 0) {
 		*patype = ARG_INLINE_BUF;
 		if (bin->size > UINT8_MAX) {
 			enif_raise_exception(env, enif_make_tuple2(env,
@@ -1761,6 +1761,11 @@ rlvgl_send_text(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
 		return (enif_make_badarg(env));
+
+	if (bin.size == 0) {
+		bin.data = (unsigned char *)"\0";
+		bin.size = 1;
+	}
 
 	if (bin.size > CDESC_MAX_INLINE) {
 		rv = make_errno(env, ENOSPC);

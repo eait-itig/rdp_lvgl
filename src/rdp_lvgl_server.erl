@@ -238,6 +238,8 @@ paste_proc(Srv, Inst) ->
                         false -> text
                     end,
                     case cliprdr_fsm:paste(ClipRdr, Fmt) of
+                        {ok, <<>>} ->
+                            lager:debug("empty paste");
                         {ok, Data} ->
                             ok = lv_indev:send_text(Inst, Data);
                         Err ->
