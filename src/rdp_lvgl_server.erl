@@ -62,6 +62,7 @@
     mod :: module(),
     modstate :: term(),
     inst :: lv:instance(),
+    res :: lv:point(),
     suppress = false :: boolean(),
     flushref :: undefined | reference(),
     frame = 1 :: integer(),
@@ -216,6 +217,7 @@ init_ui(Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
     case Mod:init_ui({Srv, Inst}, MS0) of
         {ok, MS1} ->
             {ok, S0#?MODULE{inst = Inst,
+                            res = {W, H},
                             flushref = MsgRef,
                             modstate = MS1}};
         {stop, Reason, MS1} ->
@@ -277,18 +279,18 @@ handle_select_all(_Srv, S = #?MODULE{inst = Inst}) ->
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = move}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst, mousedown = Down} = S,
-    ok = lv_indev:send_pointer_event(Inst, Pt,
+    ok = lv_indev:send_pointer_event(Inst, bound_point(Pt, S),
         if Down -> pressed; true -> released end),
     {ok, S};
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = down}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
-    ok = lv_indev:send_pointer_event(Inst, Pt, pressed),
+    ok = lv_indev:send_pointer_event(Inst, bound_point(Pt, S), pressed),
     {ok, S#?MODULE{mousedown = true}};
 
 handle_event(#ts_inpevt_mouse{point = Pt, action = up}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
-    ok = lv_indev:send_pointer_event(Inst, Pt, released),
+    ok = lv_indev:send_pointer_event(Inst, bound_point(Pt, S), released),
     {ok, S#?MODULE{mousedown = false}};
 
 handle_event(#ts_inpevt_mouse{}, _Srv, S = #?MODULE{}) ->
@@ -429,3 +431,8 @@ ts_key_to_lv({Plain, Shifted}, false, MK) ->
         {_, true} -> Shifted
     end;
 ts_key_to_lv(_, _, _) -> null.
+
+bound_point({X0, Y0}, #?MODULE{res = {W, H}}) ->
+    X1 = if (X0 < 0) -> 0; (X0 >= W) -> W - 1; true -> X0 end,
+    Y1 = if (Y0 < 0) -> 0; (Y0 >= H) -> H - 1; true -> Y0 end,
+    {X1, Y1}.

@@ -25,6 +25,7 @@
 %% THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "log.h"
 #include "lvkutils.h"
 
 #define	TILE_XSIZE	120
@@ -206,6 +207,7 @@ lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
 {
 	lv_point_t pt;
 	lv_obj_t *target;
+	int height, scaled;
 
 	lv_indev_get_point(mouse, &pt);
 
@@ -219,8 +221,12 @@ lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
 	if (target == NULL)
 		return;
 
+	height = lv_obj_get_height(target);
+	/* We scroll 40% of the widget height for every 1 windows WHEEL_DELTA */
+	scaled = (height * (dy * 100 / 120)) / 250;
+
 	if (target != NULL)
-		lv_obj_scroll_by_bounded(target, 0, dy, anim);
+		lv_obj_scroll_by_bounded(target, 0, scaled, anim);
 }
 
 struct cdinline {

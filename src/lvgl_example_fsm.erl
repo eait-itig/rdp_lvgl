@@ -240,6 +240,21 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
         {login_pin, "chemlabs", PinText}),
 
+    {ok, List} = lv_list:create(Flex),
+    ok = lv_obj:set_size(List, {{percent, 100}, {percent, 20}}),
+
+    lists:foreach(fun (I) ->
+        {ok, Opt} = lv_list:add_btn(List, none, none),
+        {ok, Icon} = lv_label:create(Opt),
+        ok = lv_obj:set_style_text_font(Icon, {"lineawesome", regular, 16}),
+        ok = lv_label:set_text(Icon, unicode:characters_to_binary([16#f108], utf8)),
+        ok = lv_obj:set_size(Icon, {{percent, 3}, content}),
+
+        {ok, Label} = lv_label:create(Opt),
+        ok = lv_obj:set_size(Label, {{percent, 80}, content}),
+        ok = lv_label:set_text(Label, ["List option ", integer_to_list(I)])
+    end, lists:seq(1, 100)),
+
     case S0#?MODULE.errmsg of
         undefined -> ok;
         ErrMsg ->
