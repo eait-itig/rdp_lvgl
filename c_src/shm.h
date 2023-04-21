@@ -90,6 +90,7 @@ struct shmintf {
 	size_t		 si_nfbuf;
 	struct fbuf	*si_fbuf;
 	size_t		 si_ringsz;
+	size_t		 si_respringsz;
 
 	size_t		 si_ncmd;	/* general commands */
 	pthread_mutex_t	 si_cc_mtx;	/* protects si_cc outbound */

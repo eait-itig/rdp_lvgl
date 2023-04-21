@@ -48,12 +48,14 @@ struct shm_settings {
 	size_t			ss_nfbuf;
 	size_t			ss_ringsz;
 	size_t			ss_fbsize;
+	size_t			ss_respringsz;
 };
 static struct shm_settings settings = {
 	.ss_lock = PTHREAD_RWLOCK_INITIALIZER,
 	.ss_nfbuf = FRAMEBUFS_PER_CHILD,
 	.ss_ringsz = RING_SIZE,
 	.ss_fbsize = FRAMEBUFFER_MAX_SIZE,
+	.ss_respringsz = RING_SIZE + 4096
 };
 
 void
@@ -69,6 +71,12 @@ set_ring_size(size_t ringsz)
 {
 	pthread_rwlock_wrlock(&settings.ss_lock);
 	settings.ss_ringsz = ringsz;
+	/*
+	 * Add an extra page to the resp rings so they always have free slots.
+	 * This avoids a deadlock between the cmd and rsp rings both looking
+	 * for a free slot while blocking progress on the other.
+	 */
+	settings.ss_respringsz = ringsz + 4096;
 	pthread_rwlock_unlock(&settings.ss_lock);
 }
 
@@ -90,6 +98,7 @@ alloc_shmintf(void)
 	pthread_mutexattr_t mattr;
 	pthread_condattr_t cattr;
 	size_t ringsz, fbsize;
+	size_t respringsz;
 
 	shm = calloc(1, sizeof (*shm));
 	if (shm == NULL)
@@ -99,12 +108,13 @@ alloc_shmintf(void)
 
 	pthread_rwlock_rdlock(&settings.ss_lock);
 	shm->si_ringsz = (ringsz = settings.ss_ringsz);
+	shm->si_respringsz = (respringsz = settings.ss_respringsz);
 	fbsize = settings.ss_fbsize;
 	shm->si_nfbuf = settings.ss_nfbuf;
 	pthread_rwlock_unlock(&settings.ss_lock);
 
 	shm->si_ncmd = ringsz / sizeof (struct cdesc);
-	shm->si_nresp = ringsz / sizeof (struct rdesc);
+	shm->si_nresp = respringsz / sizeof (struct rdesc);
 	shm->si_nev = ringsz / sizeof (struct edesc);
 	shm->si_nfl = ringsz / sizeof (struct fdesc);
 	shm->si_nph = ringsz / sizeof (struct pdesc);
@@ -177,7 +187,7 @@ alloc_shmintf(void)
 	for (i = 0; i < shm->si_ncmd; ++i)
 		atomic_store(&shm->si_cmdr[i].cd_owner, OWNER_ERL);
 
-	shm->si_respr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
+	shm->si_respr = mmap(NULL, respringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_respr == MAP_FAILED)
 		goto err;
@@ -226,7 +236,7 @@ free_shmintf(struct shmintf *shm)
 	if (shm->si_cmdr != MAP_FAILED)
 		munmap(shm->si_cmdr, shm->si_ringsz);
 	if (shm->si_respr != MAP_FAILED)
-		munmap(shm->si_respr, shm->si_ringsz);
+		munmap(shm->si_respr, shm->si_respringsz);
 	if (shm->si_evr != MAP_FAILED)
 		munmap(shm->si_evr, shm->si_ringsz);
 	if (shm->si_flr != MAP_FAILED)
