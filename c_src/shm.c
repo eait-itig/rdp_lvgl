@@ -303,6 +303,7 @@ shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, uint n)
 {
 	uint owner;
 	uint i = 0;
+	uint iters = 0;
 	assert(shm->si_role == ROLE_LV);
 	if (atomic_load(&shm->si_dead))
 		return;
@@ -312,7 +313,8 @@ shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, uint n)
 			owner = atomic_load(
 			    &shm->si_respr[shm->si_rc].rd_owner);
 			if (owner != OWNER_LV) {
-				shm_ring_doorbell(shm);
+				if (++iters & 0x10000)
+					shm_ring_doorbell(shm);
 				if (atomic_load(&shm->si_dead))
 					return;
 			}
@@ -332,6 +334,7 @@ void
 shm_produce_cmd(struct shmintf *shm, const struct cdesc *rsp, uint n)
 {
 	uint owner;
+	uint iters = 0;
 	uint i = 0;
 	assert(shm->si_role == ROLE_ERL);
 	if (atomic_load(&shm->si_dead))
@@ -342,7 +345,8 @@ shm_produce_cmd(struct shmintf *shm, const struct cdesc *rsp, uint n)
 			owner = atomic_load(
 			    &shm->si_cmdr[shm->si_cc].cd_owner);
 			if (owner != OWNER_ERL) {
-				shm_ring_doorbell(shm);
+				if (++iters & 0x10000)
+					shm_ring_doorbell(shm);
 				if (atomic_load(&shm->si_dead))
 					return;
 			}
@@ -362,6 +366,7 @@ void
 shm_produce_evt(struct shmintf *shm, const struct edesc *esp)
 {
 	uint owner;
+	uint iters = 0;
 	assert(shm->si_role == ROLE_LV);
 	if (atomic_load(&shm->si_dead))
 		return;
@@ -370,7 +375,8 @@ shm_produce_evt(struct shmintf *shm, const struct edesc *esp)
 		owner = atomic_load(
 		    &shm->si_evr[shm->si_ec].ed_owner);
 		if (owner != OWNER_LV) {
-			shm_ring_doorbell(shm);
+			if (++iters & 0x10000)
+				shm_ring_doorbell(shm);
 			if (atomic_load(&shm->si_dead))
 				return;
 		}
@@ -388,6 +394,7 @@ void
 shm_produce_flush(struct shmintf *shm, const struct fdesc *fsp)
 {
 	uint owner;
+	uint iters = 0;
 	assert(shm->si_role == ROLE_LV);
 	if (atomic_load(&shm->si_dead))
 		return;
@@ -396,7 +403,8 @@ shm_produce_flush(struct shmintf *shm, const struct fdesc *fsp)
 		owner = atomic_load(
 		    &shm->si_flr[shm->si_fc].fd_owner);
 		if (owner != OWNER_LV) {
-			shm_ring_doorbell(shm);
+			if (++iters & 0x10000)
+				shm_ring_doorbell(shm);
 			if (atomic_load(&shm->si_dead))
 				return;
 		}
@@ -414,6 +422,7 @@ void
 shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 {
 	uint owner;
+	uint iters = 0;
 	assert(shm->si_role == ROLE_ERL);
 	if (atomic_load(&shm->si_dead))
 		return;
@@ -422,7 +431,8 @@ shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 		owner = atomic_load(
 		    &shm->si_phr[shm->si_pc].pd_owner);
 		if (owner != OWNER_ERL) {
-			shm_ring_doorbell(shm);
+			if (++iters & 0x10000)
+				shm_ring_doorbell(shm);
 			if (atomic_load(&shm->si_dead))
 				return;
 		}
@@ -579,6 +589,7 @@ shm_ring_doorbell(struct shmintf *shm)
 	pthread_cond_t *cond;
 	uint *db;
 	struct lockpg *lp = shm->si_lockpg;
+	int rc;
 	switch (shm->si_role) {
 	case ROLE_ERL:
 		cond = &lp->lp_lv_db_cond;
@@ -592,7 +603,17 @@ shm_ring_doorbell(struct shmintf *shm)
 		assert(0);
 		return;
 	}
-	pthread_mutex_lock(&lp->lp_mtx);
+	/*
+	 * We might be being called by e.g. the erl_rsp_ring thread while
+	 * handling a cmd response. If we are, the other side might be blocked
+	 * up waiting for ring slots and holding the lp_mtx. This is a bit of
+	 * a hack, but if we just vacate here instead and give them their slot
+	 * then eventually things will un-cork and the last response will ring
+	 * the doorbell for them.
+	 */
+	rc = pthread_mutex_trylock(&lp->lp_mtx);
+	if (rc == EBUSY)
+		return;
 	(*db)++;
 	pthread_cond_broadcast(cond);
 	pthread_mutex_unlock(&lp->lp_mtx);

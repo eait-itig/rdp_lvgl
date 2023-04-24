@@ -112,12 +112,25 @@ lvkobj_release(struct lvkobj *obj)
 
 	if (obj == NULL)
 		return;
+
+	/* if erlang still has a handle to it, defer cleanup until it's gone */
 	if (obj->lvko_hdl != NULL)
 		return;
+
+	/*
+	 * if we haven't gotten the delete event from the lvkid yet, wait for
+	 * that. it'll clear lvko_ptr, and then call this again.
+	 */
 	if (obj->lvko_ptr != 0)
 		return;
 
-	LIST_REMOVE(obj, lvko_entry);
+	/*
+	 * in the case where we're called by teardown, it will have already
+	 * cleared lvko_inst and taken us off the list. in other cases (where
+	 * the instance is still alive), we do the list remove here.
+	 */
+	if (obj->lvko_inst != NULL)
+		LIST_REMOVE(obj, lvko_entry);
 
 	obj->lvko_delevt->lvke_obj = NULL;
 	assert(obj->lvko_delevt->lvke_hdl == NULL);
@@ -1494,8 +1507,34 @@ lvk_cmd(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
 	cmd->lvkc_cb = cb;
 	cmd->lvkc_priv = priv;
 
-	LIST_INSERT_HEAD(&kid->lvk_cmds, cmd, lvkc_entry);
 	cd[0].cd_cookie = (uint64_t)cmd;
+
+	pthread_mutex_lock(&kid->lvk_cmdlk);
+	LIST_INSERT_HEAD(&kid->lvk_cmds, cmd, lvkc_entry);
+	pthread_mutex_unlock(&kid->lvk_cmdlk);
+
+	shm_produce_cmd(kid->lvk_shm, cd, ncd);
+	shm_ring_doorbell(kid->lvk_shm);
+}
+
+void
+lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
+    void *priv)
+{
+	struct lvkcmd *cmd;
+
+	cmd = calloc(1, sizeof (*cmd));
+	cmd->lvkc_kid = kid;
+	cmd->lvkc_cb = cb;
+	cmd->lvkc_priv = priv;
+	cmd->lvkc_defer = 1;
+
+	cd[0].cd_cookie = (uint64_t)cmd;
+
+	pthread_mutex_lock(&kid->lvk_cmdlk);
+	LIST_INSERT_HEAD(&kid->lvk_cmds, cmd, lvkc_entry);
+	pthread_mutex_unlock(&kid->lvk_cmdlk);
+
 	shm_produce_cmd(kid->lvk_shm, cd, ncd);
 	shm_ring_doorbell(kid->lvk_shm);
 }
@@ -2346,6 +2385,28 @@ next:
 }
 
 static void *
+lvkcmd_deferred(void *arg)
+{
+	struct lvkcmd *cmd = arg;
+
+	struct rdesc *rd[RING_MAX_CHAIN];
+	uint nrd = cmd->lvkc_nrd;
+	void *priv = cmd->lvkc_priv;
+
+	uint i;
+
+	for (i = 0; i < nrd; ++i)
+		rd[i] = &cmd->lvkc_rd[i];
+
+	(*cmd->lvkc_cb)(rd, nrd, priv);
+
+	free(cmd->lvkc_rd);
+	free(cmd);
+
+	return (NULL);
+}
+
+static void *
 lvkid_erl_rsp_ring(void *arg)
 {
 	struct lvkid *kid = arg;
@@ -2362,12 +2423,30 @@ lvkid_erl_rsp_ring(void *arg)
 
 		cmd = (struct lvkcmd *)rd[0]->rd_cookie;
 		assert(cmd->lvkc_kid == kid);
-		pthread_rwlock_wrlock(&kid->lvk_lock);
+
+		pthread_mutex_lock(&kid->lvk_cmdlk);
 		LIST_REMOVE(cmd, lvkc_entry);
-		pthread_rwlock_unlock(&kid->lvk_lock);
-		if (cmd->lvkc_cb != NULL)
-			(*cmd->lvkc_cb)(rd, nrd, cmd->lvkc_priv);
-		free(cmd);
+		pthread_mutex_unlock(&kid->lvk_cmdlk);
+
+		if (cmd->lvkc_cb != NULL) {
+			if (cmd->lvkc_defer) {
+				cmd->lvkc_rd = calloc(nrd,
+				    sizeof (struct rdesc));
+				for (i = 0; i < nrd; ++i)
+					cmd->lvkc_rd[i] = *rd[i];
+				cmd->lvkc_nrd = nrd;
+				pthread_create(&cmd->lvkc_cbth, NULL,
+				    lvkcmd_deferred, cmd);
+				pthread_setname_np(cmd->lvkc_cbth,
+				    "lvkcmd_def_cb");
+				/* don't free cmd (lvkcmd_deferred will) */
+			} else {
+				(*cmd->lvkc_cb)(rd, nrd, cmd->lvkc_priv);
+				free(cmd);
+			}
+		} else {
+			free(cmd);
+		}
 		for (i = 0; i < nrd; ++i)
 			shm_finish_rsp(rd[i]);
 	}
@@ -2383,6 +2462,7 @@ lvkid_new(void)
 	kid = calloc(1, sizeof(struct lvkid));
 	assert(kid != NULL);
 	pthread_rwlock_init(&kid->lvk_lock, NULL);
+	pthread_mutex_init(&kid->lvk_cmdlk, NULL);
 	LIST_INIT(&kid->lvk_insts);
 	LIST_INIT(&kid->lvk_cmds);
 	LIST_INIT(&kid->lvk_evts);
@@ -2563,7 +2643,7 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 			.cds_udata = (uint64_t)inst,
 		}
 	};
-	lvk_cmd(kid, &cd, 1, lvk_inst_setup_cb, inst);
+	lvk_cmd_defer(kid, &cd, 1, lvk_inst_setup_cb, inst);
 
 	log_debug("inst %p: fbuf = %u, kid = %p (pid %d), owner = %T, "
 	    "msgref = %T", inst, i, nkid, nkid->lvk_pid,
@@ -2678,6 +2758,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 			obj->lvko_hdl = NULL;
 		}
 		obj->lvko_inst = NULL;
+		LIST_REMOVE(obj, lvko_entry);
 		lvkobj_release(obj);
 	}
 	LIST_FOREACH_SAFE(sty, &inst->lvki_styles, lvks_entry, nsty) {
@@ -2823,5 +2904,5 @@ lvkinst_teardown(struct lvkinst *inst)
 			.cdt_disp_drv = inst->lvki_disp_drv
 		}
 	};
-	lvk_cmd(kid, &cd, 1, lvk_inst_teardown_cb, inst);
+	lvk_cmd_defer(kid, &cd, 1, lvk_inst_teardown_cb, inst);
 }

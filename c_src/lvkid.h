@@ -100,8 +100,10 @@ struct lvkid {
 	size_t			 lvk_busy;
 	TAILQ_ENTRY(lvkid)	 lvk_entry;
 
-	struct lvkinst_list	 lvk_insts;
+	pthread_mutex_t		 lvk_cmdlk;
 	struct lvkcmd_list	 lvk_cmds;
+
+	struct lvkinst_list	 lvk_insts;
 	struct lvkevt_list	 lvk_evts;
 
 	pthread_t		 lvk_lv_th;
@@ -113,10 +115,14 @@ struct lvkid {
 typedef void (*lvkcmd_cb_t)(struct rdesc **rd, uint nrd, void *priv);
 
 struct lvkcmd {
-	struct lvkid		*lvkc_kid;
-	LIST_ENTRY(lvkcmd)	 lvkc_entry;
-	lvkcmd_cb_t		 lvkc_cb;
-	void			*lvkc_priv;
+	struct lvkid		 *lvkc_kid;
+	LIST_ENTRY(lvkcmd)	  lvkc_entry;
+	lvkcmd_cb_t		  lvkc_cb;
+	void			 *lvkc_priv;
+	uint			  lvkc_defer;
+	pthread_t		  lvkc_cbth;
+	struct rdesc		 *lvkc_rd;
+	uint			  lvkc_nrd;
 };
 
 enum lvkinst_state {
@@ -300,6 +306,8 @@ typedef void (*lvk_call_cb_t)(struct lvkid *, uint32_t err, enum arg_type,
     void *arg, void *priv);
 
 void lvk_cmd(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
+    void *priv);
+void lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
     void *priv);
 
 int lvk_cast(struct lvkid *kid, enum arg_type rt, lvk_call_func_t f, ...);
