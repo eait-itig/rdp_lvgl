@@ -119,10 +119,11 @@ struct shmintf {
 };
 
 struct lockpg {
-	pthread_mutex_t	lp_mtx;
 	uint		lp_dead;
+	pthread_mutex_t	lp_erl_mtx;
 	uint		lp_erl_db;
 	pthread_cond_t	lp_erl_db_cond;
+	pthread_mutex_t	lp_lv_mtx;
 	uint		lp_lv_db;
 	pthread_cond_t	lp_lv_db_cond;
 };

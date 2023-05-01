@@ -147,7 +147,10 @@ alloc_shmintf(void)
 	rc = pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK);
 	assert(rc == 0);
 
-	rc = pthread_mutex_init(&shm->si_lockpg->lp_mtx, &mattr);
+	rc = pthread_mutex_init(&shm->si_lockpg->lp_erl_mtx, &mattr);
+	if (rc)
+		goto err;
+	rc = pthread_mutex_init(&shm->si_lockpg->lp_lv_mtx, &mattr);
 	if (rc)
 		goto err;
 
@@ -244,7 +247,8 @@ free_shmintf(struct shmintf *shm)
 	if (shm->si_phr != MAP_FAILED)
 		munmap(shm->si_phr, shm->si_ringsz);
 	if (shm->si_lockpg != MAP_FAILED) {
-		pthread_mutex_destroy(&shm->si_lockpg->lp_mtx);
+		pthread_mutex_destroy(&shm->si_lockpg->lp_erl_mtx);
+		pthread_mutex_destroy(&shm->si_lockpg->lp_lv_mtx);
 		pthread_cond_destroy(&shm->si_lockpg->lp_erl_db_cond);
 		pthread_cond_destroy(&shm->si_lockpg->lp_lv_db_cond);
 		munmap(shm->si_lockpg, sizeof (struct lockpg));
@@ -516,19 +520,21 @@ shm_read_doorbell(struct shmintf *shm)
 {
 	struct lockpg *lp = shm->si_lockpg;
 	uint val;
-	pthread_mutex_lock(&lp->lp_mtx);
 	switch (shm->si_role) {
 	case ROLE_ERL:
+		pthread_mutex_lock(&lp->lp_erl_mtx);
 		val = lp->lp_erl_db;
+		pthread_mutex_unlock(&lp->lp_erl_mtx);
 		break;
 	case ROLE_LV:
+		pthread_mutex_lock(&lp->lp_lv_mtx);
 		val = lp->lp_lv_db;
+		pthread_mutex_unlock(&lp->lp_lv_mtx);
 		break;
 	default:
 		assert(0);
 		return (0);
 	}
-	pthread_mutex_unlock(&lp->lp_mtx);
 	return (val);
 }
 
@@ -536,14 +542,17 @@ void
 shm_await_doorbell_v(struct shmintf *shm, uint orig)
 {
 	pthread_cond_t *cond;
+	pthread_mutex_t *mtx;
 	struct lockpg *lp = shm->si_lockpg;
 	uint *db;
 	switch (shm->si_role) {
 	case ROLE_ERL:
+		mtx = &lp->lp_erl_mtx;
 		cond = &lp->lp_erl_db_cond;
 		db = &lp->lp_erl_db;
 		break;
 	case ROLE_LV:
+		mtx = &lp->lp_lv_mtx;
 		cond = &lp->lp_lv_db_cond;
 		db = &lp->lp_lv_db;
 		break;
@@ -551,24 +560,27 @@ shm_await_doorbell_v(struct shmintf *shm, uint orig)
 		assert(0);
 		return;
 	}
-	pthread_mutex_lock(&lp->lp_mtx);
+	pthread_mutex_lock(mtx);
 	while (*db == orig)
-		pthread_cond_wait(cond, &lp->lp_mtx);
-	pthread_mutex_unlock(&lp->lp_mtx);
+		pthread_cond_wait(cond, mtx);
+	pthread_mutex_unlock(mtx);
 }
 
 void
 shm_await_doorbell(struct shmintf *shm)
 {
 	pthread_cond_t *cond;
+	pthread_mutex_t *mtx;
 	struct lockpg *lp = shm->si_lockpg;
 	uint *db, orig;
 	switch (shm->si_role) {
 	case ROLE_ERL:
+		mtx = &lp->lp_erl_mtx;
 		cond = &lp->lp_erl_db_cond;
 		db = &lp->lp_erl_db;
 		break;
 	case ROLE_LV:
+		mtx = &lp->lp_lv_mtx;
 		cond = &lp->lp_lv_db_cond;
 		db = &lp->lp_lv_db;
 		break;
@@ -576,26 +588,28 @@ shm_await_doorbell(struct shmintf *shm)
 		assert(0);
 		return;
 	}
-	pthread_mutex_lock(&lp->lp_mtx);
+	pthread_mutex_lock(mtx);
 	orig = *db;
 	while (*db == orig && !lp->lp_dead)
-		pthread_cond_wait(cond, &lp->lp_mtx);
-	pthread_mutex_unlock(&lp->lp_mtx);
+		pthread_cond_wait(cond, mtx);
+	pthread_mutex_unlock(mtx);
 }
 
 void
 shm_ring_doorbell(struct shmintf *shm)
 {
 	pthread_cond_t *cond;
+	pthread_mutex_t *mtx;
 	uint *db;
 	struct lockpg *lp = shm->si_lockpg;
-	int rc;
 	switch (shm->si_role) {
 	case ROLE_ERL:
+		mtx = &lp->lp_lv_mtx;
 		cond = &lp->lp_lv_db_cond;
 		db = &lp->lp_lv_db;
 		break;
 	case ROLE_LV:
+		mtx = &lp->lp_erl_mtx;
 		cond = &lp->lp_erl_db_cond;
 		db = &lp->lp_erl_db;
 		break;
@@ -603,20 +617,10 @@ shm_ring_doorbell(struct shmintf *shm)
 		assert(0);
 		return;
 	}
-	/*
-	 * We might be being called by e.g. the erl_rsp_ring thread while
-	 * handling a cmd response. If we are, the other side might be blocked
-	 * up waiting for ring slots and holding the lp_mtx. This is a bit of
-	 * a hack, but if we just vacate here instead and give them their slot
-	 * then eventually things will un-cork and the last response will ring
-	 * the doorbell for them.
-	 */
-	rc = pthread_mutex_trylock(&lp->lp_mtx);
-	if (rc == EBUSY)
-		return;
+	pthread_mutex_lock(mtx);
 	(*db)++;
 	pthread_cond_broadcast(cond);
-	pthread_mutex_unlock(&lp->lp_mtx);
+	pthread_mutex_unlock(mtx);
 }
 
 void
@@ -765,13 +769,15 @@ shm_parent_pipewatch(void *arg)
 			log_warn("child %d died", shm->si_kid);
 			atomic_store(&shm->si_dead, 1);
 
-			pthread_mutex_lock(&lp->lp_mtx);
+			pthread_mutex_lock(&lp->lp_lv_mtx);
+			pthread_mutex_lock(&lp->lp_erl_mtx);
 			lp->lp_dead = 1;
 			++lp->lp_lv_db;
 			++lp->lp_erl_db;
-			pthread_cond_broadcast(&lp->lp_lv_db_cond);
 			pthread_cond_broadcast(&lp->lp_erl_db_cond);
-			pthread_mutex_unlock(&lp->lp_mtx);
+			pthread_cond_broadcast(&lp->lp_lv_db_cond);
+			pthread_mutex_unlock(&lp->lp_erl_mtx);
+			pthread_mutex_unlock(&lp->lp_lv_mtx);
 
 			waitpid(shm->si_kid, NULL, 0);
 			return (NULL);
