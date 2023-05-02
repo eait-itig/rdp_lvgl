@@ -173,10 +173,19 @@ log_take_ownership(ErlNifPid owner)
 void
 log_post_fork(const char *role, pid_t newpid)
 {
-	pthread_mutex_lock(&logerl->le_mtx);
+	int rc;
+	/*
+	 * Called by the singular main thread post-fork into an lvkid.
+	 * We drop the old "logerl" on the floor -- other threads might have
+	 * had it locked at the time we forked. We don't care about that now,
+	 * so just construct a new one.
+	 */
+	logerl = calloc(1, sizeof (struct logerl));
+	rc = pthread_mutex_init(&logerl->le_mtx, NULL);
+	assert(rc == 0);
+
 	logerl->le_role = role;
 	logerl->le_pid = newpid;
-	pthread_mutex_unlock(&logerl->le_mtx);
 }
 
 static void
