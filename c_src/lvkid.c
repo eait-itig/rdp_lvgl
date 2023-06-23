@@ -2600,6 +2600,7 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 		log_warn("%T requested %u x %u res; too large for fbuf",
 		    enif_make_pid(env, &owner), width, height);
 		enif_free_env(env);
+		--nkid->lvk_busy;
 		pthread_rwlock_unlock(&nkid->lvk_lock);
 		return (NULL);
 	}
