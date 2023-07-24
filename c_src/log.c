@@ -216,16 +216,21 @@ log_await_doorbell(uint db)
 	pthread_mutex_unlock(&logshm->ls_mtx);
 }
 
-static void
+static int
 log_reserve_descrs(struct logdesc **pld, uint ndesc)
 {
 	uint owner;
 	uint i = 0;
+	uint nloop = 0;
 	pthread_mutex_lock(&logshm->ls_mtx);
 	while (i < ndesc) {
 		do {
 			owner = atomic_load(
 			    &logshm->ls_ring[logshm->ls_pc].ld_owner);
+			if (owner != LOG_PRODUCER && ++nloop > (1<<18)) {
+				pthread_mutex_unlock(&logshm->ls_mtx);
+				return (-1);
+			}
 		} while (owner != LOG_PRODUCER);
 		pld[i++] = &logshm->ls_ring[logshm->ls_pc];
 		logshm->ls_pc++;
@@ -233,6 +238,7 @@ log_reserve_descrs(struct logdesc **pld, uint ndesc)
 			logshm->ls_pc = 0;
 	}
 	pthread_mutex_unlock(&logshm->ls_mtx);
+	return (0);
 }
 
 static void
@@ -311,7 +317,9 @@ again:
 	rem = rc;
 	off = 0;
 
-	log_reserve_descrs((struct logdesc **)&ld, ndesc);
+	if (log_reserve_descrs((struct logdesc **)&ld, ndesc))
+		return;
+
 	ld[0]->ld_chain = 0;
 	hd = (struct logdesc_head *)ld[0];
 	hd->ldh_len = rem;
