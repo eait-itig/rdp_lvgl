@@ -31,6 +31,7 @@
 
 #include <string.h>
 #include <sys/errno.h>
+#include <queue.h>
 
 struct ibuf {
 	uint8_t	 ib_buf[4096];
@@ -48,6 +49,159 @@ static struct ibuf ibuf[MAX_ARGS];
 #else
 # define debug(fmt...)	(void)0
 #endif
+
+LIST_HEAD(ptrentries, ptrentry);
+struct ptrentry {
+	LIST_ENTRY(ptrentry)	 pe_ht_ent;
+	LIST_ENTRY(ptrentry)	 pe_dep_ent;
+	struct ptrentries	 pe_dependents;
+	struct ptrentry		*pe_parent;
+	uintptr_t		 pe_ptr;
+};
+static struct ptrentries ptrht[256] = { LIST_HEAD_INITIALIZER(ptrentries) };
+
+int
+lvptr_check(void *pptr)
+{
+	uintptr_t ptr = (uintptr_t)pptr;
+	uint htidx;
+	struct ptrentries *list;
+	struct ptrentry *pe, *npe;
+
+	htidx = (ptr >> 4) & 0xFF;
+	htidx ^= (ptr >> 12) & 0xFF;
+	list = &ptrht[htidx];
+
+	LIST_FOREACH_SAFE(pe, list, pe_ht_ent, npe) {
+		if (pe->pe_ptr == ptr) {
+			LIST_REMOVE(pe, pe_ht_ent);
+			LIST_INSERT_HEAD(list, pe, pe_ht_ent);
+			return (1);
+		}
+	}
+
+	return (0);
+}
+
+void
+lvptr_validate(void *pptr)
+{
+	uintptr_t ptr = (uintptr_t)pptr;
+	uint htidx;
+	struct ptrentries *list;
+	struct ptrentry *pe;
+
+	htidx = (ptr >> 4) & 0xFF;
+	htidx ^= (ptr >> 12) & 0xFF;
+	list = &ptrht[htidx];
+
+	LIST_FOREACH(pe, list, pe_ht_ent) {
+		if (pe->pe_ptr == ptr)
+			return;
+	}
+
+	pe = calloc(1, sizeof (*pe));
+	LIST_INIT(&pe->pe_dependents);
+	pe->pe_ptr = ptr;
+	LIST_INSERT_HEAD(list, pe, pe_ht_ent);
+}
+
+void
+lvptr_validate_with_dep(void *pptr, void *pparent)
+{
+	uintptr_t ptr = (uintptr_t)pptr;
+	uintptr_t parent = (uintptr_t)pparent;
+	uint htidx;
+	struct ptrentries *list, *plist;
+	struct ptrentry *pe = NULL, *tpe, *ppe = NULL;
+
+	htidx = (ptr >> 4) & 0xFF;
+	htidx ^= (ptr >> 12) & 0xFF;
+	list = &ptrht[htidx];
+
+	htidx = (parent >> 4) & 0xFF;
+	htidx ^= (parent >> 12) & 0xFF;
+	plist = &ptrht[htidx];
+
+	LIST_FOREACH(tpe, list, pe_ht_ent) {
+		if (tpe->pe_ptr == ptr) {
+			pe = tpe;
+			break;
+		}
+	}
+
+	LIST_FOREACH(tpe, plist, pe_ht_ent) {
+		if (tpe->pe_ptr == parent) {
+			ppe = tpe;
+			break;
+		}
+	}
+
+	if (ppe == NULL) {
+		ppe = calloc(1, sizeof (*ppe));
+		LIST_INIT(&ppe->pe_dependents);
+		ppe->pe_ptr = parent;
+		LIST_INSERT_HEAD(plist, ppe, pe_ht_ent);
+	}
+
+	if (pe == NULL) {
+		pe = calloc(1, sizeof (*pe));
+		LIST_INIT(&pe->pe_dependents);
+		pe->pe_ptr = ptr;
+		pe->pe_parent = ppe;
+		LIST_INSERT_HEAD(list, pe, pe_ht_ent);
+	}
+
+	LIST_INSERT_HEAD(&ppe->pe_dependents, pe, pe_dep_ent);
+}
+
+
+static void lvptr_ent_delete(struct ptrentry *pe);
+
+static void
+lvptr_ent_delete(struct ptrentry *pe)
+{
+	struct ptrentry *tpe, *npe;
+
+	if (pe->pe_parent != NULL) {
+		LIST_REMOVE(pe, pe_dep_ent);
+		pe->pe_parent = NULL;
+	}
+
+	LIST_FOREACH_SAFE(tpe, &pe->pe_dependents, pe_dep_ent, npe) {
+		lvptr_ent_delete(tpe);
+	}
+
+	LIST_REMOVE(pe, pe_ht_ent);
+	pe->pe_ptr = 0;
+
+	free(pe);
+}
+
+void
+lvptr_invalidate(void *pptr)
+{
+	uintptr_t ptr = (uintptr_t)pptr;
+	uint htidx;
+	struct ptrentries *list;
+	struct ptrentry *pe = NULL, *tpe;
+
+	htidx = (ptr >> 4) & 0xFF;
+	htidx ^= (ptr >> 12) & 0xFF;
+	list = &ptrht[htidx];
+
+	LIST_FOREACH(tpe, list, pe_ht_ent) {
+		if (tpe->pe_ptr == ptr) {
+			pe = tpe;
+			break;
+		}
+	}
+
+	if (pe == NULL)
+		return;
+
+	lvptr_ent_delete(pe);
+}
 
 void
 lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
@@ -74,6 +228,36 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 	inl = cdi_init(cd, ncd, FOFFSET_CALL);
 	assert(inl != NULL);
+
+	for (i = 0; i < MAX_ARGS; ++i) {
+		switch (cdc->cdc_argtype[i]) {
+		case ARG_PTR:
+		case ARG_PTR_BUFFER:
+		case ARG_PTR_OBJ:
+		case ARG_PTR_STYLE:
+		case ARG_PTR_GROUP:
+		case ARG_PTR_CHART_SER:
+		case ARG_PTR_CHART_CUR:
+		case ARG_PTR_METER_SCL:
+		case ARG_PTR_METER_IND:
+		case ARG_PTR_SPAN:
+			if (cdc->cdc_arg[i] == 0)
+				continue;
+			if (!lvptr_check((void *)cdc->cdc_arg[i])) {
+				debug("arg %u invalid ptr (%p)", i,
+				    cdc->cdc_arg[i]);
+				rd[0] = (struct rdesc){
+					.rd_error = EFAULT,
+					.rd_cookie = cd[0]->cd_cookie,
+				};
+				shm_produce_rsp(shm, rd, 1);
+				return;
+			}
+			break;
+		default:
+			/* nothing */
+		}
+	}
 
 	for (i = 0; i < MAX_ARGS; ++i) {
 		if (cdc->cdc_argtype[i] != ARG_INLINE_BUF &&
@@ -212,6 +396,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_OBJ:
 		obj = (lv_obj_t *)rv;
+		if (obj != NULL)
+			lvptr_validate(obj);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -225,6 +411,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_GROUP:
 		grp = (lv_group_t *)rv;
+		if (grp != NULL)
+			lvptr_validate(grp);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -237,6 +425,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_STYLE:
 		sty = (lv_style_t *)rv;
+		if (sty != NULL)
+			lvptr_validate(sty);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -249,6 +439,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_CHART_CUR:
 		chartcur = (lv_chart_cursor_t *)rv;
+		if (chartcur != NULL)
+			lvptr_validate_with_dep(chartcur, chartcur->ser);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -261,6 +453,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_CHART_SER:
 		chartser = (lv_chart_series_t *)rv;
+		if (chartser != NULL)
+			lvptr_validate(chartser);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -273,6 +467,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_METER_IND:
 		meterind = (lv_meter_indicator_t *)rv;
+		if (meterind != NULL)
+			lvptr_validate_with_dep(meterind, meterind->scale);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -285,6 +481,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_METER_SCL:
 		meterscl = (lv_meter_scale_t *)rv;
+		if (meterscl != NULL)
+			lvptr_validate(meterscl);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -297,6 +495,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		break;
 	case ARG_PTR_SPAN:
 		span = (lv_span_t *)rv;
+		if (span != NULL)
+			lvptr_validate_with_dep(span, span->spangroup);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,
@@ -308,6 +508,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		shm_produce_rsp(shm, rd, 1);
 		break;
 	default:
+		if (rt == ARG_PTR)
+			lvptr_validate((void *)rv);
 		rd[0] = (struct rdesc){
 			.rd_error = 0,
 			.rd_cookie = cd[0]->cd_cookie,

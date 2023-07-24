@@ -726,6 +726,13 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	lvi_debug(inst, "created kbd_drv %p => %p", &inst->lvi_kbd_drv,
 	    inst->lvi_kbd);
 
+	lvptr_validate(&inst->lvi_disp_drv);
+	lvptr_validate(inst->lvi_disp);
+	lvptr_validate(&inst->lvi_mouse_drv);
+	lvptr_validate(inst->lvi_mouse);
+	lvptr_validate(&inst->lvi_kbd_drv);
+	lvptr_validate(inst->lvi_kbd);
+
 	pthread_mutex_unlock(&lv_mtx);
 
 	rd = (struct rdesc){
@@ -768,6 +775,13 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 		lvi_debug(inst, "waiting for phinal phlush");
 		pthread_cond_wait(&lv_flush_cond, &lv_flush_mtx);
 	}
+
+	lvptr_invalidate(&inst->lvi_disp_drv);
+	lvptr_invalidate(inst->lvi_disp);
+	lvptr_invalidate(&inst->lvi_mouse_drv);
+	lvptr_invalidate(inst->lvi_mouse);
+	lvptr_invalidate(&inst->lvi_kbd_drv);
+	lvptr_invalidate(inst->lvi_kbd);
 
 	fb = inst->lvi_fbuf;
 	fb->fb_state = FBUF_FREE;
@@ -823,6 +837,17 @@ lvkid_lv_cmd_set_udata(struct lvkid *kid, struct shmintf *shm,
 	lv_span_t *span;
 
 	pthread_mutex_lock(&lv_mtx);
+	if (!lvptr_check((void *)cdsu->cdsu_ptr)) {
+		pthread_mutex_unlock(&lv_mtx);
+
+		rd = (struct rdesc){
+			.rd_error = EFAULT,
+			.rd_cookie = cd->cd_cookie
+		};
+		shm_produce_rsp(shm, &rd, 1);
+
+		return;
+	}
 	switch (cdsu->cdsu_type) {
 	case ARG_PTR_OBJ:
 		obj = (lv_obj_t *)cdsu->cdsu_ptr;
@@ -893,6 +918,7 @@ lvkid_lv_event_cb(lv_event_t *ev)
 
 	switch (lv_event_get_code(ev)) {
 	case LV_EVENT_DELETE:
+		lvptr_invalidate(target);
 		/*
 		 * Note on other LEUs that this object is gone, so the event
 		 * teardown command won't try to deref them.
@@ -933,13 +959,25 @@ lvkid_lv_cmd_setup_event(struct lvkid *kid, struct shmintf *shm,
 	struct lv_event_udata *leu;
 
 	leu = calloc(1, sizeof (*leu));
+
+	pthread_mutex_lock(&lv_mtx);
+	obj = (lv_obj_t *)cdse->cdse_obj;
+	if (!lvptr_check(obj)) {
+		pthread_mutex_unlock(&lv_mtx);
+		free(leu);
+		rd = (struct rdesc){
+			.rd_error = EFAULT,
+			.rd_cookie = cd->cd_cookie
+		};
+		shm_produce_rsp(shm, &rd, 1);
+		return;
+	}
+
 	leu->leu_kid = kid;
 	leu->leu_shm = shm;
 	leu->leu_udata = cdse->cdse_udata;
-	obj = (lv_obj_t *)cdse->cdse_obj;
 	leu->leu_obj = obj;
 
-	pthread_mutex_lock(&lv_mtx);
 	leu->leu_dsc = lv_obj_add_event_cb(obj, lvkid_lv_event_cb,
 	    cdse->cdse_event, leu);
 	LIST_INSERT_HEAD(&leus, leu, leu_entry);
@@ -1062,6 +1100,7 @@ lvkid_lv_cmd_copy_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc **cd,
 	bptr = malloc(rem);
 	assert(bptr != NULL);
 	off = 0;
+	lvptr_validate(bptr);
 
 	take = sizeof (cdcs->cdcs_data);
 	if (take > rem)
@@ -1100,6 +1139,7 @@ lvkid_lv_cmd_free_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 
 	bptr = (uint8_t *)cdfs->cdfs_buf;
 	free(bptr);
+	lvptr_invalidate(bptr);
 
 	rd = (struct rdesc){
 		.rd_error = 0,

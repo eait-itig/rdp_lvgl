@@ -31,6 +31,11 @@
 #include "shm.h"
 #include "lvkid.h"
 
+int lvptr_check(void *ptr);
+void lvptr_validate(void *ptr);
+void lvptr_validate_with_dep(void *ptr, void *parent);
+void lvptr_invalidate(void *ptr);
+
 void lv_do_call(struct shmintf *, struct cdesc **, uint);
 
 /* auto-generated dispatch */
