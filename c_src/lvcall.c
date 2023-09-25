@@ -251,6 +251,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 					.rd_cookie = cd[0]->cd_cookie,
 				};
 				shm_produce_rsp(shm, rd, 1);
+				cdi_free(inl);
 				return;
 			}
 			break;
