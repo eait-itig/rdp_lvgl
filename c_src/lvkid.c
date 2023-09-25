@@ -320,6 +320,7 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 	struct lvkspan *span;
 	struct fbuf *fb;
 	struct lvkhdl **phdl = NULL;
+	struct lvkhdl *thdl;
 	ErlNifResourceType *rtype = lvkid_hdl_rsrc;
 
 	switch (type) {
@@ -408,19 +409,32 @@ lvkid_make_hdl(enum lvkh_type type, void *ptr, uint *do_release)
 		return (*phdl);
 	}
 
-	*phdl = enif_alloc_resource(rtype, sizeof (struct lvkhdl));
-	bzero(*phdl, sizeof (struct lvkhdl));
-	(*phdl)->lvkh_kid = kid;
-	(*phdl)->lvkh_type = type;
-	(*phdl)->lvkh_ptr = ptr;
-	(*phdl)->lvkh_inst = inst;
+	thdl = enif_alloc_resource(rtype, sizeof (struct lvkhdl));
+	bzero(thdl, sizeof (struct lvkhdl));
+	thdl->lvkh_kid = kid;
+	thdl->lvkh_type = type;
+	thdl->lvkh_ptr = ptr;
+	thdl->lvkh_inst = inst;
+	*phdl = thdl;
+
+	/*
+	 * If we're in DRAIN, give Erlang a useless LVK_NONE handle. That
+	 * way nobody can get a new reference to something that's about to
+	 * be destroyed.
+	 */
+	if (inst && inst->lvki_state == LVKINST_DRAIN) {
+		thdl->lvkh_type = LVK_NONE;
+		thdl->lvkh_ptr = NULL;
+		thdl->lvkh_inst = NULL;
+		*phdl = NULL;
+	}
 
 	if (do_release != NULL) {
 		*do_release = 1;
-		(*phdl)->lvkh_given = 1;
+		thdl->lvkh_given = 1;
 	}
 
-	return (*phdl);
+	return (thdl);
 }
 
 static void
@@ -1278,15 +1292,17 @@ lvk_make_chart_series(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	cs->lvkcs_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_CHART_SER,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)cs
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_CHART_SER,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)cs
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (cs);
 }
@@ -1310,15 +1326,17 @@ lvk_make_chart_cursor(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	cc->lvkcc_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_CHART_CUR,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)cc
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_CHART_CUR,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)cc
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (cc);
 }
@@ -1342,15 +1360,17 @@ lvk_make_meter_ind(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	mi->lvkmi_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_METER_IND,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)mi
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_METER_IND,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)mi
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (mi);
 }
@@ -1374,15 +1394,17 @@ lvk_make_meter_scale(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	ms->lvkms_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_METER_SCL,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)ms
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_METER_SCL,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)ms
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (ms);
 }
@@ -1406,15 +1428,17 @@ lvk_make_span(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	sp->lvksp_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_SPAN,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)sp
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_SPAN,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)sp
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (sp);
 }
@@ -1438,15 +1462,17 @@ lvk_make_style(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	sty->lvks_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_STYLE,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)sty
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_STYLE,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)sty
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (sty);
 }
@@ -1470,15 +1496,17 @@ lvk_make_group(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 
 	grp->lvkg_ptr = ptr;
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_GROUP,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)grp
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_GROUP,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)grp
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
+	}
 
 	return (grp);
 }
@@ -1513,25 +1541,27 @@ lvk_make_obj(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr,
 	LIST_INSERT_HEAD(&obj->lvko_events, obj->lvko_delevt, lvke_obj_entry);
 	LIST_INSERT_HEAD(&kid->lvk_evts, obj->lvko_delevt, lvke_kid_entry);
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SET_UDATA,
-		.cd_set_udata = (struct cdesc_setudata){
-			.cdsu_type = ARG_PTR_OBJ,
-			.cdsu_ptr = ptr,
-			.cdsu_udata = (uint64_t)obj
-		}
-	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	if (inst->lvki_state == LVKINST_ALIVE) {
+		cd = (struct cdesc){
+			.cd_op = CMD_SET_UDATA,
+			.cd_set_udata = (struct cdesc_setudata){
+				.cdsu_type = ARG_PTR_OBJ,
+				.cdsu_ptr = ptr,
+				.cdsu_udata = (uint64_t)obj
+			}
+		};
+		lvk_cmd(kid, &cd, 1, NULL, NULL);
 
-	cd = (struct cdesc){
-		.cd_op = CMD_SETUP_EVENT,
-		.cd_setup_event = (struct cdesc_setupev){
-			.cdse_obj = ptr,
-			.cdse_udata = (uint64_t)obj->lvko_delevt,
-			.cdse_event = LV_EVENT_DELETE,
-		}
-	};
-	lvk_cmd(kid, &cd, 1, lvkevt_setup_cb, obj->lvko_delevt);
+		cd = (struct cdesc){
+			.cd_op = CMD_SETUP_EVENT,
+			.cd_setup_event = (struct cdesc_setupev){
+				.cdse_obj = ptr,
+				.cdse_udata = (uint64_t)obj->lvko_delevt,
+				.cdse_event = LV_EVENT_DELETE,
+			}
+		};
+		lvk_cmd(kid, &cd, 1, lvkevt_setup_cb, obj->lvko_delevt);
+	}
 
 	return (obj);
 }
@@ -2895,6 +2925,15 @@ lvkinst_teardown(struct lvkinst *inst)
 	struct lvkgroup *grp;
 	struct cdesc cd;
 	struct pdesc pd;
+
+	struct lvkobj *obj;
+	struct lvkstyle *sty;
+	struct lvkchartser *cser;
+	struct lvkchartcur *ccur;
+	struct lvkmeterind *mi;
+	struct lvkmeterscl *ms;
+	struct lvkspan *sp;
+
 	if (inst->lvki_state == LVKINST_DRAIN)
 		return;
 	inst->lvki_fbuf->fb_state = FBUF_TEARDOWN;
@@ -2946,4 +2985,76 @@ lvkinst_teardown(struct lvkinst *inst)
 		}
 	};
 	lvk_cmd_defer(kid, &cd, 1, lvk_inst_teardown_cb, inst);
+
+	/*
+	 * Ensure that all handles to objects in this instance cannot be used
+	 * to enqueue new commands from now on.
+	 *
+	 * We don't want any commands ending up pushed in after the teardown
+	 * command that refer to objects now deleted by it.
+	 */
+	LIST_FOREACH(obj, &inst->lvki_objs, lvko_entry) {
+		if (obj->lvko_hdl) {
+			obj->lvko_hdl->lvkh_type = LVK_NONE;
+			obj->lvko_hdl->lvkh_ptr = NULL;
+			obj->lvko_hdl->lvkh_inst = NULL;
+			obj->lvko_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(sty, &inst->lvki_styles, lvks_entry) {
+		if (sty->lvks_hdl) {
+			sty->lvks_hdl->lvkh_type = LVK_NONE;
+			sty->lvks_hdl->lvkh_ptr = NULL;
+			sty->lvks_hdl->lvkh_inst = NULL;
+			sty->lvks_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(grp, &inst->lvki_groups, lvkg_entry) {
+		if (grp->lvkg_hdl) {
+			grp->lvkg_hdl->lvkh_type = LVK_NONE;
+			grp->lvkg_hdl->lvkh_ptr = NULL;
+			grp->lvkg_hdl->lvkh_inst = NULL;
+			grp->lvkg_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(cser, &inst->lvki_chart_series, lvkcs_entry) {
+		if (cser->lvkcs_hdl) {
+			cser->lvkcs_hdl->lvkh_type = LVK_NONE;
+			cser->lvkcs_hdl->lvkh_ptr = NULL;
+			cser->lvkcs_hdl->lvkh_inst = NULL;
+			cser->lvkcs_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(ccur, &inst->lvki_chart_cursors, lvkcc_entry) {
+		if (ccur->lvkcc_hdl) {
+			ccur->lvkcc_hdl->lvkh_type = LVK_NONE;
+			ccur->lvkcc_hdl->lvkh_ptr = NULL;
+			ccur->lvkcc_hdl->lvkh_inst = NULL;
+			ccur->lvkcc_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(mi, &inst->lvki_meter_inds, lvkmi_entry) {
+		if (mi->lvkmi_hdl) {
+			mi->lvkmi_hdl->lvkh_type = LVK_NONE;
+			mi->lvkmi_hdl->lvkh_ptr = NULL;
+			mi->lvkmi_hdl->lvkh_inst = NULL;
+			mi->lvkmi_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(sp, &inst->lvki_spans, lvksp_entry) {
+		if (sp->lvksp_hdl) {
+			sp->lvksp_hdl->lvkh_type = LVK_NONE;
+			sp->lvksp_hdl->lvkh_ptr = NULL;
+			sp->lvksp_hdl->lvkh_inst = NULL;
+			sp->lvksp_hdl = NULL;
+		}
+	}
+	LIST_FOREACH(ms, &inst->lvki_meter_scales, lvkms_entry) {
+		if (ms->lvkms_hdl) {
+			ms->lvkms_hdl->lvkh_type = LVK_NONE;
+			ms->lvkms_hdl->lvkh_ptr = NULL;
+			ms->lvkms_hdl->lvkh_inst = NULL;
+			ms->lvkms_hdl = NULL;
+		}
+	}
 }
