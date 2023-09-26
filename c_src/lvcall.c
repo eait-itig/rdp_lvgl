@@ -257,6 +257,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			break;
 		default:
 			/* nothing */
+			break;
 		}
 	}
 
