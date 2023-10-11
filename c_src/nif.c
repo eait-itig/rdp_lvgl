@@ -1904,8 +1904,8 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	fb = inst->lvki_fbuf;
 	buf = inst->lvki_cfb;
 	fbhdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
-	if (nls.nls_first_hdl->lvkh_fbuf == NULL)
-		nls.nls_first_hdl->lvkh_fbuf = buf;
+	if (fbhdl->lvkh_fbuf == NULL)
+		fbhdl->lvkh_fbuf = buf;
 
 	if (rect.x2 >= fb->fb_w)
 		rect.x2 = fb->fb_w - 1;
