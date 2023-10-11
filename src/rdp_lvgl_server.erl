@@ -355,7 +355,7 @@ handle_event(#ts_inpevt_unicode{code = Code, action = A}, Srv, S = #?MODULE{}) -
         true ->
             % otherwise we'll use send_text, which needs utf8
             #?MODULE{inst = Inst} = S,
-            {ok, Text} = unicode:characters_to_binary([Code], utf8),
+            Text = unicode:characters_to_binary([Code], utf8),
             ok = lv_indev:send_text(Inst, Text),
             {ok, S}
     end;
