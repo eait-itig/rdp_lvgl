@@ -119,7 +119,7 @@ choose_format(_Preferred, Supported, S = #?MODULE{}) ->
 
 handle_info({R, flush, _, _}, _Srv, S = #?MODULE{flushref = R, suppress = true}) ->
     {ok, S};
-handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = R}) ->
+handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S0 = #?MODULE{flushref = R}) ->
     W = (X2 - X1) + 1,
     H = (Y2 - Y1) + 1,
     Surf = #ts_surface_set_bits{dest = {X1, Y1},
@@ -127,15 +127,15 @@ handle_info({R, flush, {X1, Y1, X2, Y2}, PixData}, Srv, S = #?MODULE{flushref = 
                                 bpp = 16,
                                 codec = 0,
                                 data = lists:reverse(PixData)},
-    #?MODULE{frame = FrameId, sent_sof = SentSOF} = S,
+    #?MODULE{frame = FrameId, sent_sof = SentSOF} = S0,
     SOF = #ts_surface_frame_marker{frame = FrameId, action = start},
-    Surfs = case SentSOF of
-        true -> [Surf];
-        false -> [SOF, Surf]
+    {Surfs, S1} = case SentSOF of
+        true -> {[Surf], S0};
+        false -> {[SOF, Surf], S0#?MODULE{sent_sof = true}}
     end,
     Update = #ts_update_surfaces{surfaces = Surfs},
     rdp_server:send_update(Srv, Update),
-    {ok, S};
+    {ok, S1};
 
 handle_info({R, flush_sync}, _Srv, S0 = #?MODULE{flushref = R, suppress = true}) ->
     #?MODULE{inst = Inst, frame = FrameId} = S0,
