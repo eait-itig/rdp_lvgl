@@ -347,7 +347,18 @@ handle_event(#ts_inpevt_key{}, _Srv, S = #?MODULE{}) ->
     {ok, S};
 
 handle_event(#ts_inpevt_unicode{code = Code, action = A}, Srv, S = #?MODULE{}) ->
-    handle_event(#ts_inpevt_key{code = {Code,Code}, flags = [], action = A}, Srv, S);
+    if
+        (Code >= 16#20) and (Code =< 16#7e) ->
+            % if it's a basic printable char, handle it like a key scan code
+            handle_event(#ts_inpevt_key{code = {Code, Code},
+                flags = [], action = A}, Srv, S);
+        true ->
+            % otherwise we'll use send_text, which needs utf8
+            #?MODULE{inst = Inst} = S,
+            {ok, Text} = unicode:characters_to_binary([Code], utf8),
+            ok = lv_indev:send_text(Inst, Text),
+            {ok, S}
+    end;
 
 handle_event(#ts_inpevt_wheel{clicks = N}, _Srv, S = #?MODULE{}) ->
     #?MODULE{inst = Inst} = S,
