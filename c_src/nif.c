@@ -1842,13 +1842,55 @@ rlvgl_flush_done(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	shm = inst->lvki_kid->lvk_shm;
 	pd = (struct pdesc){
-		.pd_disp_drv = inst->lvki_disp_drv
+		.pd_flags	= 0,
+		.pd_disp_drv	= inst->lvki_disp_drv
 	};
 	shm_produce_phlush(shm, &pd);
 	shm_ring_doorbell(shm);
 
 	inst->lvki_flushing = 0;
 	rv = enif_make_atom(env, "ok");
+
+out:
+	leave_nif(&nls);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_flush_state(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkinst *inst;
+	struct nif_lock_state nls;
+	int rc;
+	ERL_NIF_TERM rv;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 1)
+		return (enif_make_badarg(env));
+
+	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 1);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (inst->lvki_fbhdl != NULL) {
+		rv = enif_make_atom(env, "busy");
+		goto out;
+	}
+
+	if (inst->lvki_state != LVKINST_ALIVE) {
+		rv = enif_make_atom(env, "teardown");
+		goto out;
+	}
+
+	if (!inst->lvki_flushing) {
+		rv = enif_make_atom(env, "idle");
+		goto out;
+	}
+
+	rv = enif_make_atom(env, "flushing");
 
 out:
 	leave_nif(&nls);
@@ -1912,8 +1954,11 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		buf = fb->fb_a;
 
 	fbhdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
-	if (fbhdl->lvkh_fbuf == NULL)
-		fbhdl->lvkh_fbuf = buf;
+	/*
+	 * We deliberately don't set lvkh_fbuf here. Our reference to the
+	 * framebuffer is fine to keep using until the end of the current
+	 * flush cycle.
+	 */
 
 	if (rect.x2 >= fb->fb_w)
 		rect.x2 = fb->fb_w - 1;
@@ -1985,6 +2030,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "send_key_event", 	3, rlvgl_send_key_event },
 	{ "send_wheel_event",	2, rlvgl_send_wheel_event },
 	{ "flush_done", 	1, rlvgl_flush_done },
+	{ "flush_state",	1, rlvgl_flush_state },
 	{ "prefork",		1, rlvgl_prefork },
 	{ "read_framebuffer",	2, rlvgl_read_framebuffer },
 	{ "make_buffer",	2, rlvgl_make_buffer },

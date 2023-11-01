@@ -253,9 +253,13 @@ struct edesc {
 	uint64_t	ed_param_data;
 };
 
+enum phlush_flags {
+	PHLUSH_FINAL	= (1<<0),
+	PHLUSH_STALL	= (1<<1),
+};
 struct pdesc {
 	atomic_uint		pd_owner;
-	uint32_t		pd_final;
+	uint32_t		pd_flags;
 	uint64_t		pd_disp_drv;
 };
 

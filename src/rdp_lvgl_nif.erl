@@ -138,6 +138,9 @@ prefork(_N) -> error(no_nif).
 -spec flush_done(instance()) -> ok | {error, term()}.
 flush_done(_Inst) -> error(no_nif).
 
+-spec flush_state(instance()) -> idle | flushing | teardown.
+flush_state(_Inst) -> error(no_nif).
+
 -spec make_buffer(instance(), binary()) -> async_return(buffer()).
 make_buffer(_Inst, _Data) -> error(no_nif).
 

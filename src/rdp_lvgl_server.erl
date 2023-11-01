@@ -389,6 +389,7 @@ handle_event(#ts_suppress_output{allow_updates = true, rect = R}, Srv, S0 = #?MO
     handle_event(#ts_refresh_rect{rects = [R]}, Srv, S1);
 
 handle_event(#ts_refresh_rect{rects = []}, _Srv, S0 = #?MODULE{}) ->
+    erlang:garbage_collect(),
     {ok, S0};
 handle_event(#ts_refresh_rect{rects = [R | Rest]}, Srv, S0 = #?MODULE{}) ->
     #?MODULE{inst = Inst, flushref = Ref} = S0,

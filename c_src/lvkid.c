@@ -1079,8 +1079,15 @@ lvkid_lv_phlush_ring(void *arg)
 		assert(drv == &inst->lvi_disp_drv);
 		assert(inst->lvi_disp != NULL);
 
-		if (pd->pd_final == 1) {
+		if (pd->pd_flags & PHLUSH_FINAL) {
 			inst->lvi_phinal = 1;
+			pthread_cond_broadcast(&lv_flush_cond);
+			goto next;
+		}
+
+		if (pd->pd_flags & PHLUSH_STALL) {
+			inst->lvi_stalled = 1;
+			lv_disp_flush_ready(drv);
 			pthread_cond_broadcast(&lv_flush_cond);
 			goto next;
 		}
@@ -2235,8 +2242,30 @@ lvkid_erl_flush_ring(void *arg)
 		if (hdl->lvkh_fbuf == NULL)
 			hdl->lvkh_fbuf = buf;
 		if (hdl->lvkh_fbuf != buf) {
+			struct pdesc pd;
+
+			env = inst->lvki_env;
+			ref = inst->lvki_msgref;
+			inst->lvki_env = enif_alloc_env();
+			inst->lvki_msgref = enif_make_copy(inst->lvki_env, ref);
+			owner = inst->lvki_owner;
+
+			log_warn("stalling inst %p (owner %T) due to flush "
+			    "on wrong fbuf", inst, enif_make_pid(env, &owner));
+
+			pd = (struct pdesc){
+				.pd_flags	= PHLUSH_STALL,
+				.pd_disp_drv	= inst->lvki_disp_drv
+			};
+			shm_produce_phlush(kid->lvk_shm, &pd);
+
+			msg = enif_make_tuple2(env,
+			    ref,
+			    enif_make_atom(env, "flush_sync"));
+			enif_send(NULL, &owner, env, msg);
+			enif_free_env(env);
+
 			pthread_rwlock_unlock(&inst->lvki_lock);
-			log_warn("dropping due to wrong buf");
 			goto next;
 		}
 
@@ -2989,7 +3018,7 @@ lvkinst_teardown(struct lvkinst *inst)
 	 * Otherwise teardown will have to wait for it.
 	 */
 	pd = (struct pdesc){
-		.pd_final	= 1,
+		.pd_flags	= PHLUSH_FINAL,
 		.pd_disp_drv	= inst->lvki_disp_drv
 	};
 	shm_produce_phlush(kid->lvk_shm, &pd);

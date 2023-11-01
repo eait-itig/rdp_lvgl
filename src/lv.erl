@@ -32,7 +32,8 @@
     make_buffer/2,
     setup/1,
     flush_done/1,
-    read_framebuffer/2
+    read_framebuffer/2,
+    flush_state/1
     ]).
 
 -export_type([
@@ -235,6 +236,11 @@ setup(Size) ->
 -spec flush_done(instance()) -> ok | {error, busy} | {error, teardown}.
 flush_done(Inst) ->
     rdp_lvgl_nif:flush_done(Inst).
+
+%% @doc Returns the current flushing state of the LVGL instance.
+-spec flush_state(instance()) -> idle | flushing | teardown.
+flush_state(Inst) ->
+    rdp_lvgl_nif:flush_state(Inst).
 
 %% @doc Creates a byte buffer whose liftime is tied to an LVGL instance.
 %%
