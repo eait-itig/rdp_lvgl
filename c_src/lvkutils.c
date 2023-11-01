@@ -465,7 +465,6 @@ lvk_secure_alloc(size_t len)
 	    -1, 0);
 	if (base == MAP_FAILED)
 		return (NULL);
-	log_debug("base = %p, npages = %u", base, npages);
 	ptr = (char *)base + PAGE;
 	rc = mprotect(ptr, (npages - 2) * PAGE, PROT_READ | PROT_WRITE);
 	if (rc < 0) {
@@ -494,7 +493,6 @@ lvk_secure_free(void *ptr, size_t len)
 		return;
 	npages = 2 + ((len / PAGE) + 1);
 	base = (char *)ptr - PAGE;
-	log_debug("base = %p, npages = %u", base, npages);
 	explicit_bzero(ptr, len);
 	munmap(base, npages * PAGE);
 }
