@@ -1194,6 +1194,15 @@ lvkid_lv_cmd_ring(void *arg)
 			pthread_mutex_lock(&lv_mtx);
 			lv_do_call(shm, cd, ncd);
 			pthread_mutex_unlock(&lv_mtx);
+			for (i = 0; i < ncd; ++i) {
+				/*
+				 * Zero out all the argument data: it might be
+				 * sensitive and we don't want it to stick
+				 * around for ages
+				 */
+				explicit_bzero(cd[i]->cd_data,
+				    sizeof (cd[i]->cd_data));
+			}
 			break;
 		case CMD_COPY_BUF:
 			lvkid_lv_cmd_copy_buf(kid, shm, cd, ncd);
@@ -2449,6 +2458,13 @@ next:
 		if (inst != NULL)
 			pthread_rwlock_unlock(&inst->lvki_lock);
 		pthread_rwlock_unlock(&kid->lvk_lock);
+
+		/*
+		 * Zero out all the fields which could contain sensitive data
+		 * (like key presses), so it doesn't stick around in the ring.
+		 */
+		explicit_bzero((char *)ed + offsetof(struct edesc, ed_code),
+		    sizeof (struct edesc) - offsetof(struct edesc, ed_code));
 		shm_finish_evt(ed);
 	}
 
@@ -2518,8 +2534,15 @@ lvkid_erl_rsp_ring(void *arg)
 		} else {
 			free(cmd);
 		}
-		for (i = 0; i < nrd; ++i)
+		for (i = 0; i < nrd; ++i) {
+			/*
+			 * Zero out the reply data: it might contain sensitive
+			 * info and we don't want it to stick around
+			 */
+			explicit_bzero(&rd[i]->rd_data,
+			    sizeof (rd[i]->rd_data));
 			shm_finish_rsp(rd[i]);
+		}
 	}
 
 	return (NULL);

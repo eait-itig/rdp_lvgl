@@ -141,10 +141,15 @@ void lv_textarea_add_char(lv_obj_t * obj, uint32_t c)
 
     if(ta->pwd_mode) {
         /*+2: the new char + \0*/
+        char *new_alloc;
         size_t realloc_size = strlen(ta->pwd_tmp) + strlen(letter_buf) + 1;
-        ta->pwd_tmp = lv_mem_realloc(ta->pwd_tmp, realloc_size);
-        LV_ASSERT_MALLOC(ta->pwd_tmp);
-        if(ta->pwd_tmp == NULL) return;
+        new_alloc = lv_mem_alloc(realloc_size);
+        LV_ASSERT_MALLOC(new_alloc);
+        if(new_alloc == NULL) return;
+        bcopy(ta->pwd_tmp, new_alloc, strlen(ta->pwd_tmp) + 1);
+        explicit_bzero(ta->pwd_tmp, strlen(ta->pwd_tmp));
+        lv_mem_free(ta->pwd_tmp);
+        ta->pwd_tmp = new_alloc;
 
         _lv_txt_ins(ta->pwd_tmp, ta->cursor.pos, (const char *)letter_buf);
 
@@ -191,10 +196,16 @@ void lv_textarea_add_text(lv_obj_t * obj, const char * txt)
     lv_textarea_clear_selection(obj);
 
     if(ta->pwd_mode) {
+        char *new_alloc;
         size_t realloc_size = strlen(ta->pwd_tmp) + strlen(txt) + 1;
-        ta->pwd_tmp = lv_mem_realloc(ta->pwd_tmp, realloc_size);
-        LV_ASSERT_MALLOC(ta->pwd_tmp);
-        if(ta->pwd_tmp == NULL) return;
+        new_alloc = lv_mem_alloc(realloc_size);
+        LV_ASSERT_MALLOC(new_alloc);
+        if(new_alloc == NULL) return;
+        bcopy(ta->pwd_tmp, new_alloc, strlen(ta->pwd_tmp) + 1);
+        explicit_bzero(ta->pwd_tmp, strlen(ta->pwd_tmp));
+        lv_mem_free(ta->pwd_tmp);
+        ta->pwd_tmp = new_alloc;
+
 
         _lv_txt_ins(ta->pwd_tmp, ta->cursor.pos, txt);
 
@@ -238,11 +249,19 @@ void lv_textarea_del_char(lv_obj_t * obj)
     }
 
     if(ta->pwd_mode) {
+        char *new_alloc;
+        size_t realloc_size, orig_size = strlen(ta->pwd_tmp);
         _lv_txt_cut(ta->pwd_tmp, ta->cursor.pos - 1, 1);
 
-        ta->pwd_tmp = lv_mem_realloc(ta->pwd_tmp, strlen(ta->pwd_tmp) + 1);
-        LV_ASSERT_MALLOC(ta->pwd_tmp);
-        if(ta->pwd_tmp == NULL) return;
+        realloc_size = strlen(ta->pwd_tmp) + 1;
+        new_alloc = lv_mem_alloc(realloc_size);
+        LV_ASSERT_MALLOC(new_alloc);
+        if(new_alloc == NULL) return;
+
+        bcopy(ta->pwd_tmp, new_alloc, realloc_size);
+        explicit_bzero(ta->pwd_tmp, orig_size);
+        lv_mem_free(ta->pwd_tmp);
+        ta->pwd_tmp = new_alloc;
     }
 
     /*Move the cursor to the place of the deleted character*/
@@ -280,7 +299,7 @@ void lv_textarea_set_text(lv_obj_t * obj, const char * txt)
         lv_label_set_text(ta->label, "");
         lv_textarea_set_cursor_pos(obj, LV_TEXTAREA_CURSOR_LAST);
         if(ta->pwd_mode) {
-            ta->pwd_tmp[0] = '\0'; /*Clear the password too*/
+            explicit_bzero(ta->pwd_tmp, strlen(ta->pwd_tmp) + 1);
         }
         uint32_t i = 0;
         while(txt[i] != '\0') {
@@ -845,6 +864,7 @@ static void lv_textarea_destructor(const lv_obj_class_t * class_p, lv_obj_t * ob
 
     lv_textarea_t * ta = (lv_textarea_t *)obj;
     if(ta->pwd_tmp != NULL) {
+        explicit_bzero(ta->pwd_tmp, strlen(ta->pwd_tmp));
         lv_mem_free(ta->pwd_tmp);
         ta->pwd_tmp = NULL;
     }
