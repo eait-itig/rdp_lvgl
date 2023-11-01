@@ -42,6 +42,7 @@ typedef struct {
     lv_obj_t * label;            /*Label of the text area*/
     char * placeholder_txt;      /*Place holder label. only visible if text is an empty string*/
     char * pwd_tmp;              /*Used to store the original text in password mode*/
+    uint32_t pwd_tmp_len;
     char * pwd_bullet;           /*Replacement characters displayed in password mode*/
     const char * accepted_chars; /*Only these characters will be accepted. NULL: accept all*/
     uint32_t max_length;         /*The max. number of characters. 0: no limit*/

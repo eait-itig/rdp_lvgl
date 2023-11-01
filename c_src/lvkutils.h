@@ -97,4 +97,7 @@ uint cdi_ncd(struct cdinline *cdi);
 void cdi_get(struct cdinline *cdi, uint8_t *buf, size_t len);
 void cdi_put(struct cdinline *cdi, const uint8_t *buf, size_t len);
 
+void *lvk_secure_alloc(size_t len);
+void lvk_secure_free(void *ptr, size_t len);
+
 #endif /* _LVK_UTILS_H */

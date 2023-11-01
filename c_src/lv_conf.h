@@ -73,6 +73,14 @@
 /*Use the standard `memcpy` and `memset` instead of LVGL's own functions. (Might or might not be faster).*/
 #define LV_MEMCPY_MEMSET_STD 0
 
+/* Used for password inputs */
+#define LV_MEM_CUSTOM_SECURE	1
+#if LV_MEM_CUSTOM_SECURE == 1
+    #define LV_MEM_CUSTOM_SECURE_INCLUDE	<lvkutils.h>
+    #define LV_MEM_CUSTOM_SECURE_ALLOC		lvk_secure_alloc
+    #define LV_MEM_CUSTOM_SECURE_FREE		lvk_secure_free
+#endif
+
 /*====================
    HAL SETTINGS
  *====================*/

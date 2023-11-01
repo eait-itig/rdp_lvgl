@@ -28,6 +28,9 @@
 #include "log.h"
 #include "lvkutils.h"
 
+#include <unistd.h>
+#include <sys/mman.h>
+
 #define	TILE_XSIZE	120
 #define TILE_YSIZE	64
 
@@ -446,4 +449,54 @@ void
 lv_span_set_style(lv_span_t *span, lv_style_t *sty)
 {
 	lv_style_copy(sty, &span->style);
+}
+
+static size_t PAGE = 0;
+
+void *
+lvk_secure_alloc(size_t len)
+{
+	int rc;
+	void *base;
+	void *ptr;
+	size_t npages;
+	if (PAGE == 0)
+		PAGE = sysconf(_SC_PAGESIZE);
+	npages = 2 + ((len / PAGE) + 1);
+	base = mmap(NULL, npages * PAGE, PROT_NONE, MAP_PRIVATE | MAP_ANON,
+	    -1, 0);
+	if (base == MAP_FAILED)
+		return (NULL);
+	log_debug("base = %p, npages = %u", base, npages);
+	ptr = (char *)base + PAGE;
+	rc = mprotect(ptr, (npages - 2) * PAGE, PROT_READ | PROT_WRITE);
+	if (rc < 0) {
+		munmap(base, npages * PAGE);
+		return (NULL);
+	}
+	madvise(base, PAGE, MADV_DONTNEED);
+#if defined(MADV_DONTDUMP)
+	madvise(ptr, (npages - 2) * PAGE, MADV_DONTDUMP);
+#endif
+#if defined(MADV_WIPEONFORK)
+	madvise(ptr, (npages - 2) * PAGE, MADV_WIPEONFORK);
+#endif
+	madvise((char *)base + (npages - 1) * PAGE, PAGE, MADV_DONTNEED);
+	return (ptr);
+}
+
+void
+lvk_secure_free(void *ptr, size_t len)
+{
+	size_t npages;
+	void *base;
+	if (ptr == NULL)
+		return;
+	if (len == 0)
+		return;
+	npages = 2 + ((len / PAGE) + 1);
+	base = (char *)ptr - PAGE;
+	log_debug("base = %p, npages = %u", base, npages);
+	explicit_bzero(ptr, len);
+	munmap(base, npages * PAGE);
 }
