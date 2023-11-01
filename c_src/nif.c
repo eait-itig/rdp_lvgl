@@ -1906,12 +1906,10 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	buf = inst->lvki_cfb;
 	/*
 	 * We might be called before the first flush for frame 1: if so, use
-	 * framebuffer B. LVGL hasn't finished rendering the first frame yet,
-	 * and we don't want to give out incomplete rendering if we can help
-	 * it. For the first frame it'll be rendering into framebuffer A.
+	 * framebuffer A. LVGL will render to that framebuffer first.
 	 */
 	if (buf == NULL)
-		buf = fb->fb_b;
+		buf = fb->fb_a;
 
 	fbhdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
 	if (fbhdl->lvkh_fbuf == NULL)
