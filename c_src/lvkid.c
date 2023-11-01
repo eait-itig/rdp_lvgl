@@ -657,6 +657,7 @@ lvkid_lv_read_kbd_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
 	nev = TAILQ_NEXT(ev, ie_entry);
 	if (nev != NULL) {
 		TAILQ_REMOVE(&inst->lvi_kbd_q, ev, ie_entry);
+		explicit_bzero(ev, sizeof (*ev));
 		free(ev);
 		data->continue_reading = 1;
 	}
