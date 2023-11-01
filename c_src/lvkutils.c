@@ -71,19 +71,17 @@ lvk_tile_to_iolist(ErlNifEnv *env, struct fbuf *fb, lv_color_t *buf,
     void *rsrc, const lv_area_t *tile)
 {
 	ERL_NIF_TERM list, *row;
-	ErlNifBinary bin;
 	lv_color_t *p;
 	uint nrow, ncol, i, y;
+	assert(buf != NULL);
+	assert(rsrc != NULL);
 	nrow = tile->y2 - tile->y1 + 1;
 	ncol = tile->x2 - tile->x1 + 1;
 	row = alloca(nrow * sizeof (ERL_NIF_TERM));
 	for (i = 0, y = tile->y1; i < nrow; ++i, ++y) {
 		p = &buf[fb->fb_w * y + tile->x1];
-		enif_alloc_binary(ncol * sizeof (lv_color_t), &bin);
-		memcpy(bin.data, p, bin.size);
-		row[i] = enif_make_binary(env, &bin);
-		/*row[i] = enif_make_resource_binary(env, rsrc, p,
-		    ncol * sizeof (lv_color_t));*/
+		row[i] = enif_make_resource_binary(env, rsrc, p,
+		    ncol * sizeof (lv_color_t));
 	}
 	list = enif_make_list_from_array(env, row, nrow);
 	return (list);
