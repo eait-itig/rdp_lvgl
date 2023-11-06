@@ -152,6 +152,26 @@ parse_enum(ErlNifEnv *env, ERL_NIF_TERM term, const struct enum_spec *specs,
 	return (0);
 }
 
+struct zerobuf {
+	char	*zb_data;
+	size_t	 zb_len;
+};
+
+static void
+zerobuf_dtor(ErlNifEnv *env, void *arg)
+{
+	struct zerobuf *zb = arg;
+	explicit_bzero(zb->zb_data, zb->zb_len);
+	free(zb->zb_data);
+	zb->zb_data = NULL;
+	zb->zb_len = 0;
+}
+
+static ErlNifResourceType *zerobuf_rsrc;
+static ErlNifResourceTypeInit zerobuf_ops = {
+	.dtor	= zerobuf_dtor,
+};
+
 struct nif_call_data {
 	ErlNifEnv		*ncd_env;
 	ERL_NIF_TERM		 ncd_msgref;
@@ -186,6 +206,7 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 	lv_color32_t c32;
 	ErlNifBinary *bin;
 	uint do_release;
+	struct zerobuf *zb;
 
 	if (err != 0) {
 		msg = enif_make_tuple4(env,
@@ -327,7 +348,17 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 	case ARG_INLINE_BUF:
 	case ARG_INLINE_STR:
 		bin = rv;
-		rterm = enif_make_binary(env, bin);
+
+		zb = enif_alloc_resource(zerobuf_rsrc, sizeof (struct zerobuf));
+		bzero(zb, sizeof (*zb));
+		zb->zb_len = bin->size;
+		zb->zb_data = malloc(zb->zb_len);
+		bcopy(bin->data, zb->zb_data, zb->zb_len);
+
+		rterm = enif_make_resource_binary(env, zb, zb->zb_data,
+		    zb->zb_len);
+
+		enif_release_resource(zb);
 		break;
 	default:
 		assert(0);
@@ -2011,6 +2042,9 @@ rlvgl_nif_load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM info)
 {
 	lvk_open_resource_types(env);
 	log_setup();
+	zerobuf_rsrc = enif_open_resource_type_x(env, "lv_zerobuf",
+	    &zerobuf_ops, ERL_NIF_RT_CREATE | ERL_NIF_RT_TAKEOVER,
+	    NULL);
 	return (0);
 }
 

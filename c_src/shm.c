@@ -185,10 +185,6 @@ alloc_shmintf(void)
 		madvise(f->fb_a, f->fb_sz, MADV_DONTDUMP);
 		madvise(f->fb_b, f->fb_sz, MADV_DONTDUMP);
 #endif
-#if defined(MADV_DONTFORK)
-		madvise(f->fb_a, f->fb_sz, MADV_DONTFORK);
-		madvise(f->fb_b, f->fb_sz, MADV_DONTFORK);
-#endif
 	}
 
 	shm->si_cmdr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
@@ -804,6 +800,8 @@ shm_fork(struct shmintf *shm)
 {
 	pid_t kid;
 	int fd, maxfd;
+	struct fbuf *fb;
+	uint i;
 #if !HAVE_CLOSEFROM
 	int fdlimit;
 #endif
@@ -823,6 +821,24 @@ shm_fork(struct shmintf *shm)
 
 	kid = fork();
 	shm->si_kid = kid;
+
+#if defined(MADV_DONTFORK)
+	/*
+	 * After we've forked, mark the framebuffers and rings so they won't
+	 * get shared with any other forked children.
+	 */
+	madvise(shm->si_cmdr, shm->si_ringsz, MADV_DONTFORK);
+	madvise(shm->si_evr, shm->si_ringsz, MADV_DONTFORK);
+	madvise(shm->si_flr, shm->si_ringsz, MADV_DONTFORK);
+	madvise(shm->si_phr, shm->si_ringsz, MADV_DONTFORK);
+	madvise(shm->si_respr, shm->si_respringsz, MADV_DONTFORK);
+	for (i = 0; i < shm->si_nfbuf; ++i) {
+		fb = &shm->si_fbuf[i];
+		madvise(fb->fb_a, fb->fb_sz, MADV_DONTFORK);
+		madvise(fb->fb_b, fb->fb_sz, MADV_DONTFORK);
+	}
+#endif
+
 	switch (kid) {
 	case -1:
 		break;
