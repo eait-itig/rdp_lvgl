@@ -71,3 +71,11 @@ send_text(Inst, Text) ->
 -spec get_focused(lv:instance(), indev()) -> {ok, lv:object() | null} | lv:error().
 get_focused(Inst, keyboard) ->
     ?async_wrapper(indev_get_focused, Inst).
+
+-spec reset_keyboard(lv:instance(), lv:object() | null) -> ok | lv:error().
+reset_keyboard(Inst, Obj) ->
+    ?async_void_wrapper(kbd_reset, Inst, Obj).
+
+-spec reset_mouse(lv:instance(), lv:object() | null) -> ok | lv:error().
+reset_mouse(Inst, Obj) ->
+    ?async_void_wrapper(mouse_reset, Inst, Obj).

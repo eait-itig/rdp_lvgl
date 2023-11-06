@@ -12339,6 +12339,116 @@ out:
 	return (rv);
 }
 
+static ERL_NIF_TERM
+rlvgl_kbd_reset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkinst *inst;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_obj_hdl(env, argv[1], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_indev_reset,
+	    ARG_PTR, inst->lvki_kbd,
+	    ARG_PTR_OBJ, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
+rlvgl_mouse_reset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkinst *inst;
+	struct lvkobj *obj;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	rc = enter_obj_hdl(env, argv[1], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_NONE, lv_indev_reset,
+	    ARG_PTR, inst->lvki_mouse,
+	    ARG_PTR_OBJ, obj,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
 #define AUTOGEN_NIFS \
 { "bar_create",				1, rlvgl_bar_create1 }, \
 { "bar_set_value",			3, rlvgl_bar_set_value3 }, \
@@ -12530,4 +12640,6 @@ out:
 { "scr_load",				2, rlvgl_scr_load2 }, \
 { "scr_load_anim",			6, rlvgl_scr_load_anim6 }, \
 { "set_mouse_cursor",			2, rlvgl_set_mouse_cursor2 }, \
-{ "indev_get_focused",			1, rlvgl_indev_get_focused1 }
+{ "indev_get_focused",			1, rlvgl_indev_get_focused1 }, \
+{ "kbd_reset",				2, rlvgl_kbd_reset2 }, \
+{ "mouse_reset",			2, rlvgl_mouse_reset2 }

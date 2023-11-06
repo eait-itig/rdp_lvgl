@@ -258,7 +258,7 @@ chart_set_all_value(_Obj, _Series, _Y) -> error(no_nif).
 chart_set_next_value(_Obj, _Series, _Y) -> error(no_nif).
 -spec chart_set_next_value2(object(), lv_chart:series(), none | integer(), none | integer()) -> async_return().
 chart_set_next_value2(_Obj, _Series, _X, _Y) -> error(no_nif).
--spec obj_create(instance(), object()) -> async_return(object()).
+-spec obj_create(instance(), object() | null | none) -> async_return(object()).
 obj_create(_Inst, _Parent) -> error(no_nif).
 -spec obj_center(object()) -> async_return().
 obj_center(_Obj) -> error(no_nif).
@@ -298,7 +298,7 @@ obj_move_foreground(_Obj) -> error(no_nif).
 obj_move_background(_Obj) -> error(no_nif).
 -spec obj_swap(object(), object()) -> async_return().
 obj_swap(_Obj, _Other) -> error(no_nif).
--spec obj_set_parent(object(), object()) -> async_return().
+-spec obj_set_parent(object(), object() | null | none) -> async_return().
 obj_set_parent(_Obj, _Parent) -> error(no_nif).
 -spec obj_move_to_index(object(), integer()) -> async_return().
 obj_move_to_index(_Obj, _Index) -> error(no_nif).
@@ -380,3 +380,7 @@ scr_load_anim(_Inst, _Screen, _Anim, _Time, _Delay, _Autodel) -> error(no_nif).
 set_mouse_cursor(_Inst, _Cursor) -> error(no_nif).
 -spec indev_get_focused(instance()) -> async_return(object()).
 indev_get_focused(_Inst) -> error(no_nif).
+-spec kbd_reset(instance(), object() | null | none) -> async_return().
+kbd_reset(_Inst, _Obj) -> error(no_nif).
+-spec mouse_reset(instance(), object() | null | none) -> async_return().
+mouse_reset(_Inst, _Obj) -> error(no_nif).

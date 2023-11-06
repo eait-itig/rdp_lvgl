@@ -123,7 +123,10 @@ end
 
 class Obj < Handle
   def stem; 'obj'; end
-  def erl_type; 'object()'; end
+  def erl_type
+    return 'object() | null | none' if @nullable
+    'object()'
+  end
 end
 
 class Style < Handle
@@ -1029,6 +1032,8 @@ Func.new('scr_load_anim', 'lv_disp_scr_load_anim', Void, InstMember.new('inst', 
 Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void, InstMember.new('inst', 'lvki_mouse'), Obj.new('cursor'))
 
 LvFunc.new('indev_get_focused', Obj, InstMember.new('inst', 'lvki_kbd'))
+Func.new('kbd_reset', 'lv_indev_reset', Void, InstMember.new('inst', 'lvki_kbd'), Obj.new('obj', true))
+Func.new('mouse_reset', 'lv_indev_reset', Void, InstMember.new('inst', 'lvki_mouse'), Obj.new('obj', true))
 
 $stdout.reopen('c_src/nif_gen.h', 'w')
 Func.print_all

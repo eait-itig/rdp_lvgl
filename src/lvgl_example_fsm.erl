@@ -285,6 +285,8 @@ login(info, {_Ref, {login_pin, Login, PinInp}}, S0 = #?MODULE{}) ->
 
 %% @private
 checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
+    ok = lv_indev:reset_keyboard(Inst, null),
+
     {Screen, Flex} = make_flex(S0),
     {ok, _Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
