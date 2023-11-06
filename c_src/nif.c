@@ -155,14 +155,19 @@ parse_enum(ErlNifEnv *env, ERL_NIF_TERM term, const struct enum_spec *specs,
 struct zerobuf {
 	char	*zb_data;
 	size_t	 zb_len;
+	bool	 zb_secure;
 };
 
 static void
 zerobuf_dtor(ErlNifEnv *env, void *arg)
 {
 	struct zerobuf *zb = arg;
-	explicit_bzero(zb->zb_data, zb->zb_len);
-	free(zb->zb_data);
+	if (zb->zb_secure) {
+		lvk_secure_free(zb->zb_data, zb->zb_len);
+	} else {
+		explicit_bzero(zb->zb_data, zb->zb_len);
+		free(zb->zb_data);
+	}
 	zb->zb_data = NULL;
 	zb->zb_len = 0;
 }
@@ -179,6 +184,7 @@ struct nif_call_data {
 	void			*ncd_priv;
 	const struct enum_spec	*ncd_enum;
 	bool			 ncd_multi;
+	bool			 ncd_ret_secure;
 };
 
 static void
@@ -351,8 +357,14 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 
 		zb = enif_alloc_resource(zerobuf_rsrc, sizeof (struct zerobuf));
 		bzero(zb, sizeof (*zb));
+
 		zb->zb_len = bin->size;
-		zb->zb_data = malloc(zb->zb_len);
+		if (ncd->ncd_ret_secure) {
+			zb->zb_data = lvk_secure_alloc(zb->zb_len);
+			zb->zb_secure = true;
+		} else {
+			zb->zb_data = malloc(zb->zb_len);
+		}
 		bcopy(bin->data, zb->zb_data, zb->zb_len);
 
 		rterm = enif_make_resource_binary(env, zb, zb->zb_data,

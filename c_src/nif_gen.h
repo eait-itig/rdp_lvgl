@@ -802,6 +802,8 @@ rlvgl_textarea_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	ncd->ncd_ret_secure = true;
+
 
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_INLINE_STR, lv_textarea_get_text,

@@ -658,6 +658,7 @@ class Func
     @rtype = rtype.new('rv')
     @rtype.set_func(self, -1)
     @args = args
+    @rsecure = false
     @flags = {}
     args.each_with_index { |a,i| a.set_func(self, i) }
     Func.register(self)
@@ -723,6 +724,8 @@ class Func
     puts "\t\tgoto out;"
     puts "\t}"
     puts ""
+    puts "\tncd->ncd_ret_secure = true;" if @rsecure
+    puts "" if @rsecure
     precall
     puts ""
     puts "\trc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,"
@@ -759,6 +762,10 @@ class Func
   def get_nif_def
     tabs = "\t" * (5 - ((@name.size + 5) / 8))
     "{ \"#{@name}\",#{tabs}#{@args.size}, rlvgl_#{@name}#{@args.size} }"
+  end
+
+  def secure_return!
+    @rsecure = true
   end
 end
 
@@ -821,7 +828,7 @@ WidgetFunc.new('checkbox', 'get_text', InlineStr)
 
 WidgetCreateFunc.new('textarea')
 WidgetFunc.new('textarea', 'set_text', Void, InlineStr.new('text'))
-WidgetFunc.new('textarea', 'get_text', InlineStr)
+WidgetFunc.new('textarea', 'get_text', InlineStr).secure_return!
 WidgetFunc.new('textarea', 'set_placeholder_text', Void, InlineStr.new('text'))
 WidgetFunc.new('textarea', 'set_text_selection', Void, Bool8.new('state'))
 WidgetFunc.new('textarea', 'set_password_mode', Void, Bool8.new('state'))
