@@ -521,4 +521,11 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 		};
 		shm_produce_rsp(shm, rd, 1);
 	}
+
+	for (ib = 0; ib < MAX_ARGS; ++ib) {
+		if (ibuf[ib].ib_len > 0) {
+			explicit_bzero(ibuf[ib].ib_buf,
+			    sizeof (ibuf[ib].ib_buf));
+		}
+	}
 }

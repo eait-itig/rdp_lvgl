@@ -252,7 +252,7 @@ void lv_textarea_del_char(lv_obj_t * obj)
         _lv_txt_cut(ta->pwd_tmp, ta->cursor.pos - 1, 1);
         new_size = strlen(ta->pwd_tmp);
 
-        explicit_bzero(ta->pwd_tmp + orig_size, new_size - orig_size);
+        explicit_bzero(ta->pwd_tmp + orig_size, orig_size - new_size);
     }
 
     /*Move the cursor to the place of the deleted character*/
