@@ -181,6 +181,14 @@ alloc_shmintf(void)
 		    MAP_SHARED | MAP_ANON, -1, 0);
 		if (f->fb_b == MAP_FAILED)
 			goto err;
+#if defined(MADV_DONTDUMP)
+		madvise(f->fb_a, f->fb_sz, MADV_DONTDUMP);
+		madvise(f->fb_b, f->fb_sz, MADV_DONTDUMP);
+#endif
+#if defined(MADV_DONTFORK)
+		madvise(f->fb_a, f->fb_sz, MADV_DONTFORK);
+		madvise(f->fb_b, f->fb_sz, MADV_DONTFORK);
+#endif
 	}
 
 	shm->si_cmdr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
