@@ -67,6 +67,7 @@ static struct lv_event_udata_list leus;
 struct input_event {
 	TAILQ_ENTRY(input_event)	ie_entry;
 	lv_indev_data_t			ie_data;
+	int				ie_delivered;
 };
 TAILQ_HEAD(input_event_q, input_event);
 struct lvinst {
@@ -647,20 +648,42 @@ lvkid_lv_read_kbd_cb(lv_indev_drv_t *drv, lv_indev_data_t *data)
 	struct input_event *ev, *nev;
 
 	ev = TAILQ_FIRST(&inst->lvi_kbd_q);
+	/* Initial state before any keyboard inputs are received */
 	if (ev == NULL) {
 		data->state = LV_INDEV_STATE_RELEASED;
 		return;
 	}
 
+	/*
+	 * Let's say the user presses enter, we get a pressed event and a
+	 * released one. We want to leave the released one on the queue
+	 * afterwards so that we correctly report that key and the released
+	 * state.
+	 *
+	 * If the user then presses another key later, we know we've already
+	 * told lvgl about that release we left on the front of the queue, so
+	 * we want to skip it and just tell them about the new pressed key.
+	 * We only want to do this if we definitely already told lvgl about the
+	 * release, though, so we use the ie_delivered field.
+	 */
+	nev = TAILQ_NEXT(ev, ie_entry);
+	if (nev != NULL && ev->ie_delivered) {
+		TAILQ_REMOVE(&inst->lvi_kbd_q, ev, ie_entry);
+		explicit_bzero(ev, sizeof (*ev));
+		free(ev);
+		ev = nev;
+		nev = TAILQ_NEXT(ev, ie_entry);
+	}
+
 	data->key = ev->ie_data.key;
 	data->state = ev->ie_data.state;
-	nev = TAILQ_NEXT(ev, ie_entry);
 	if (nev != NULL) {
 		TAILQ_REMOVE(&inst->lvi_kbd_q, ev, ie_entry);
 		explicit_bzero(ev, sizeof (*ev));
 		free(ev);
 		data->continue_reading = 1;
 	}
+	ev->ie_delivered = 1;
 }
 
 static void
