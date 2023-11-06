@@ -380,6 +380,10 @@ scr_load_anim(_Inst, _Screen, _Anim, _Time, _Delay, _Autodel) -> error(no_nif).
 set_mouse_cursor(_Inst, _Cursor) -> error(no_nif).
 -spec indev_get_focused(instance()) -> async_return(object()).
 indev_get_focused(_Inst) -> error(no_nif).
+-spec kbd_wait_release(instance()) -> async_return().
+kbd_wait_release(_Inst) -> error(no_nif).
+-spec mouse_wait_release(instance()) -> async_return().
+mouse_wait_release(_Inst) -> error(no_nif).
 -spec kbd_reset(instance(), object() | null | none) -> async_return().
 kbd_reset(_Inst, _Obj) -> error(no_nif).
 -spec mouse_reset(instance(), object() | null | none) -> async_return().

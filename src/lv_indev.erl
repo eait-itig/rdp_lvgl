@@ -72,10 +72,18 @@ send_text(Inst, Text) ->
 get_focused(Inst, keyboard) ->
     ?async_wrapper(indev_get_focused, Inst).
 
--spec reset_keyboard(lv:instance(), lv:object() | null) -> ok | lv:error().
-reset_keyboard(Inst, Obj) ->
-    ?async_void_wrapper(kbd_reset, Inst, Obj).
+-spec reset(lv:instance(), indev()) -> ok | lv:error().
+reset(Inst, Device) ->
+    reset(Inst, Device, null).
 
--spec reset_mouse(lv:instance(), lv:object() | null) -> ok | lv:error().
-reset_mouse(Inst, Obj) ->
+-spec reset(lv:instance(), indev(), lv:object() | null) -> ok | lv:error().
+reset(Inst, keyboard, Obj) ->
+    ?async_void_wrapper(kbd_reset, Inst, Obj);
+reset(Inst, mouse, Obj) ->
     ?async_void_wrapper(mouse_reset, Inst, Obj).
+
+-spec wait_release(lv:instance(), indev()) -> ok | lv:error().
+wait_release(Inst, keyboard) ->
+    ?async_void_wrapper(kbd_wait_release, Inst);
+wait_release(Inst, mouse) ->
+    ?async_void_wrapper(mouse_wait_release, Inst).

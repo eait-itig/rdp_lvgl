@@ -1032,6 +1032,8 @@ Func.new('scr_load_anim', 'lv_disp_scr_load_anim', Void, InstMember.new('inst', 
 Func.new('set_mouse_cursor', 'lv_indev_set_cursor', Void, InstMember.new('inst', 'lvki_mouse'), Obj.new('cursor'))
 
 LvFunc.new('indev_get_focused', Obj, InstMember.new('inst', 'lvki_kbd'))
+Func.new('kbd_wait_release', 'lv_indev_wait_release', Void, InstMember.new('inst', 'lvki_kbd'))
+Func.new('mouse_wait_release', 'lv_indev_wait_release', Void, InstMember.new('inst', 'lvki_mouse'))
 Func.new('kbd_reset', 'lv_indev_reset', Void, InstMember.new('inst', 'lvki_kbd'), Obj.new('obj', true))
 Func.new('mouse_reset', 'lv_indev_reset', Void, InstMember.new('inst', 'lvki_mouse'), Obj.new('obj', true))
 

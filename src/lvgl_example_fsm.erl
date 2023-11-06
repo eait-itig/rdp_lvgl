@@ -216,7 +216,7 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     ok = lv_label:set_text(BtnLbl, "Login"),
 
     {ok, BtnEvent, _} = lv_event:setup(Btn, pressed, {login, Text, PwText}),
-    {ok, AcEvent, _} = lv_event:setup(PwText, ready, {login, Text, PwText}),
+    {ok, AcEvent, _} = lv_event:setup(PwText, ready, {ready_login, Text, PwText}),
 
     YkFlex = make_auth_method_flex(Flex, 16#f2c2, S0),
 
@@ -238,7 +238,7 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, YkBtnEvent, _} = lv_event:setup(YkBtn, pressed,
         {login_pin, "chemlabs", PinText}),
     {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
-        {login_pin, "chemlabs", PinText}),
+        {ready_login_pin, "chemlabs", PinText}),
 
     {ok, List} = lv_list:create(Flex),
     ok = lv_obj:set_size(List, {{percent, 100}, {percent, 20}}),
@@ -272,6 +272,14 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
 login(info, {'DOWN', MRef, process, _, _}, S0 = #?MODULE{mref = MRef}) ->
     {stop, normal, S0};
 
+login(info, {Ref, {ready_login, LoginInp, PwInp}}, S0 = #?MODULE{inst = Inst}) ->
+    ok = lv_indev:wait_release(Inst, keyboard),
+    login(info, {Ref, {login, LoginInp, PwInp}}, S0);
+
+login(info, {Ref, {ready_login_pin, Login, PinInp}}, S0 = #?MODULE{inst = Inst}) ->
+    ok = lv_indev:wait_release(Inst, keyboard),
+    login(info, {Ref, {login_pin, Login, PinInp}}, S0);
+
 login(info, {_Ref, {login, LoginInp, PwInp}}, S0 = #?MODULE{}) ->
     {ok, Login} = lv_textarea:get_text(LoginInp),
     {ok, Pw} = lv_textarea:get_text(PwInp),
@@ -285,8 +293,6 @@ login(info, {_Ref, {login_pin, Login, PinInp}}, S0 = #?MODULE{}) ->
 
 %% @private
 checking_login(enter, _PrevState, S0 = #?MODULE{inst = Inst}) ->
-    ok = lv_indev:reset_keyboard(Inst, null),
-
     {Screen, Flex} = make_flex(S0),
     {ok, _Spinner} = lv_spinner:create(Flex, 1000, 90),
     ok = lv_scr:load_anim(Inst, Screen, fade_in, 500, 0, true),
