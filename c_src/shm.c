@@ -33,6 +33,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <signal.h>
 #include <poll.h>
 #include <errno.h>
 
@@ -802,6 +803,7 @@ shm_fork(struct shmintf *shm)
 	int fd, maxfd;
 	struct fbuf *fb;
 	uint i;
+	struct sigaction sa;
 #if !HAVE_CLOSEFROM
 	int fdlimit;
 #endif
@@ -867,6 +869,17 @@ shm_fork(struct shmintf *shm)
 		for (fd = maxfd + 1; fd < fdlimit; ++fd)
 			close(fd);
 #endif
+
+		bzero(&sa, sizeof (sa));
+		sa.sa_handler = SIG_DFL;
+		sigaction(SIGTERM, &sa, NULL);
+		sigaction(SIGUSR1, &sa, NULL);
+		sigaction(SIGINT, &sa, NULL);
+		sa.sa_handler = SIG_IGN;
+		sigaction(SIGCHLD, &sa, NULL);
+		sigaction(SIGPIPE, &sa, NULL);
+		sigaction(SIGQUIT, &sa, NULL);
+
 		pthread_create(&shm->si_pipewatch, NULL, shm_pipewatch, shm);
 		pthread_setname_np(shm->si_pipewatch, "shm_pipewatch");
 		break;
