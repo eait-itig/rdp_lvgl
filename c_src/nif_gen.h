@@ -11364,7 +11364,7 @@ rlvgl_style_set_flex_align4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	ERL_NIF_TERM msgref, rv;
 	int rc;
 	struct lvkstyle *style;
-	int main;
+	int mainaxis;
 	int cross;
 	int tracks;
 
@@ -11383,7 +11383,7 @@ rlvgl_style_set_flex_align4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = make_errno(env, rc);
 		goto out;
 	}
-	if ((rc = parse_enum(env, argv[1], flex_align, false, &main))) {
+	if ((rc = parse_enum(env, argv[1], flex_align, false, &mainaxis))) {
 		rv = make_errno(env, rc);
 		goto out;
 	}
@@ -11406,7 +11406,7 @@ rlvgl_style_set_flex_align4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_style_set_flex_align,
 	    ARG_PTR_STYLE, style,
-	    ARG_UINT32, main,
+	    ARG_UINT32, mainaxis,
 	    ARG_UINT32, cross,
 	    ARG_UINT32, tracks,
 	    ARG_NONE);
