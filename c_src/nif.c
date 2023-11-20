@@ -356,6 +356,7 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		bin = rv;
 
 		zb = enif_alloc_resource(zerobuf_rsrc, sizeof (struct zerobuf));
+		assert(zb != NULL);
 		bzero(zb, sizeof (*zb));
 
 		zb->zb_len = bin->size;
@@ -365,12 +366,17 @@ rlvgl_call_cb(struct lvkid *kid, uint32_t err, enum arg_type rt,
 		} else {
 			zb->zb_data = malloc(zb->zb_len);
 		}
+		assert(zb->zb_data != NULL);
 		bcopy(bin->data, zb->zb_data, zb->zb_len);
 
 		rterm = enif_make_resource_binary(env, zb, zb->zb_data,
 		    zb->zb_len);
 
 		enif_release_resource(zb);
+
+		explicit_bzero(bin->data, bin->size);
+		enif_release_binary(bin);
+
 		break;
 	default:
 		assert(0);
