@@ -1183,8 +1183,8 @@ lvkid_lv_cmd_free_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 	struct rdesc rd;
 
 	bptr = (uint8_t *)cdfs->cdfs_buf;
-	free(bptr);
 	lvptr_invalidate(bptr);
+	free(bptr);
 
 	rd = (struct rdesc){
 		.rd_error = 0,
