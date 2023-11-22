@@ -750,7 +750,11 @@ shm_pipewatch(void *arg)
 			continue;
 		if (read(pfd.fd, &ret, sizeof (ret)) == 0) {
 			log_debug("parent died; exiting");
-			exit(0);
+			/*
+			 * don't use exit(3) -- that will call atexit stuff
+			 * from the original erlang process and explode
+			 */
+			_exit(1);
 		}
 	}
 }
