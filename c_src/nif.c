@@ -1960,7 +1960,6 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	const ERL_NIF_TERM *tup;
 	int tuplen;
 	lv_area_t rect, tile;
-	uint do_release;
 
 	bzero(&nls, sizeof (nls));
 
@@ -1980,6 +1979,11 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (!enif_get_uint(env, tup[3], &y2))
 		return (enif_make_badarg(env));
 
+	if (x2 <= x1)
+		return (enif_make_badarg(env));
+	if (y2 <= y1)
+		return (enif_make_badarg(env));
+
 	rect.x1 = x1;
 	rect.x2 = x2;
 	rect.y1 = y1;
@@ -1993,22 +1997,46 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 
 	fb = inst->lvki_fbuf;
-
 	buf = inst->lvki_cfb;
-	/*
-	 * We might be called before the first flush for frame 1: if so, use
-	 * framebuffer A. LVGL will render to that framebuffer first.
-	 */
-	if (buf == NULL)
-		buf = fb->fb_a;
+	fbhdl = lvkid_make_hdl(LVK_FBUF, fb, NULL);
 
-	fbhdl = lvkid_make_hdl(LVK_FBUF, fb, &do_release);
-	/*
-	 * We deliberately don't set lvkh_fbuf here. Our reference to the
-	 * framebuffer is fine to keep using until the end of the current
-	 * flush cycle.
-	 */
+	if (!inst->lvki_flushing) {
+		/*
+		 * We're going to pretend that the display flush has started
+		 * early.
+		 *
+		 * We might be called before the first flush for frame 1: if
+		 * so, use framebuffer A. LVGL will render to that framebuffer
+		 * first.
+		 *
+		 * Otherwise, set the fbhdl's lvkh_fbuf to the _other_ buffer.
+		 * We will take pixel data from the non-drawing buffer here
+		 * (buf), but the flush belongs to the one currently drawing.
+		 */
+		if (buf == NULL) {
+			buf = fb->fb_a;
+			fbhdl->lvkh_fbuf = buf;
+		} else if (buf == fb->fb_a) {
+			fbhdl->lvkh_fbuf = fb->fb_b;
+		} else if (buf == fb->fb_b) {
+			fbhdl->lvkh_fbuf = fb->fb_a;
+		}
 
+	} else {
+		assert(fbhdl->lvkh_fbuf == buf);
+	}
+
+	inst->lvki_cfb = buf;
+	inst->lvki_flushing = 1;
+
+	/*
+	 * Ensure we're producing at least one valid pixel that's on the screen,
+	 * or the logic below will break
+	 */
+	if (rect.x1 >= fb->fb_w - 1)
+		rect.x1 = fb->fb_w - 2;
+	if (rect.y1 >= fb->fb_h - 1)
+		rect.y1 = fb->fb_h - 2;
 	if (rect.x2 >= fb->fb_w)
 		rect.x2 = fb->fb_w - 1;
 	if (rect.y2 >= fb->fb_h)
@@ -2028,9 +2056,6 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 
 	rv = enif_make_tuple2(env, enif_make_atom(env, "ok"), rv);
-
-	if (do_release)
-		enif_release_resource(fbhdl);
 
 out:
 	leave_nif(&nls);
