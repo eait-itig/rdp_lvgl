@@ -2021,9 +2021,6 @@ rlvgl_read_framebuffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		} else if (buf == fb->fb_b) {
 			fbhdl->lvkh_fbuf = fb->fb_a;
 		}
-
-	} else {
-		assert(fbhdl->lvkh_fbuf == buf);
 	}
 
 	inst->lvki_cfb = buf;
