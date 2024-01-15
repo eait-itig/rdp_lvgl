@@ -164,11 +164,16 @@ handle_info(Msg, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
             {stop, Reason, S0#?MODULE{modstate = MS1}}
     end.
 
-flush_done(Inst) ->
+flush_done(Inst) -> flush_done(Inst, 0).
+flush_done(Inst, N) when N >= 500 ->
+    error(flush_failed);
+flush_done(Inst, N) ->
     erlang:garbage_collect(),
     case lv:flush_done(Inst) of
         ok -> ok;
-        {error, busy} -> flush_done(Inst)
+        {error, busy} ->
+            timer:sleep(N),
+            flush_done(Inst, N + 1)
     end.
 
 try_paths([Last], BaseName) ->
