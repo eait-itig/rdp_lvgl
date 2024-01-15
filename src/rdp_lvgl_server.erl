@@ -165,7 +165,7 @@ handle_info(Msg, Srv, S0 = #?MODULE{mod = Mod, modstate = MS0}) ->
     end.
 
 flush_done(Inst) -> flush_done(Inst, 0).
-flush_done(Inst, N) when N >= 500 ->
+flush_done(Inst, N) when N >= 250 ->
     error(flush_failed);
 flush_done(Inst, N) ->
     erlang:garbage_collect(),
