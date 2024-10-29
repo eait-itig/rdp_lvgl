@@ -2244,6 +2244,7 @@ lvkid_erl_flush_ring(void *arg)
 				.pd_disp_drv	= inst->lvki_disp_drv
 			};
 			shm_produce_phlush(kid->lvk_shm, &pd);
+			shm_ring_doorbell(kid->lvk_shm);
 
 			msg = enif_make_tuple2(env,
 			    ref,
@@ -3028,7 +3029,7 @@ lvkinst_teardown(struct lvkinst *inst)
 	};
 	shm_produce_phlush(kid->lvk_shm, &pd);
 	inst->lvki_flushing = 0;
-	/* lvk_cmd will ring the doorbell */
+	shm_ring_doorbell(kid->lvk_shm);
 	/*
 	 * Then the actual teardown command. This will nuke the display driver
 	 * as well as all input drivers.
