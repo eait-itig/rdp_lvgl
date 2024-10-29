@@ -1339,7 +1339,7 @@ parse_img_src(ErlNifEnv *env, ERL_NIF_TERM term, ErlNifBinary *bin,
 }
 
 static void
-rlvgl_setup_buf_cb(struct rdesc **rd, uint nrd, void *priv)
+rlvgl_setup_buf_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct nif_call_data *ncd = priv;
 	struct lvkbuf *buf = ncd->ncd_priv;
@@ -1348,21 +1348,21 @@ rlvgl_setup_buf_cb(struct rdesc **rd, uint nrd, void *priv)
 	ERL_NIF_TERM msg;
 	ErlNifEnv *env = ncd->ncd_env;
 
-	assert(nrd == 1);
+	assert(dlen == 0);
 
-	if (rd[0]->rd_error != 0) {
+	if (rd->rd_error != 0) {
 		msg = enif_make_tuple4(env,
 		    ncd->ncd_msgref,
 		    enif_make_atom(env, "error"),
-		    enif_make_uint(env, rd[0]->rd_error),
-		    enif_make_string(env, strerror(rd[0]->rd_error),
+		    enif_make_uint(env, rd->rd_error),
+		    enif_make_string(env, strerror(rd->rd_error),
 		    ERL_NIF_LATIN1));
 	} else {
 		pthread_rwlock_wrlock(&kid->lvk_lock);
 		inst = buf->lvkb_inst;
 		if (inst != NULL)
 			pthread_rwlock_wrlock(&inst->lvki_lock);
-		buf->lvkb_ptr = rd[0]->rd_return.rdr_val;
+		buf->lvkb_ptr = rd->rd_return.rdr_val;
 		if (inst != NULL)
 			pthread_rwlock_unlock(&inst->lvki_lock);
 		pthread_rwlock_unlock(&kid->lvk_lock);
@@ -1378,20 +1378,20 @@ rlvgl_setup_buf_cb(struct rdesc **rd, uint nrd, void *priv)
 }
 
 static void
-rlvgl_setup_event_cb(struct rdesc **rd, uint nrd, void *priv)
+rlvgl_setup_event_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct nif_call_data *ncd = priv;
 	ERL_NIF_TERM msg;
 	ErlNifEnv *env = ncd->ncd_env;
 
-	assert(nrd == 1);
+	assert(dlen == 0);
 
-	if (rd[0]->rd_error != 0) {
+	if (rd->rd_error != 0) {
 		msg = enif_make_tuple4(env,
 		    ncd->ncd_msgref,
 		    enif_make_atom(env, "error"),
-		    enif_make_uint(env, rd[0]->rd_error),
-		    enif_make_string(env, strerror(rd[0]->rd_error),
+		    enif_make_uint(env, rd->rd_error),
+		    enif_make_string(env, strerror(rd->rd_error),
 		    ERL_NIF_LATIN1));
 	} else {
 		msg = enif_make_tuple2(env,
@@ -1479,7 +1479,7 @@ rlvgl_setup_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 			.cdse_event = filter
 		}
 	};
-	lvk_cmd(kid, &cd, 1, rlvgl_setup_event_cb, ncd);
+	lvk_cmd0(kid, &cd, rlvgl_setup_event_cb, ncd);
 
 	ncd = NULL;
 	evt = NULL;
@@ -1506,14 +1506,12 @@ rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	struct lvkhdl *bhdl;
 	struct nif_lock_state nls;
 	struct nif_call_data *ncd = NULL;
-	struct cdesc cd[RING_MAX_CHAIN];
+	struct cdesc cd;
 	struct lvkid *kid;
 	ERL_NIF_TERM rv, msgref;
 	uint do_release;
 	int rc;
 	ErlNifBinary bin;
-	uint nc = 1;
-	size_t rem, off, take;
 
 	bzero(&nls, sizeof (nls));
 
@@ -1522,11 +1520,6 @@ rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!enif_inspect_iolist_as_binary(env, argv[1], &bin))
 		return (enif_make_badarg(env));
-
-	if (bin.size > CDESC_MAX_INLINE) {
-		rv = make_errno(env, ENOSPC);
-		goto out;
-	}
 
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
@@ -1553,39 +1546,13 @@ rlvgl_make_buffer(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	bhdl = lvkid_make_hdl(LVK_BUF, buf, &do_release);
 
-	cd[0] = (struct cdesc){
+	cd = (struct cdesc){
 		.cd_op = CMD_COPY_BUF,
-		.cd_chain = 0,
 		.cd_copy_buf = (struct cdesc_copybuf){
 			.cdcs_len = bin.size,
 		}
 	};
-	rem = bin.size;
-	off = 0;
-
-	take = sizeof (cd[0].cd_copy_buf.cdcs_data);
-	if (take > rem)
-		take = rem;
-	bcopy(&bin.data[off], cd[0].cd_copy_buf.cdcs_data, take);
-	rem -= take;
-	off += take;
-
-	nc = 1;
-	while (nc < RING_MAX_CHAIN && rem > 0) {
-		cd[nc - 1].cd_chain = 1;
-		cd[nc] = (struct cdesc){
-			.cd_op = CMD_COPY_BUF,
-			.cd_chain = 0,
-		};
-		take = sizeof (cd[nc].cd_data);
-		if (take > rem)
-			take = rem;
-		bcopy(&bin.data[off], cd[nc].cd_data, take);
-		rem -= take;
-		off += take;
-		++nc;
-	}
-	lvk_cmd(kid, cd, nc, rlvgl_setup_buf_cb, ncd);
+	lvk_cmd(kid, &cd, bin.data, bin.size, rlvgl_setup_buf_cb, ncd);
 
 	ncd = NULL;
 	buf = NULL;

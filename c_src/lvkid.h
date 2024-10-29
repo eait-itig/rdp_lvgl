@@ -112,7 +112,8 @@ struct lvkid {
 	pthread_t		 lvk_flush_th;
 };
 
-typedef void (*lvkcmd_cb_t)(struct rdesc **rd, uint nrd, void *priv);
+typedef void (*lvkcmd_cb_t)(const struct rdesc *rd, const void *data,
+   size_t dlen, void *priv);
 
 struct lvkcmd {
 	struct lvkid		 *lvkc_kid;
@@ -121,8 +122,9 @@ struct lvkcmd {
 	void			 *lvkc_priv;
 	uint			  lvkc_defer;
 	pthread_t		  lvkc_cbth;
-	struct rdesc		 *lvkc_rd;
-	uint			  lvkc_nrd;
+	struct rdesc		  lvkc_rd;
+	void			 *lvkc_data;
+	size_t			  lvkc_dlen;
 };
 
 enum lvkinst_state {
@@ -305,10 +307,15 @@ typedef void *lvk_call_func_t;
 typedef void (*lvk_call_cb_t)(struct lvkid *, uint32_t err, enum arg_type,
     void *arg, void *priv);
 
-void lvk_cmd(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
-    void *priv);
-void lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
-    void *priv);
+void lvk_cmd(struct lvkid *kid, struct cdesc *cd, const void *data,
+    size_t dlen, lvkcmd_cb_t cb, void *priv);
+void lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, const void *data,
+    size_t dlen, lvkcmd_cb_t cb, void *priv);
+
+#define lvk_cmd0(kid, cd, cb, priv) \
+	lvk_cmd((kid), (cd), NULL, 0, (cb), (priv))
+#define lvk_cmd0_defer(kid, cd, cb, priv) \
+	lvk_cmd_defer((kid), (cd), NULL, 0, (cb), (priv))
 
 int lvk_cast(struct lvkid *kid, enum arg_type rt, lvk_call_func_t f, ...);
 int lvk_icast(struct lvkinst *inst, enum arg_type rt, lvk_call_func_t f, ...);

@@ -88,16 +88,18 @@ void lv_style_copy(lv_style_t *from, lv_style_t *to);
 
 bool lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base);
 
-struct cdinline;
-#define	FOFFSET_CALL		(offsetof(struct cdesc_call, cdc_ibuf))
-#define FOFFSET_COPYBUF		(offsetof(struct cdesc_copybuf, cdcs_data))
-struct cdinline *cdi_init(struct cdesc **cd, uint ncd, size_t foffset);
-void cdi_free(struct cdinline *cdi);
-uint cdi_ncd(struct cdinline *cdi);
-void cdi_get(struct cdinline *cdi, uint8_t *buf, size_t len);
-void cdi_put(struct cdinline *cdi, const uint8_t *buf, size_t len);
-
 void *lvk_secure_alloc(size_t len);
 void lvk_secure_free(void *ptr, size_t len);
+
+struct dbuf;
+struct dbuf *dbuf_new(void);
+struct dbuf *dbuf_from(const void *, size_t);
+void dbuf_free(struct dbuf *);
+
+void dbuf_put(struct dbuf *, const void *, size_t);
+void *dbuf_get(struct dbuf *, size_t);
+
+const void *dbuf_data(const struct dbuf *);
+size_t dbuf_len(const struct dbuf *);
 
 #endif /* _LVK_UTILS_H */

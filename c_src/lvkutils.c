@@ -234,116 +234,6 @@ lv_wheel_scroll_by(lv_disp_t *disp, lv_indev_t *mouse, int dy,
 		lv_obj_scroll_by_bounded(target, 0, scaled, anim);
 }
 
-struct cdinline {
-	struct cdesc	**cdi_cd;
-	uint		  cdi_ncd;
-	size_t		  cdi_foff;
-
-	uint		  cdi_i;
-	size_t		  cdi_off;
-};
-
-struct cdinline *
-cdi_init(struct cdesc **cd, uint ncd, size_t foffset)
-{
-	struct cdinline *cdi;
-
-	cdi = calloc(1, sizeof (struct cdinline));
-	assert(cdi != NULL);
-	cdi->cdi_cd = cd;
-	cdi->cdi_ncd = ncd;
-	cdi->cdi_foff = foffset;
-
-	return (cdi);
-}
-
-uint
-cdi_ncd(struct cdinline *cdi)
-{
-	uint ncd = cdi->cdi_i;
-	if (cdi->cdi_off > 0)
-		++ncd;
-	if (ncd == 0)
-		ncd = 1;
-	return (ncd);
-}
-
-void
-cdi_free(struct cdinline *cdi)
-{
-	free(cdi);
-}
-
-void
-cdi_get(struct cdinline *cdi, uint8_t *buf, size_t len)
-{
-	size_t take, doff = 0;
-	struct cdesc *cd;
-	uint8_t *src;
-
-	while (len > 0) {
-		assert(cdi->cdi_i < cdi->cdi_ncd);
-		cd = cdi->cdi_cd[cdi->cdi_i];
-		if (cdi->cdi_i == 0) {
-			src = &cd->cd_data[cdi->cdi_foff + cdi->cdi_off];
-			take = sizeof (cd->cd_data) - cdi->cdi_foff -
-			    cdi->cdi_off;
-		} else {
-			src = &cd->cd_data[cdi->cdi_off];
-			take = sizeof (cd->cd_data) - cdi->cdi_off;
-		}
-		if (take > len) {
-			take = len;
-			cdi->cdi_off += take;
-		} else {
-			cdi->cdi_i++;
-			cdi->cdi_off = 0;
-		}
-		if (take > 0)
-			bcopy(src, &buf[doff], take);
-		doff += take;
-		len -= take;
-	}
-}
-
-void
-cdi_put(struct cdinline *cdi, const uint8_t *buf, size_t len)
-{
-	size_t take, doff = 0;
-	struct cdesc *cd;
-	uint8_t *dst;
-
-	while (len > 0) {
-		assert(cdi->cdi_i < cdi->cdi_ncd);
-		cd = cdi->cdi_cd[cdi->cdi_i];
-		if (cdi->cdi_i > 0 && cdi->cdi_off == 0) {
-			struct cdesc *pcd = cdi->cdi_cd[cdi->cdi_i - 1];
-			pcd->cd_chain = 1;
-			bzero(cd, sizeof (*cd));
-			cd->cd_op = pcd->cd_op;
-			cd->cd_cookie = pcd->cd_cookie;
-		}
-		if (cdi->cdi_i == 0) {
-			dst = &cd->cd_data[cdi->cdi_foff + cdi->cdi_off];
-			take = sizeof (cd->cd_data) - cdi->cdi_foff -
-			    cdi->cdi_off;
-		} else {
-			dst = &cd->cd_data[cdi->cdi_off];
-			take = sizeof (cd->cd_data) - cdi->cdi_off;
-		}
-		if (take > len) {
-			take = len;
-			cdi->cdi_off += take;
-		} else {
-			cdi->cdi_i++;
-			cdi->cdi_off = 0;
-		}
-		bcopy(&buf[doff], dst, take);
-		doff += take;
-		len -= take;
-	}
-}
-
 bool
 lv_obj_class_has_base(const lv_obj_class_t *class, const lv_obj_class_t *base)
 {
@@ -495,4 +385,93 @@ lvk_secure_free(void *ptr, size_t len)
 	base = (char *)ptr - PAGE;
 	explicit_bzero(ptr, len);
 	munmap(base, npages * PAGE);
+}
+
+struct dbuf {
+	void	*d_b;
+	void	*d_p;
+	size_t	 d_len;
+	size_t	 d_size;
+	uint8_t	 d_free;
+};
+
+struct dbuf *
+dbuf_new(void)
+{
+	struct dbuf *d;
+	d = calloc(1, sizeof (*d));
+	assert(d != NULL);
+	d->d_size = 512;
+	d->d_b = (d->d_p = malloc(d->d_size));
+	assert(d->d_p != NULL);
+	d->d_free = 1;
+	return (d);
+}
+
+struct dbuf *
+dbuf_from(const void *p, size_t len)
+{
+	struct dbuf *d;
+	d = calloc(1, sizeof (*d));
+	assert(d != NULL);
+	d->d_b = (d->d_p = (void *)p);
+	d->d_size = len;
+	return (d);
+}
+
+void
+dbuf_free(struct dbuf *d)
+{
+	if (d->d_free) {
+		explicit_bzero(d->d_b, d->d_size);
+		free(d->d_b);
+	}
+	free(d);
+}
+
+void
+dbuf_put(struct dbuf *d, const void *p, size_t s)
+{
+	while (d->d_len + s >= d->d_size) {
+		void *newb;
+		d->d_size *= 2;
+		newb = malloc(d->d_size);
+		assert(newb != NULL);
+		memcpy(newb, d->d_b, d->d_len);
+		free(d->d_b);
+		d->d_b = newb;
+		d->d_p = newb + d->d_len;
+	}
+	d->d_len += s;
+	memcpy(d->d_p, p, s);
+	d->d_p += s;
+}
+
+void *
+dbuf_get(struct dbuf *d, size_t s)
+{
+	uint8_t *p;
+	assert(d->d_len + s <= d->d_size);
+
+	p = malloc(s + 1);
+	assert(p != NULL);
+	memcpy(p, d->d_p, s);
+	p[s] = 0;
+
+	d->d_p += s;
+	d->d_len += s;
+
+	return (p);
+}
+
+const void *
+dbuf_data(const struct dbuf *d)
+{
+	return (d->d_b);
+}
+
+size_t
+dbuf_len(const struct dbuf *d)
+{
+	return (d->d_len);
 }

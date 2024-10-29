@@ -28,6 +28,7 @@
 #include <assert.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 
 #include "lvkid.h"
 #include "lvkutils.h"
@@ -704,7 +705,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 			.rd_error = EBUSY,
 			.rd_cookie = cd->cd_cookie
 		};
-		shm_produce_rsp(shm, &rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		return;
 	}
 	fb->fb_state = FBUF_RUNNING;
@@ -785,7 +786,7 @@ lvkid_lv_cmd_setup(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 			.rds_kbd 	= (uint64_t)inst->lvi_kbd,
 		}
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 }
 
 static void
@@ -856,7 +857,7 @@ lvkid_lv_cmd_teardown(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 		.rd_error = 0,
 		.rd_cookie = cd->cd_cookie
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 }
 
 static void
@@ -882,7 +883,7 @@ lvkid_lv_cmd_set_udata(struct lvkid *kid, struct shmintf *shm,
 			.rd_error = EFAULT,
 			.rd_cookie = cd->cd_cookie
 		};
-		shm_produce_rsp(shm, &rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 
 		return;
 	}
@@ -933,7 +934,7 @@ lvkid_lv_cmd_set_udata(struct lvkid *kid, struct shmintf *shm,
 		.rd_error = 0,
 		.rd_cookie = cd->cd_cookie
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 }
 
 static void
@@ -1007,7 +1008,7 @@ lvkid_lv_cmd_setup_event(struct lvkid *kid, struct shmintf *shm,
 			.rd_error = EFAULT,
 			.rd_cookie = cd->cd_cookie
 		};
-		shm_produce_rsp(shm, &rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		return;
 	}
 
@@ -1025,7 +1026,7 @@ lvkid_lv_cmd_setup_event(struct lvkid *kid, struct shmintf *shm,
 		.rd_error = 0,
 		.rd_cookie = cd->cd_cookie
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 }
 
 static void
@@ -1074,7 +1075,7 @@ lvkid_lv_cmd_teardown_event(struct lvkid *kid, struct shmintf *shm,
 		.rd_error = 0,
 		.rd_cookie = cd->cd_cookie
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 
 	free(leu);
 }
@@ -1132,47 +1133,28 @@ next:
 }
 
 static void
-lvkid_lv_cmd_copy_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc **cd,
-    uint ncd)
+lvkid_lv_cmd_copy_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd,
+    void *data, size_t dlen)
 {
-	struct cdesc_copybuf *cdcs = &cd[0]->cd_copy_buf;
+	struct cdesc_copybuf *cdcs = &cd->cd_copy_buf;
 	uint8_t *bptr;
-	size_t rem, off, take;
-	uint i;
 	struct rdesc rd;
 
-	rem = cdcs->cdcs_len;
-	bptr = malloc(rem);
+	assert(cdcs->cdcs_len <= dlen);
+	bptr = malloc(cdcs->cdcs_len);
 	assert(bptr != NULL);
-	off = 0;
 	lvptr_validate(bptr);
 
-	take = sizeof (cdcs->cdcs_data);
-	if (take > rem)
-		take = rem;
-
-	bcopy(cdcs->cdcs_data, &bptr[off], take);
-	off += take;
-	rem -= take;
-
-	for (i = 1; i < ncd; ++i) {
-		take = sizeof (cd[i]->cd_data);
-		if (take > rem)
-			take = rem;
-		bcopy(cd[i]->cd_data, &bptr[off], take);
-		off += take;
-		rem -= take;
-	}
-	assert(rem == 0);
+	memcpy(bptr, data, cdcs->cdcs_len);
 
 	rd = (struct rdesc){
 		.rd_error = 0,
-		.rd_cookie = cd[0]->cd_cookie,
+		.rd_cookie = cd->cd_cookie,
 		.rd_return = (struct rdesc_return){
 			.rdr_val = (uint64_t)bptr
 		}
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 }
 
 static void
@@ -1190,73 +1172,81 @@ lvkid_lv_cmd_free_buf(struct lvkid *kid, struct shmintf *shm, struct cdesc *cd)
 		.rd_error = 0,
 		.rd_cookie = cd->cd_cookie
 	};
-	shm_produce_rsp(shm, &rd, 1);
+	shm_produce_rsp(shm, &rd, NULL, 0);
 }
 
 static void *
 lvkid_lv_cmd_ring(void *arg)
 {
 	struct lvkid *kid = arg;
-	struct cdesc *cd[RING_MAX_CHAIN];
+	struct cdesc *cd;
 	struct shmintf *shm = kid->lvk_shm;
-	uint ncd, i;
+	void *data = NULL;
+	int rc;
+	size_t dlen;
 
 	while (1) {
-		ncd = shm_consume_cmd(shm, cd, RING_MAX_CHAIN);
+		rc = shm_consume_cmd(shm, &cd, &data, &dlen);
 
 		if (atomic_load(&shm->si_dead))
 			return (NULL);
 
-		switch (cd[0]->cd_op) {
+		if (rc == ESHUTDOWN) {
+			log_warn("exiting due to lost parent");
+			return (NULL);
+		}
+
+		if (rc != 0) {
+			log_warn("cmd ring failed to read: %d (%s)", rc, strerror(rc));
+			continue;
+		}
+
+		switch (cd->cd_op) {
 		case CMD_SETUP:
-			assert(ncd == 1);
-			lvkid_lv_cmd_setup(kid, shm, cd[0]);
+			assert(dlen == 0);
+			lvkid_lv_cmd_setup(kid, shm, cd);
 			break;
 		case CMD_TEARDOWN:
-			assert(ncd == 1);
-			lvkid_lv_cmd_teardown(kid, shm, cd[0]);
+			assert(dlen == 0);
+			lvkid_lv_cmd_teardown(kid, shm, cd);
 			break;
 		case CMD_SET_UDATA:
-			assert(ncd == 1);
-			lvkid_lv_cmd_set_udata(kid, shm, cd[0]);
+			assert(dlen == 0);
+			lvkid_lv_cmd_set_udata(kid, shm, cd);
 			break;
 		case CMD_CALL:
 			pthread_mutex_lock(&lv_mtx);
-			lv_do_call(shm, cd, ncd);
+			lv_do_call(shm, cd, data, dlen);
 			pthread_mutex_unlock(&lv_mtx);
-			for (i = 0; i < ncd; ++i) {
-				/*
-				 * Zero out all the argument data: it might be
-				 * sensitive and we don't want it to stick
-				 * around for ages
-				 */
-				explicit_bzero(cd[i]->cd_data,
-				    sizeof (cd[i]->cd_data));
-			}
+			/*
+			 * Zero out all the argument data: it might be
+			 * sensitive and we don't want it to stick
+			 * around for ages
+			 */
+			explicit_bzero(cd, sizeof (*cd));
+			if (dlen > 0)
+				explicit_bzero(data, dlen);
 			break;
 		case CMD_COPY_BUF:
-			lvkid_lv_cmd_copy_buf(kid, shm, cd, ncd);
+			lvkid_lv_cmd_copy_buf(kid, shm, cd, data, dlen);
 			break;
 		case CMD_FREE_BUF:
-			assert(ncd == 1);
-			lvkid_lv_cmd_free_buf(kid, shm, cd[0]);
+			assert(dlen == 0);
+			lvkid_lv_cmd_free_buf(kid, shm, cd);
 			break;
 		case CMD_SETUP_EVENT:
-			assert(ncd == 1);
-			lvkid_lv_cmd_setup_event(kid, shm, cd[0]);
+			assert(dlen == 0);
+			lvkid_lv_cmd_setup_event(kid, shm, cd);
 			break;
 		case CMD_TEARDOWN_EVENT:
-			assert(ncd == 1);
-			lvkid_lv_cmd_teardown_event(kid, shm, cd[0]);
+			assert(dlen == 0);
+			lvkid_lv_cmd_teardown_event(kid, shm, cd);
 			break;
 		case CMD_EXIT_CHILD:
 			exit(0);
 		}
 
-		for (i = 0; i < ncd; ++i)
-			shm_finish_cmd(cd[i]);
-
-		shm_ring_doorbell(shm);
+		free(data);
 	}
 
 	return (NULL);
@@ -1302,14 +1292,14 @@ lvkid_lv_startup(void *arg)
 }
 
 static void
-lvkevt_setup_cb(struct rdesc **rd, uint nrd, void *priv)
+lvkevt_setup_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct lvkevt *evt = priv;
 	struct lvkid *kid = evt->lvke_kid;
-	assert(nrd == 1);
+	assert(dlen == 0);
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
-	evt->lvke_eudata = rd[0]->rd_setup_event.rdse_eudata;
+	evt->lvke_eudata = rd->rd_setup_event.rdse_eudata;
 	pthread_rwlock_unlock(&kid->lvk_lock);
 }
 
@@ -1341,7 +1331,7 @@ lvk_make_chart_series(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)cs
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (cs);
@@ -1375,7 +1365,7 @@ lvk_make_chart_cursor(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)cc
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (cc);
@@ -1409,7 +1399,7 @@ lvk_make_meter_ind(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)mi
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (mi);
@@ -1443,7 +1433,7 @@ lvk_make_meter_scale(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)ms
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (ms);
@@ -1477,7 +1467,7 @@ lvk_make_span(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)sp
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (sp);
@@ -1511,7 +1501,7 @@ lvk_make_style(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)sty
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (sty);
@@ -1545,7 +1535,7 @@ lvk_make_group(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr)
 				.cdsu_udata = (uint64_t)grp
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 	}
 
 	return (grp);
@@ -1590,7 +1580,7 @@ lvk_make_obj(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr,
 				.cdsu_udata = (uint64_t)obj
 			}
 		};
-		lvk_cmd(kid, &cd, 1, NULL, NULL);
+		lvk_cmd0(kid, &cd, NULL, NULL);
 
 		cd = (struct cdesc){
 			.cd_op = CMD_SETUP_EVENT,
@@ -1600,15 +1590,15 @@ lvk_make_obj(struct lvkid *kid, struct lvkinst *inst, lvaddr_t ptr,
 				.cdse_event = LV_EVENT_DELETE,
 			}
 		};
-		lvk_cmd(kid, &cd, 1, lvkevt_setup_cb, obj->lvko_delevt);
+		lvk_cmd0(kid, &cd, lvkevt_setup_cb, obj->lvko_delevt);
 	}
 
 	return (obj);
 }
 
 void
-lvk_cmd(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
-    void *priv)
+lvk_cmd(struct lvkid *kid, struct cdesc *cd, const void *data, size_t dlen,
+    lvkcmd_cb_t cb, void *priv)
 {
 	struct lvkcmd *cmd;
 
@@ -1617,19 +1607,18 @@ lvk_cmd(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
 	cmd->lvkc_cb = cb;
 	cmd->lvkc_priv = priv;
 
-	cd[0].cd_cookie = (uint64_t)cmd;
+	cd->cd_cookie = (uint64_t)cmd;
 
 	pthread_mutex_lock(&kid->lvk_cmdlk);
 	LIST_INSERT_HEAD(&kid->lvk_cmds, cmd, lvkc_entry);
 	pthread_mutex_unlock(&kid->lvk_cmdlk);
 
-	shm_produce_cmd(kid->lvk_shm, cd, ncd);
-	shm_ring_doorbell(kid->lvk_shm);
+	shm_produce_cmd(kid->lvk_shm, cd, data, dlen);
 }
 
 void
-lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
-    void *priv)
+lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, const void *data, size_t dlen,
+    lvkcmd_cb_t cb, void *priv)
 {
 	struct lvkcmd *cmd;
 
@@ -1639,14 +1628,13 @@ lvk_cmd_defer(struct lvkid *kid, struct cdesc *cd, uint ncd, lvkcmd_cb_t cb,
 	cmd->lvkc_priv = priv;
 	cmd->lvkc_defer = 1;
 
-	cd[0].cd_cookie = (uint64_t)cmd;
+	cd->cd_cookie = (uint64_t)cmd;
 
 	pthread_mutex_lock(&kid->lvk_cmdlk);
 	LIST_INSERT_HEAD(&kid->lvk_cmds, cmd, lvkc_entry);
 	pthread_mutex_unlock(&kid->lvk_cmdlk);
 
-	shm_produce_cmd(kid->lvk_shm, cd, ncd);
-	shm_ring_doorbell(kid->lvk_shm);
+	shm_produce_cmd(kid->lvk_shm, cd, data, dlen);
 }
 
 struct lvkcall {
@@ -1658,13 +1646,13 @@ struct lvkcall {
 };
 
 static void
-lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
+lvk_call_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct lvkcall *call = priv;
 	struct lvkid *kid = call->lvkc_kid;
 	struct lvkinst *inst = call->lvkc_inst;
-	struct rdesc_return *rdr = &rd[0]->rd_return;
-	struct rdesc_retbuf *rdrb;
+	const struct rdesc_return *rdr = &rd->rd_return;
+	const struct rdesc_retbuf *rdrb;
 	struct lvkobj *obj = NULL;
 	const lv_obj_class_t *cls;
 	uint64_t u64;
@@ -1679,18 +1667,16 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkchartser *cser;
 	struct lvkchartcur *ccur;
 	struct lvkmeterind *mi;
-	uint i;
 	ErlNifBinary bin;
-	size_t take, pos, rem;
 
 	if (call->lvkc_cb == NULL) {
 		free(call);
 		return;
 	}
 
-	if (rd[0]->rd_error) {
-		assert(nrd == 1);
-		(*call->lvkc_cb)(kid, rd[0]->rd_error, ARG_NONE, NULL,
+	if (rd->rd_error) {
+		assert(dlen == 0);
+		(*call->lvkc_cb)(kid, rd->rd_error, ARG_NONE, NULL,
 		    call->lvkc_priv);
 		free(call);
 		return;
@@ -1698,29 +1684,11 @@ lvk_call_cb(struct rdesc **rd, uint nrd, void *priv)
 
 	if (call->lvkc_rt == ARG_INLINE_BUF ||
 	    call->lvkc_rt == ARG_INLINE_STR) {
-		rdrb = &rd[0]->rd_return_buf;
+		rdrb = &rd->rd_return_buf;
 
+		assert(rdrb->rdrb_len <= dlen);
 		enif_alloc_binary(rdrb->rdrb_len, &bin);
-
-		rem = rdrb->rdrb_len;
-		pos = 0;
-		take = sizeof (rdrb->rdrb_data);
-		if (take > rem)
-			take = rem;
-		bcopy(rdrb->rdrb_data, &bin.data[pos], take);
-		pos += take;
-		rem -= take;
-
-		for (i = 1; i < nrd; ++i) {
-			take = sizeof (rd[i]->rd_data);
-			if (take > rem)
-				take = rem;
-			assert(take > 0);
-			bcopy(rd[i]->rd_data, &bin.data[pos], take);
-			pos += take;
-			rem -= take;
-		}
-		assert(rem == 0);
+		memcpy(bin.data, data, rdrb->rdrb_len);
 
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &bin, call->lvkc_priv);
 
@@ -1932,9 +1900,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	struct lvkmeterscl *ms;
 	struct lvkspan *sp;
 	struct lvkbuf *buf;
-	struct cdesc cd[RING_MAX_CHAIN];
-	struct cdesc *pcd[RING_MAX_CHAIN];
-	uint ncd;
+	struct cdesc cd;
 	uint8_t argtype;
 	lv_color_t *col;
 	lv_point_t *pt;
@@ -1943,15 +1909,14 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	size_t sz;
 	const char *str;
 	ErlNifBinary *bin = NULL;
-	struct cdinline *inl;
+	struct dbuf *d;
 	uint8_t alen[8];
 
 	if (inst == NULL)
 		assert(rt != ARG_PTR_OBJ);
 
-	cd[0] = (struct cdesc){
+	cd = (struct cdesc){
 		.cd_op = CMD_CALL,
-		.cd_chain = 0,
 		.cd_call = (struct cdesc_call){
 			.cdc_func = (uint64_t)f,
 			.cdc_rettype = rt,
@@ -1959,126 +1924,121 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 		},
 	};
 
-	for (i = 0; i < RING_MAX_CHAIN; ++i)
-		pcd[i] = &cd[i];
-
-	inl = cdi_init(pcd, RING_MAX_CHAIN, FOFFSET_CALL);
-	assert(inl != NULL);
+	d = dbuf_new();
 
 	for (i = 0; i < MAX_ARGS; ++i) {
 		argtype = va_arg(ap, enum arg_type);
 		if (argtype == ARG_NONE)
 			break;
-		cd[0].cd_call.cdc_argtype[i] = argtype;
+		cd.cd_call.cdc_argtype[i] = argtype;
 		switch (argtype) {
 		case ARG_PTR_BUFFER:
 			buf = va_arg(ap, struct lvkbuf *);
 			if (buf == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = buf->lvkb_ptr;
+			cd.cd_call.cdc_arg[i] = buf->lvkb_ptr;
 			break;
 		case ARG_PTR_OBJ:
 			obj = va_arg(ap, struct lvkobj *);
 			if (obj == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = obj->lvko_ptr;
+			cd.cd_call.cdc_arg[i] = obj->lvko_ptr;
 			break;
 		case ARG_PTR_STYLE:
 			sty = va_arg(ap, struct lvkstyle *);
 			if (sty == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = sty->lvks_ptr;
+			cd.cd_call.cdc_arg[i] = sty->lvks_ptr;
 			break;
 		case ARG_PTR_GROUP:
 			grp = va_arg(ap, struct lvkgroup *);
 			if (grp == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = grp->lvkg_ptr;
+			cd.cd_call.cdc_arg[i] = grp->lvkg_ptr;
 			break;
 		case ARG_PTR_CHART_SER:
 			cser = va_arg(ap, struct lvkchartser *);
 			if (cser == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = cser->lvkcs_ptr;
+			cd.cd_call.cdc_arg[i] = cser->lvkcs_ptr;
 			break;
 		case ARG_PTR_CHART_CUR:
 			ccur = va_arg(ap, struct lvkchartcur *);
 			if (ccur == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = ccur->lvkcc_ptr;
+			cd.cd_call.cdc_arg[i] = ccur->lvkcc_ptr;
 			break;
 		case ARG_PTR_METER_IND:
 			mi = va_arg(ap, struct lvkmeterind *);
 			if (mi == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = mi->lvkmi_ptr;
+			cd.cd_call.cdc_arg[i] = mi->lvkmi_ptr;
 			break;
 		case ARG_PTR_METER_SCL:
 			ms = va_arg(ap, struct lvkmeterscl *);
 			if (ms == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = ms->lvkms_ptr;
+			cd.cd_call.cdc_arg[i] = ms->lvkms_ptr;
 			break;
 		case ARG_PTR_SPAN:
 			sp = va_arg(ap, struct lvkspan *);
 			if (sp == NULL)
 				break;
-			cd[0].cd_call.cdc_arg[i] = sp->lvksp_ptr;
+			cd.cd_call.cdc_arg[i] = sp->lvksp_ptr;
 			break;
 		case ARG_PTR:
-			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uintptr_t);
+			cd.cd_call.cdc_arg[i] = va_arg(ap, uintptr_t);
 			break;
 		case ARG_UINT64:
-			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uint64_t);
+			cd.cd_call.cdc_arg[i] = va_arg(ap, uint64_t);
 			break;
 		case ARG_UINT32:
-			cd[0].cd_call.cdc_arg[i] = va_arg(ap, uint32_t);
+			cd.cd_call.cdc_arg[i] = va_arg(ap, uint32_t);
 			break;
 		case ARG_UINT16:
-			cd[0].cd_call.cdc_arg[i] = va_arg(ap, int);
+			cd.cd_call.cdc_arg[i] = va_arg(ap, int);
 			break;
 		case ARG_UINT8:
-			cd[0].cd_call.cdc_arg[i] = va_arg(ap, int);
+			cd.cd_call.cdc_arg[i] = va_arg(ap, int);
 			break;
 		case ARG_COLOR:
 			col = va_arg(ap, lv_color_t *);
-			cd[0].cd_call.cdc_arg[i] = col->full;
+			cd.cd_call.cdc_arg[i] = col->full;
 			break;
 		case ARG_POINT:
 			pt = va_arg(ap, lv_point_t *);
 			assert(sizeof (*pt) <= sizeof (uint64_t));
-			bcopy(pt, &cd[0].cd_call.cdc_arg[i], sizeof (*pt));
+			bcopy(pt, &cd.cd_call.cdc_arg[i], sizeof (*pt));
 			break;
 		case ARG_STYLEVAL:
 			stv = va_arg(ap, lv_style_value_t *);
 			assert(sizeof (*stv) <= sizeof (uint64_t));
-			bcopy(stv, &cd[0].cd_call.cdc_arg[i], sizeof (*stv));
+			bcopy(stv, &cd.cd_call.cdc_arg[i], sizeof (*stv));
 			break;
 		case ARG_INLINE_BUF:
 			bin = va_arg(ap, ErlNifBinary *);
-			cd[0].cd_call.cdc_arg[i] = bin->size;
-			cdi_put(inl, bin->data, bin->size);
+			cd.cd_call.cdc_arg[i] = bin->size;
+			dbuf_put(d, bin->data, bin->size);
 			break;
 		case ARG_INLINE_STR:
 			str = va_arg(ap, const char *);
-			cd[0].cd_call.cdc_arg[i] = strlen(str);
-			cdi_put(inl, (const uint8_t *)str,
-			    cd[0].cd_call.cdc_arg[i]);
+			cd.cd_call.cdc_arg[i] = strlen(str);
+			dbuf_put(d, str, cd.cd_call.cdc_arg[i]);
 			break;
 		case ARG_INL_BUF_ARR:
 			bin = va_arg(ap, ErlNifBinary *);
 			sz = va_arg(ap, size_t);
 			for (ai = 0; ai < sz; ++ai) {
 				alen[ai] = bin[ai].size;
-				cdi_put(inl, bin[ai].data, alen[ai]);
+				dbuf_put(d, bin[ai].data, alen[ai]);
 			}
-			cd[0].cd_call.cdc_arg[i] = 0;
+			cd.cd_call.cdc_arg[i] = 0;
 			for (; ai > 0; --ai) {
-				cd[0].cd_call.cdc_arg[i] <<= 8;
-				cd[0].cd_call.cdc_arg[i] |= alen[ai - 1];
+				cd.cd_call.cdc_arg[i] <<= 8;
+				cd.cd_call.cdc_arg[i] |= alen[ai - 1];
 			}
 			log_debug("inline buf arr of %u members, cdc_arg = %llx",
-			    sz, cd[0].cd_call.cdc_arg[i]);
+			    sz, cd.cd_call.cdc_arg[i]);
 			break;
 		}
 	}
@@ -2090,10 +2050,13 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 	call->lvkc_rt = rt;
 	call->lvkc_inst = inst;
 
-	ncd = cdi_ncd(inl);
-	cdi_free(inl);
+	if (dbuf_len(d) > 0) {
+		lvk_cmd(kid, &cd, dbuf_data(d), dbuf_len(d), lvk_call_cb, call);
+	} else {
+		lvk_cmd0(kid, &cd, lvk_call_cb, call);
+	}
 
-	lvk_cmd(kid, cd, ncd, lvk_call_cb, call);
+	dbuf_free(d);
 }
 
 int
@@ -2528,18 +2491,13 @@ lvkcmd_deferred(void *arg)
 {
 	struct lvkcmd *cmd = arg;
 
-	struct rdesc *rd[RING_MAX_CHAIN];
-	uint nrd = cmd->lvkc_nrd;
-	void *priv = cmd->lvkc_priv;
+	(*cmd->lvkc_cb)(&cmd->lvkc_rd, cmd->lvkc_data, cmd->lvkc_dlen,
+	    cmd->lvkc_priv);
 
-	uint i;
-
-	for (i = 0; i < nrd; ++i)
-		rd[i] = &cmd->lvkc_rd[i];
-
-	(*cmd->lvkc_cb)(rd, nrd, priv);
-
-	free(cmd->lvkc_rd);
+	if (cmd->lvkc_dlen > 0) {
+		explicit_bzero(cmd->lvkc_data, cmd->lvkc_dlen);
+		free(cmd->lvkc_data);
+	}
 	free(cmd);
 
 	return (NULL);
@@ -2549,18 +2507,41 @@ static void *
 lvkid_erl_rsp_ring(void *arg)
 {
 	struct lvkid *kid = arg;
-	struct rdesc *rd[RING_MAX_CHAIN];
+	struct rdesc *rd;
+	size_t dlen;
+	void *data;
 	struct shmintf *shm = kid->lvk_shm;
+	struct lockpg *lp = shm->si_lockpg;
 	struct lvkcmd *cmd;
-	uint nrd, i;
+	int rc;
 
 	while (1) {
-		nrd = shm_consume_rsp(shm, rd, RING_MAX_CHAIN);
+		rc = shm_consume_rsp(shm, &rd, &data, &dlen);
 
-		if (atomic_load(&shm->si_dead))
+		if (rc == ESHUTDOWN) {
+			log_warn("child %d died", shm->si_kid);
+			atomic_store(&shm->si_dead, 1);
+
+			pthread_mutex_lock(&lp->lp_lv_mtx);
+			pthread_mutex_lock(&lp->lp_erl_mtx);
+			lp->lp_dead = 1;
+			++lp->lp_lv_db;
+			++lp->lp_erl_db;
+			pthread_cond_broadcast(&lp->lp_erl_db_cond);
+			pthread_cond_broadcast(&lp->lp_lv_db_cond);
+			pthread_mutex_unlock(&lp->lp_erl_mtx);
+			pthread_mutex_unlock(&lp->lp_lv_mtx);
+
+			waitpid(shm->si_kid, NULL, 0);
 			return (NULL);
+		}
 
-		cmd = (struct lvkcmd *)rd[0]->rd_cookie;
+		if (rc != 0) {
+			log_warn("shm_consume_rsp returned %d: %s", rc, strerror(rc));
+			continue;
+		}
+
+		cmd = (struct lvkcmd *)rd->rd_cookie;
 		assert(cmd->lvkc_kid == kid);
 
 		pthread_mutex_lock(&kid->lvk_cmdlk);
@@ -2569,31 +2550,32 @@ lvkid_erl_rsp_ring(void *arg)
 
 		if (cmd->lvkc_cb != NULL) {
 			if (cmd->lvkc_defer) {
-				cmd->lvkc_rd = calloc(nrd,
-				    sizeof (struct rdesc));
-				for (i = 0; i < nrd; ++i)
-					cmd->lvkc_rd[i] = *rd[i];
-				cmd->lvkc_nrd = nrd;
+				bcopy(rd, &cmd->lvkc_rd, sizeof (*rd));
+				cmd->lvkc_data = data;
+				cmd->lvkc_dlen = dlen;
 				pthread_create(&cmd->lvkc_cbth, NULL,
 				    lvkcmd_deferred, cmd);
 				pthread_setname_np(cmd->lvkc_cbth,
 				    "lvkcmd_def_cb");
+				/* don't free the data buffer */
+				dlen = 0;
+				data = NULL;
 				/* don't free cmd (lvkcmd_deferred will) */
 			} else {
-				(*cmd->lvkc_cb)(rd, nrd, cmd->lvkc_priv);
+				(*cmd->lvkc_cb)(rd, data, dlen, cmd->lvkc_priv);
 				free(cmd);
 			}
 		} else {
 			free(cmd);
 		}
-		for (i = 0; i < nrd; ++i) {
-			/*
-			 * Zero out the reply data: it might contain sensitive
-			 * info and we don't want it to stick around
-			 */
-			explicit_bzero(&rd[i]->rd_data,
-			    sizeof (rd[i]->rd_data));
-			shm_finish_rsp(rd[i]);
+		/*
+		 * Zero out the reply data: it might contain sensitive
+		 * info and we don't want it to stick around
+		 */
+		explicit_bzero(rd, sizeof (*rd));
+		if (dlen > 0) {
+			explicit_bzero(data, dlen);
+			free(data);
 		}
 	}
 
@@ -2648,16 +2630,16 @@ lvkid_prefork(uint n)
 }
 
 static void
-lvk_inst_setup_cb(struct rdesc **rd, uint nrd, void *priv)
+lvk_inst_setup_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct lvkinst *inst = priv;
 	struct lvkid *kid = inst->lvki_kid;
-	struct rdesc_setup *s = &rd[0]->rd_setup;
+	const struct rdesc_setup *s = &rd->rd_setup;
 	ErlNifEnv *env;
 	ERL_NIF_TERM ref, msg;
 	ErlNifPid owner;
 
-	assert(nrd == 1);
+	assert(dlen == 0);
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
 	pthread_rwlock_wrlock(&inst->lvki_lock);
@@ -2790,7 +2772,7 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 			.cds_udata = (uint64_t)inst,
 		}
 	};
-	lvk_cmd_defer(kid, &cd, 1, lvk_inst_setup_cb, inst);
+	lvk_cmd0_defer(kid, &cd, lvk_inst_setup_cb, inst);
 
 	log_debug("inst %p: fbuf = %u, kid = %p (pid %d), owner = %T, "
 	    "msgref = %T", inst, i, nkid, nkid->lvk_pid,
@@ -2821,16 +2803,16 @@ lvkevt_teardown(struct lvkevt *evt)
 			.cdte_eudata = evt->lvke_eudata,
 		}
 	};
-	lvk_cmd(kid, &cd, 1, NULL, NULL);
+	lvk_cmd0(kid, &cd, NULL, NULL);
 }
 
 static void
-lvkbuf_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
+lvkbuf_teardown_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct lvkbuf *buf = priv;
 	struct lvkid *kid = buf->lvkb_kid;
 	struct lvkinst *inst;
-	assert(nrd == 1);
+	assert(dlen == 0);
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
 	inst = buf->lvkb_inst;
@@ -2865,11 +2847,11 @@ lvkbuf_teardown(struct lvkbuf *buf)
 			.cdfs_len = buf->lvkb_len,
 		}
 	};
-	lvk_cmd(kid, &cd, 1, lvkbuf_teardown_cb, buf);
+	lvk_cmd0(kid, &cd, lvkbuf_teardown_cb, buf);
 }
 
 static void
-lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
+lvk_inst_teardown_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 {
 	struct lvkinst *inst = priv;
 	struct lvkid *kid = inst->lvki_kid;
@@ -2884,7 +2866,7 @@ lvk_inst_teardown_cb(struct rdesc **rd, uint nrd, void *priv)
 	struct lvkspan *sp, *nsp;
 	struct fbuf *fb;
 
-	assert(nrd == 1);
+	assert(dlen == 0);
 	log_debug("inst %p teardown cb", inst);
 
 	pthread_rwlock_wrlock(&kid->lvk_lock);
@@ -3060,7 +3042,7 @@ lvkinst_teardown(struct lvkinst *inst)
 			.cdt_disp_drv = inst->lvki_disp_drv
 		}
 	};
-	lvk_cmd_defer(kid, &cd, 1, lvk_inst_teardown_cb, inst);
+	lvk_cmd0_defer(kid, &cd, lvk_inst_teardown_cb, inst);
 
 	/*
 	 * Ensure that all handles to objects in this instance cannot be used

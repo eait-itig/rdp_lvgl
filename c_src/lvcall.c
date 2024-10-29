@@ -34,13 +34,13 @@
 #include <queue.h>
 
 struct ibuf {
-	uint8_t	 ib_buf[4096];
-	uint8_t *ib_ptrs[4];
+	void	*ib_buf;
+	void	*ib_ptrs[4];
 	size_t	 ib_len;
 	uint	 ib_idx;
 };
 
-static struct ibuf ibuf[MAX_ARGS];
+static struct ibuf ibuf[MAX_ARGS] = { 0 };
 
 #define	LVCALL_DEBUG	0
 
@@ -204,10 +204,10 @@ lvptr_invalidate(void *pptr)
 }
 
 void
-lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
+lv_do_call(struct shmintf *shm, struct cdesc *cd, void *databuf, size_t dlen)
 {
-	struct cdesc_call *cdc = &cd[0]->cd_call;
-	struct rdesc rd[RING_MAX_CHAIN];
+	struct cdesc_call *cdc = &cd->cd_call;
+	struct rdesc rd;
 	uint64_t rv;
 	lv_obj_t *obj;
 	lv_group_t *grp;
@@ -217,17 +217,16 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 	lv_meter_indicator_t *meterind;
 	lv_meter_scale_t *meterscl;
 	lv_span_t *span;
-	struct cdinline *inl;
 	uint ib = 0, i;
-	size_t rem, off, take;
 	uint8_t *data;
 	enum arg_type rt = cdc->cdc_rettype;
+	struct dbuf *d;
 
 	debug("call to %p", (void *)cdc->cdc_func);
 	debug("rtype = %u", cdc->cdc_rettype);
 
-	inl = cdi_init(cd, ncd, FOFFSET_CALL);
-	assert(inl != NULL);
+	d = dbuf_from(databuf, dlen);
+	assert(d != NULL);
 
 	for (i = 0; i < MAX_ARGS; ++i) {
 		switch (cdc->cdc_argtype[i]) {
@@ -246,12 +245,12 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 			if (!lvptr_check((void *)cdc->cdc_arg[i])) {
 				debug("arg %u invalid ptr (%p)", i,
 				    cdc->cdc_arg[i]);
-				rd[0] = (struct rdesc){
+				rd = (struct rdesc){
 					.rd_error = EFAULT,
-					.rd_cookie = cd[0]->cd_cookie,
+					.rd_cookie = cd->cd_cookie,
 				};
-				shm_produce_rsp(shm, rd, 1);
-				cdi_free(inl);
+				shm_produce_rsp(shm, &rd, NULL, 0);
+				dbuf_free(d);
 				return;
 			}
 			break;
@@ -279,7 +278,6 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 			ibuf[ib].ib_len = 0;
 			ibuf[ib].ib_idx = i;
-			bzero(ibuf[ib].ib_buf, sizeof (ibuf[ib].ib_buf));
 
 			cdc->cdc_argtype[i] = ARG_PTR;
 			cdc->cdc_arg[i] = (uint64_t)ibuf[ib].ib_ptrs;
@@ -291,11 +289,7 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 				debug("inline arr buf in arg%d/%d: "
 				    "%d bytes", i, aidx, len);
 
-				ibuf[ib].ib_ptrs[aidx++] =
-				    &ibuf[ib].ib_buf[ibuf[ib].ib_len];
-				cdi_get(inl, &ibuf[ib].ib_buf[ibuf[ib].ib_len],
-				    len);
-				ibuf[ib].ib_len += len + 1;
+				ibuf[ib].ib_ptrs[aidx++] = dbuf_get(d, len);
 
 				debug("=> inlined as ib %d/%d", ib, aidx);
 			}
@@ -308,9 +302,8 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 		ibuf[ib].ib_len = cdc->cdc_arg[i];
 		ibuf[ib].ib_idx = i;
-		bzero(ibuf[ib].ib_buf, sizeof (ibuf[ib].ib_buf));
 
-		cdi_get(inl, ibuf[ib].ib_buf, ibuf[ib].ib_len);
+		ibuf[ib].ib_buf = dbuf_get(d, cdc->cdc_arg[i]);
 
 		cdc->cdc_argtype[i] = ARG_PTR;
 		cdc->cdc_arg[i] = (uint64_t)ibuf[ib].ib_buf;
@@ -319,8 +312,6 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 		++ib;
 	}
-
-	cdi_free(inl);
 
 	if (rt == ARG_INLINE_BUF || rt == ARG_INLINE_STR)
 		cdc->cdc_rettype = ARG_PTR_BUFFER;
@@ -336,196 +327,161 @@ lv_do_call(struct shmintf *shm, struct cdesc **cd, uint ncd)
 
 	rv = lv_do_real_call(cdc);
 
+	dbuf_free(d);
+
 	debug("rv = %lx", rv);
 
 	switch (rt) {
 	case ARG_INLINE_STR:
-		rem = strlen((const char *)rv);
-		cdc->cdc_rbuflen = rem;
+		cdc->cdc_rbuflen = strlen((const char *)rv);
 		/* FALL THROUGH */
 	case ARG_INLINE_BUF:
 		data = (uint8_t *)rv;
-
-		rem = cdc->cdc_rbuflen;
-		off = 0;
-
-		if (rem > RDESC_MAX_INLINE) {
-			log_warn("call returned buffer of len %u > max "
-			    "inline which is %u. returning ENOSPC",
-			    rem, RDESC_MAX_INLINE);
-			rd[0] = (struct rdesc){
-				.rd_error = ENOSPC,
-				.rd_cookie = cd[0]->cd_cookie,
-			};
-			shm_produce_rsp(shm, rd, 1);
-			break;
-		}
-
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return_buf = (struct rdesc_retbuf){
-				.rdrb_len = rem,
+				.rdrb_len = cdc->cdc_rbuflen,
 			}
 		};
-
-		take = sizeof (rd[0].rd_return_buf.rdrb_data);
-		if (take > rem)
-			take = rem;
-		if (take > 0)
-			bcopy(data, rd[0].rd_return_buf.rdrb_data, take);
-		rem -= take;
-		off += take;
-
-		i = 1;
-		while (i < RING_MAX_CHAIN && rem > 0) {
-			rd[i - 1].rd_chain = 1;
-			rd[i] = (struct rdesc){
-				.rd_chain = 0,
-				.rd_cookie = cd[0]->cd_cookie,
-			};
-			take = sizeof (rd[i].rd_data);
-			if (take > rem)
-				take = rem;
-			bcopy(&data[off], rd[i].rd_data, take);
-			rem -= take;
-			off += take;
-			++i;
-		}
-		rd[0].rd_return_buf.rdrb_len = off;
-
-		shm_produce_rsp(shm, rd, i);
+		shm_produce_rsp(shm, &rd, data, cdc->cdc_rbuflen);
 		break;
 	case ARG_PTR_OBJ:
 		obj = (lv_obj_t *)rv;
 		if (obj != NULL)
 			lvptr_validate(obj);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_class = (obj == NULL) ? 0 : (uint64_t)lv_obj_get_class(obj),
 				.rdr_udata = (obj == NULL) ? 0 : (uint64_t)lv_obj_get_user_data(obj),
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_GROUP:
 		grp = (lv_group_t *)rv;
 		if (grp != NULL)
 			lvptr_validate(grp);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (grp == NULL) ? 0 : (uint64_t)grp->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_STYLE:
 		sty = (lv_style_t *)rv;
 		if (sty != NULL)
 			lvptr_validate(sty);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (sty == NULL) ? 0 : (uint64_t)sty->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_CHART_CUR:
 		chartcur = (lv_chart_cursor_t *)rv;
 		if (chartcur != NULL)
 			lvptr_validate_with_dep(chartcur, chartcur->ser);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (chartcur == NULL) ? 0 : (uint64_t)chartcur->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_CHART_SER:
 		chartser = (lv_chart_series_t *)rv;
 		if (chartser != NULL)
 			lvptr_validate(chartser);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (chartser == NULL) ? 0 : (uint64_t)chartser->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_METER_IND:
 		meterind = (lv_meter_indicator_t *)rv;
 		if (meterind != NULL)
 			lvptr_validate_with_dep(meterind, meterind->scale);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (meterind == NULL) ? 0 : (uint64_t)meterind->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_METER_SCL:
 		meterscl = (lv_meter_scale_t *)rv;
 		if (meterscl != NULL)
 			lvptr_validate(meterscl);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (meterscl == NULL) ? 0 : (uint64_t)meterscl->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	case ARG_PTR_SPAN:
 		span = (lv_span_t *)rv;
 		if (span != NULL)
 			lvptr_validate_with_dep(span, span->spangroup);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 				.rdr_udata = (span == NULL) ? 0 : (uint64_t)span->user_data,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 		break;
 	default:
 		if (rt == ARG_PTR)
 			lvptr_validate((void *)rv);
-		rd[0] = (struct rdesc){
+		rd = (struct rdesc){
 			.rd_error = 0,
-			.rd_cookie = cd[0]->cd_cookie,
+			.rd_cookie = cd->cd_cookie,
 			.rd_return = (struct rdesc_return){
 				.rdr_val = rv,
 			}
 		};
-		shm_produce_rsp(shm, rd, 1);
+		shm_produce_rsp(shm, &rd, NULL, 0);
 	}
 
 	for (ib = 0; ib < MAX_ARGS; ++ib) {
-		if (ibuf[ib].ib_len > 0) {
-			explicit_bzero(ibuf[ib].ib_buf,
-			    sizeof (ibuf[ib].ib_buf));
+		if (ibuf[ib].ib_buf != NULL) {
+			free(ibuf[ib].ib_buf);
+			ibuf[ib].ib_buf = NULL;
+		}
+		for (i = 0; i < 4; ++i) {
+			if (ibuf[ib].ib_ptrs[i] != NULL) {
+				free(ibuf[ib].ib_ptrs[i]);
+				ibuf[ib].ib_ptrs[i] = NULL;
+			}
 		}
 	}
 }

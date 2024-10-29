@@ -40,6 +40,9 @@
 #include <sys/mman.h>
 #include <sys/errno.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include "shm.h"
 #include "log.h"
@@ -114,18 +117,10 @@ alloc_shmintf(void)
 	shm->si_nfbuf = settings.ss_nfbuf;
 	pthread_rwlock_unlock(&settings.ss_lock);
 
-	shm->si_ncmd = ringsz / sizeof (struct cdesc);
-	shm->si_nresp = respringsz / sizeof (struct rdesc);
 	shm->si_nev = ringsz / sizeof (struct edesc);
 	shm->si_nfl = ringsz / sizeof (struct fdesc);
 	shm->si_nph = ringsz / sizeof (struct pdesc);
 
-	rc = pthread_mutex_init(&shm->si_cc_mtx, NULL);
-	if (rc)
-		goto err;
-	rc = pthread_mutex_init(&shm->si_rc_mtx, NULL);
-	if (rc)
-		goto err;
 	rc = pthread_mutex_init(&shm->si_ec_mtx, NULL);
 	if (rc)
 		goto err;
@@ -188,20 +183,6 @@ alloc_shmintf(void)
 #endif
 	}
 
-	shm->si_cmdr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
-	    MAP_SHARED | MAP_ANON, -1, 0);
-	if (shm->si_cmdr == MAP_FAILED)
-		goto err;
-	for (i = 0; i < shm->si_ncmd; ++i)
-		atomic_store(&shm->si_cmdr[i].cd_owner, OWNER_ERL);
-
-	shm->si_respr = mmap(NULL, respringsz, PROT_READ | PROT_WRITE,
-	    MAP_SHARED | MAP_ANON, -1, 0);
-	if (shm->si_respr == MAP_FAILED)
-		goto err;
-	for (i = 0; i < shm->si_nresp; ++i)
-		atomic_store(&shm->si_respr[i].rd_owner, OWNER_LV);
-
 	shm->si_evr = mmap(NULL, ringsz, PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0);
 	if (shm->si_evr == MAP_FAILED)
@@ -236,15 +217,9 @@ free_shmintf(struct shmintf *shm)
 	uint i;
 	if (shm == NULL)
 		return;
-	pthread_mutex_destroy(&shm->si_cc_mtx);
-	pthread_mutex_destroy(&shm->si_rc_mtx);
 	pthread_mutex_destroy(&shm->si_ec_mtx);
 	pthread_mutex_destroy(&shm->si_fc_mtx);
 	pthread_mutex_destroy(&shm->si_pc_mtx);
-	if (shm->si_cmdr != MAP_FAILED)
-		munmap(shm->si_cmdr, shm->si_ringsz);
-	if (shm->si_respr != MAP_FAILED)
-		munmap(shm->si_respr, shm->si_respringsz);
 	if (shm->si_evr != MAP_FAILED)
 		munmap(shm->si_evr, shm->si_ringsz);
 	if (shm->si_flr != MAP_FAILED)
@@ -272,103 +247,210 @@ free_shmintf(struct shmintf *shm)
 	free(shm);
 }
 
-uint
-shm_consume_cmd(struct shmintf *shm, struct cdesc **cmd, uint maxchain)
+int
+shm_consume_cmd(struct shmintf *shm, struct cdesc **cmd, void **datap, size_t *lenp)
 {
-	uint iters;
-	uint owner, db;
-	uint n = 0;
-	assert(shm->si_role == ROLE_LV);
-	if (atomic_load(&shm->si_dead))
-		return (0);
-	db = shm_read_doorbell(shm);
-	do {
-		iters = 0;
-		/* Attempt a busy-wait check first. */
-		do {
-			owner = atomic_load(&shm->si_cmdr[shm->si_cc].cd_owner);
-			++iters;
-		} while (iters < RING_BUSYWAIT_ITERS && owner != OWNER_LV);
-		/* If we didn't find any descriptors ready, sleep. */
-		while (owner != OWNER_LV) {
-			shm_await_doorbell_v(shm, db);
-			owner = atomic_load(&shm->si_cmdr[shm->si_cc].cd_owner);
-			db = shm_read_doorbell(shm);
-			if (atomic_load(&shm->si_dead))
-				return (0);
-		}
-		cmd[n] = &shm->si_cmdr[shm->si_cc];
-		shm->si_cc++;
-		if (shm->si_cc >= shm->si_ncmd)
-			shm->si_cc = 0;
-		if (!cmd[n++]->cd_chain)
-			break;
-	} while (n < maxchain);
-	return (n);
-}
+	ssize_t s;
+	static __thread struct cdesc *cmdbuf = NULL;
+	void *dbuf = NULL;
+	struct msghdr msg;
+	struct iovec iov[3];
+	uint32_t dlen;
 
-void
-shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, uint n)
-{
-	uint owner;
-	uint i = 0;
-	uint iters = 0;
 	assert(shm->si_role == ROLE_LV);
-	if (atomic_load(&shm->si_dead))
-		return;
-	pthread_mutex_lock(&shm->si_rc_mtx);
-	while (i < n) {
-		do {
-			owner = atomic_load(
-			    &shm->si_respr[shm->si_rc].rd_owner);
-			if (owner != OWNER_LV) {
-				if (++iters & 0x10000)
-					shm_ring_doorbell(shm);
-				if (atomic_load(&shm->si_dead))
-					return;
-			}
-		} while (owner != OWNER_LV);
-		bcopy(&rsp[i].rd_chain, &shm->si_respr[shm->si_rc].rd_chain,
-		    sizeof(struct rdesc) - offsetof(struct rdesc, rd_chain));
-		atomic_store(&shm->si_respr[shm->si_rc].rd_owner, OWNER_ERL);
-		shm->si_rc++;
-		if (shm->si_rc >= shm->si_nresp)
-			shm->si_rc = 0;
-		i++;
+
+	if (cmdbuf == NULL)
+		cmdbuf = malloc(sizeof (*cmdbuf));
+	if (cmdbuf == NULL)
+		return (ENOMEM);
+
+	bzero(&msg, sizeof (msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+	iov[0].iov_base = &dlen;
+	iov[0].iov_len = sizeof (dlen);
+	s = recvmsg(shm->si_cmd_sock, &msg, MSG_PEEK);
+	if (s < 0)
+		return (errno);
+	if (s == 0)
+		return (ESHUTDOWN);
+	if (s < sizeof (dlen))
+		return (EIO);
+
+	bzero(&msg, sizeof (msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 2;
+	iov[0].iov_base = &dlen;
+	iov[0].iov_len = sizeof (dlen);
+	iov[1].iov_base = cmdbuf;
+	iov[1].iov_len = sizeof (*cmdbuf);
+
+	if (dlen > 0) {
+		dbuf = malloc(dlen);
+		if (dbuf == NULL)
+			return (ENOMEM);
+		iov[msg.msg_iovlen].iov_base = dbuf;
+		iov[msg.msg_iovlen].iov_len = dlen;
+		++msg.msg_iovlen;
 	}
-	pthread_mutex_unlock(&shm->si_rc_mtx);
+
+	*datap = NULL;
+	*lenp = 0;
+
+	s = recvmsg(shm->si_cmd_sock, &msg, 0);
+	if (s < 0) {
+		free(dbuf);
+		return (errno);
+	}
+	if (s == 0) {
+		free(dbuf);
+		return (ESHUTDOWN);
+	}
+	if (msg.msg_flags & MSG_TRUNC) {
+		log_warn("%s: truncated message", __func__);
+		explicit_bzero(dbuf, dlen);
+		free(dbuf);
+		return (EIO);
+	}
+
+	*cmd = cmdbuf;
+	*lenp = dlen;
+	*datap = dbuf;
+	return (0);
 }
 
-void
-shm_produce_cmd(struct shmintf *shm, const struct cdesc *rsp, uint n)
+int
+shm_consume_rsp(struct shmintf *shm, struct rdesc **rsp, void **datap, size_t *lenp)
 {
-	uint owner;
-	uint iters = 0;
-	uint i = 0;
+	ssize_t s;
+	static __thread struct rdesc *rbuf = NULL;
+	void *dbuf = NULL;
+	struct msghdr msg;
+	struct iovec iov[3];
+	uint32_t dlen;
+
 	assert(shm->si_role == ROLE_ERL);
-	if (atomic_load(&shm->si_dead))
-		return;
-	pthread_mutex_lock(&shm->si_cc_mtx);
-	while (i < n) {
-		do {
-			owner = atomic_load(
-			    &shm->si_cmdr[shm->si_cc].cd_owner);
-			if (owner != OWNER_ERL) {
-				if (++iters & 0x10000)
-					shm_ring_doorbell(shm);
-				if (atomic_load(&shm->si_dead))
-					return;
-			}
-		} while (owner != OWNER_ERL);
-		bcopy(&rsp[i].cd_op, &shm->si_cmdr[shm->si_cc].cd_op,
-		    sizeof(struct cdesc) - offsetof(struct cdesc, cd_op));
-		atomic_store(&shm->si_cmdr[shm->si_cc].cd_owner, OWNER_LV);
-		shm->si_cc++;
-		if (shm->si_cc >= shm->si_ncmd)
-			shm->si_cc = 0;
-		i++;
+
+	if (rbuf == NULL)
+		rbuf = malloc(sizeof (*rbuf));
+	if (rbuf == NULL)
+		return (ENOMEM);
+
+	bzero(&msg, sizeof (msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+	iov[0].iov_base = &dlen;
+	iov[0].iov_len = sizeof (dlen);
+	s = recvmsg(shm->si_cmd_sock, &msg, MSG_PEEK);
+	if (s < 0)
+		return (errno);
+	if (s == 0)
+		return (ESHUTDOWN);
+	if (s < sizeof (dlen))
+		return (EIO);
+
+	bzero(&msg, sizeof (msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 2;
+	iov[0].iov_base = &dlen;
+	iov[0].iov_len = sizeof (dlen);
+	iov[1].iov_base = rbuf;
+	iov[1].iov_len = sizeof (*rbuf);
+
+	if (dlen > 0) {
+		dbuf = malloc(dlen);
+		if (dbuf == NULL)
+			return (ENOMEM);
+		iov[msg.msg_iovlen].iov_base = dbuf;
+		iov[msg.msg_iovlen].iov_len = dlen;
+		++msg.msg_iovlen;
 	}
-	pthread_mutex_unlock(&shm->si_cc_mtx);
+
+	*datap = NULL;
+	*lenp = 0;
+
+	s = recvmsg(shm->si_cmd_sock, &msg, 0);
+	if (s < 0) {
+		free(dbuf);
+		return (errno);
+	}
+	if (s == 0) {
+		free(dbuf);
+		return (ESHUTDOWN);
+	}
+	if (msg.msg_flags & MSG_TRUNC) {
+		log_warn("%s: truncated message", __func__);
+		explicit_bzero(dbuf, dlen);
+		free(dbuf);
+		return (EIO);
+	}
+
+	*rsp = rbuf;
+	*lenp = dlen;
+	*datap = dbuf;
+	return (0);
+}
+
+void
+shm_produce_rsp(struct shmintf *shm, const struct rdesc *rsp, const void *data, size_t dlen)
+{
+	struct msghdr msg;
+	uint32_t plen;
+	struct iovec iov[3];
+
+	assert(shm->si_role == ROLE_LV);
+	assert(dlen < UINT32_MAX);
+	plen = dlen;
+
+	bzero(&msg, sizeof (msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 2;
+
+	iov[0].iov_base = &plen;
+	iov[0].iov_len = sizeof (plen);
+	iov[1].iov_base = (void *)rsp;
+	iov[1].iov_len = sizeof (*rsp);
+
+	if (data != NULL && dlen > 0) {
+		iov[msg.msg_iovlen].iov_base = (void *)data;
+		iov[msg.msg_iovlen].iov_len = dlen;
+		++msg.msg_iovlen;
+	}
+
+	if (sendmsg(shm->si_cmd_sock, &msg, MSG_NOSIGNAL) < 0) {
+		log_warn("%s failed: %d: %s", __func__, errno, strerror(errno));
+	}
+}
+
+void
+shm_produce_cmd(struct shmintf *shm, const struct cdesc *cmd, const void *data, size_t dlen)
+{
+	struct msghdr msg;
+	struct iovec iov[3];
+	uint32_t plen;
+
+	assert(shm->si_role == ROLE_ERL);
+	assert(dlen < UINT32_MAX);
+	plen = dlen;
+
+	bzero(&msg, sizeof (msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 2;
+
+	iov[0].iov_base = &plen;
+	iov[0].iov_len = sizeof (plen);
+	iov[1].iov_base = (void *)cmd;
+	iov[1].iov_len = sizeof (*cmd);
+
+	if (data != NULL && dlen > 0) {
+		iov[msg.msg_iovlen].iov_base = (void *)data;
+		iov[msg.msg_iovlen].iov_len = dlen;
+		++msg.msg_iovlen;
+	}
+
+	if (sendmsg(shm->si_cmd_sock, &msg, MSG_NOSIGNAL) < 0) {
+		log_warn("%s failed: %d: %s", __func__, errno, strerror(errno));
+	}
 }
 
 void
@@ -453,43 +535,6 @@ shm_produce_phlush(struct shmintf *shm, const struct pdesc *psp)
 	if (shm->si_pc >= shm->si_nph)
 		shm->si_pc = 0;
 	pthread_mutex_unlock(&shm->si_pc_mtx);
-}
-
-uint
-shm_consume_rsp(struct shmintf *shm, struct rdesc **rsp, uint maxchain)
-{
-	uint iters;
-	uint owner, db;
-	uint n = 0;
-	assert(shm->si_role == ROLE_ERL);
-	if (atomic_load(&shm->si_dead))
-		return (0);
-	db = shm_read_doorbell(shm);
-	do {
-		iters = 0;
-		/* Attempt a busy-wait check first. */
-		do {
-			owner = atomic_load(
-			    &shm->si_respr[shm->si_rc].rd_owner);
-			++iters;
-		} while (iters < RING_BUSYWAIT_ITERS && owner != OWNER_ERL);
-		/* If we didn't find any descriptors ready, sleep. */
-		while (owner != OWNER_ERL) {
-			shm_await_doorbell_v(shm, db);
-			owner = atomic_load(
-			    &shm->si_respr[shm->si_rc].rd_owner);
-			db = shm_read_doorbell(shm);
-			if (atomic_load(&shm->si_dead))
-				return (0);
-		}
-		rsp[n] = &shm->si_respr[shm->si_rc];
-		shm->si_rc++;
-		if (shm->si_rc >= shm->si_nresp)
-			shm->si_rc = 0;
-		if (!rsp[n++]->rd_chain)
-			break;
-	} while (n < maxchain);
-	return (n);
 }
 
 void
@@ -685,26 +730,6 @@ shm_consume_phlush(struct shmintf *shm, struct pdesc **psp)
 }
 
 void
-shm_finish_cmd(struct cdesc *cd)
-{
-	bool swapped;
-	uint owner = OWNER_LV;
-	swapped = atomic_compare_exchange_strong(&cd->cd_owner, &owner,
-	    OWNER_ERL);
-	assert(swapped);
-}
-
-void
-shm_finish_rsp(struct rdesc *rd)
-{
-	bool swapped;
-	uint owner = OWNER_ERL;
-	swapped = atomic_compare_exchange_strong(&rd->rd_owner, &owner,
-	    OWNER_LV);
-	assert(swapped);
-}
-
-void
 shm_finish_evt(struct edesc *ed)
 {
 	bool swapped;
@@ -734,66 +759,6 @@ shm_finish_phlush(struct pdesc *pd)
 	assert(swapped);
 }
 
-static void *
-shm_pipewatch(void *arg)
-{
-	struct shmintf *shm = arg;
-	struct pollfd pfd;
-	int ret;
-
-	pfd.fd = shm->si_down_pipe[0];
-	pfd.events = POLLIN | POLLHUP;
-
-	while (1) {
-		ret = poll(&pfd, 1, -1);
-		if (ret != 1)
-			continue;
-		if (read(pfd.fd, &ret, sizeof (ret)) == 0) {
-			log_debug("parent died; exiting");
-			/*
-			 * don't use exit(3) -- that will call atexit stuff
-			 * from the original erlang process and explode
-			 */
-			_exit(1);
-		}
-	}
-}
-
-static void *
-shm_parent_pipewatch(void *arg)
-{
-	struct shmintf *shm = arg;
-	struct lockpg *lp = shm->si_lockpg;
-	struct pollfd pfd;
-	int ret;
-
-	pfd.fd = shm->si_up_pipe[0];
-	pfd.events = POLLIN | POLLHUP;
-
-	while (1) {
-		ret = poll(&pfd, 1, -1);
-		if (ret != 1)
-			continue;
-		if (read(pfd.fd, &ret, sizeof (ret)) == 0) {
-			log_warn("child %d died", shm->si_kid);
-			atomic_store(&shm->si_dead, 1);
-
-			pthread_mutex_lock(&lp->lp_lv_mtx);
-			pthread_mutex_lock(&lp->lp_erl_mtx);
-			lp->lp_dead = 1;
-			++lp->lp_lv_db;
-			++lp->lp_erl_db;
-			pthread_cond_broadcast(&lp->lp_erl_db_cond);
-			pthread_cond_broadcast(&lp->lp_lv_db_cond);
-			pthread_mutex_unlock(&lp->lp_erl_mtx);
-			pthread_mutex_unlock(&lp->lp_lv_mtx);
-
-			waitpid(shm->si_kid, NULL, 0);
-			return (NULL);
-		}
-	}
-}
-
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__sun) || defined(LIBBSD_OVERLAY)
 # define HAVE_CLOSEFROM	1
 #else
@@ -808,20 +773,14 @@ shm_fork(struct shmintf *shm)
 	struct fbuf *fb;
 	uint i;
 	struct sigaction sa;
+	int socks[2];
 #if !HAVE_CLOSEFROM
 	int fdlimit;
 #endif
 
-	pthread_mutex_lock(&shm->si_cc_mtx);
 	assert(shm->si_role == ROLE_NONE);
 
-	if (pipe(shm->si_down_pipe)) {
-		pthread_mutex_unlock(&shm->si_cc_mtx);
-		return (-1);
-	}
-
-	if (pipe(shm->si_up_pipe)) {
-		pthread_mutex_unlock(&shm->si_cc_mtx);
+	if (socketpair(AF_UNIX, SOCK_SEQPACKET, 0, socks)) {
 		return (-1);
 	}
 
@@ -833,11 +792,9 @@ shm_fork(struct shmintf *shm)
 	 * After we've forked, mark the framebuffers and rings so they won't
 	 * get shared with any other forked children.
 	 */
-	madvise(shm->si_cmdr, shm->si_ringsz, MADV_DONTFORK);
 	madvise(shm->si_evr, shm->si_ringsz, MADV_DONTFORK);
 	madvise(shm->si_flr, shm->si_ringsz, MADV_DONTFORK);
 	madvise(shm->si_phr, shm->si_ringsz, MADV_DONTFORK);
-	madvise(shm->si_respr, shm->si_respringsz, MADV_DONTFORK);
 	for (i = 0; i < shm->si_nfbuf; ++i) {
 		fb = &shm->si_fbuf[i];
 		madvise(fb->fb_a, fb->fb_sz, MADV_DONTFORK);
@@ -850,15 +807,12 @@ shm_fork(struct shmintf *shm)
 		break;
 	case 0:
 		shm->si_role = ROLE_LV;
+		shm->si_cmd_sock = socks[0];
 		log_post_fork("lvkid", getpid());
-		close(shm->si_down_pipe[1]);
-		close(shm->si_up_pipe[0]);
-		maxfd = shm->si_down_pipe[0];
-		if (shm->si_up_pipe[1] > maxfd)
-			maxfd = shm->si_up_pipe[1];
+		close(socks[1]);
+		maxfd = socks[0];
 		for (fd = 0; fd < maxfd; ++fd) {
-			if (fd == STDERR_FILENO || fd == shm->si_down_pipe[0] ||
-			    fd == shm->si_up_pipe[1])
+			if (fd == STDERR_FILENO || fd == shm->si_cmd_sock)
 				continue;
 			close(fd);
 		}
@@ -883,19 +837,12 @@ shm_fork(struct shmintf *shm)
 		sigaction(SIGCHLD, &sa, NULL);
 		sigaction(SIGPIPE, &sa, NULL);
 		sigaction(SIGQUIT, &sa, NULL);
-
-		pthread_create(&shm->si_pipewatch, NULL, shm_pipewatch, shm);
-		pthread_setname_np(shm->si_pipewatch, "shm_pipewatch");
 		break;
 	default:
 		shm->si_role = ROLE_ERL;
-		close(shm->si_down_pipe[0]);
-		close(shm->si_up_pipe[1]);
-		pthread_create(&shm->si_pipewatch, NULL, shm_parent_pipewatch,
-		    shm);
-		pthread_setname_np(shm->si_pipewatch, "shm_pipewatch");
+		shm->si_cmd_sock = socks[1];
+		close(socks[0]);
 		break;
 	}
-	pthread_mutex_unlock(&shm->si_cc_mtx);
 	return (kid);
 }

@@ -36,7 +36,7 @@ void lvptr_validate(void *ptr);
 void lvptr_validate_with_dep(void *ptr, void *parent);
 void lvptr_invalidate(void *ptr);
 
-void lv_do_call(struct shmintf *, struct cdesc **, uint);
+void lv_do_call(struct shmintf *, struct cdesc *, void *, size_t);
 
 /* auto-generated dispatch */
 uint64_t lv_do_real_call(const struct cdesc_call *cdc);

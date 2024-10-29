@@ -79,8 +79,6 @@ enum shmrole {
 struct shmintf {
 	enum shmrole	 si_role;
 
-	int		 si_down_pipe[2];
-	int		 si_up_pipe[2];
 	pid_t		 si_kid;
 	atomic_uint	 si_dead;
 	pthread_t	 si_pipewatch;
@@ -92,15 +90,7 @@ struct shmintf {
 	size_t		 si_ringsz;
 	size_t		 si_respringsz;
 
-	size_t		 si_ncmd;	/* general commands */
-	pthread_mutex_t	 si_cc_mtx;	/* protects si_cc outbound */
-	uint		 si_cc;
-	struct cdesc	*si_cmdr;
-
-	size_t		 si_nresp;	/* responses to commands on cmdr */
-	pthread_mutex_t	 si_rc_mtx;	/* protects si_rc outbound */
-	uint		 si_rc;
-	struct rdesc	*si_respr;
+	int		 si_cmd_sock;
 
 	size_t		 si_nev;	/* async events (lv => erl) */
 	pthread_mutex_t	 si_ec_mtx;	/* protects si_ec outbound */
@@ -188,7 +178,6 @@ struct cdesc_call {
 	uint8_t			cdc_argtype[MAX_ARGS];
 	uint16_t		cdc_rbuflen;
 	uint8_t			cdc_rettype;
-	uint8_t			cdc_ibuf[29];
 };
 
 struct cdesc_setudata {
@@ -199,7 +188,6 @@ struct cdesc_setudata {
 
 struct cdesc_copybuf {
 	uint32_t		cdcs_len;
-	char			cdcs_data[108];
 };
 
 struct cdesc_freebuf {
@@ -220,10 +208,7 @@ struct cdesc_teardownev {
 };
 
 struct cdesc {
-	atomic_uint		cd_owner;
 	uint8_t			cd_op;
-	uint8_t			cd_chain;
-	uint8_t			cd_pad[2];
 	uint64_t		cd_cookie;
 	union {
 		struct cdesc_setup	cd_setup;
@@ -234,8 +219,6 @@ struct cdesc {
 		struct cdesc_freebuf	cd_free_buf;
 		struct cdesc_setupev	cd_setup_event;
 		struct cdesc_teardownev	cd_teardown_event;
-		uint64_t		cd_dword[14];
-		uint8_t			cd_data[112];
 	};
 };
 
@@ -297,7 +280,6 @@ struct rdesc_return {
 
 struct rdesc_retbuf {
 	uint32_t	rdrb_len;
-	char		rdrb_data[108];
 };
 
 struct rdesc_setupev {
@@ -305,9 +287,6 @@ struct rdesc_setupev {
 };
 
 struct rdesc {
-	atomic_uint		rd_owner;
-	uint8_t			rd_chain;
-	uint8_t			rd_pad;
 	uint16_t		rd_error;
 	uint64_t		rd_cookie;
 	union {
@@ -315,7 +294,6 @@ struct rdesc {
 		struct rdesc_setupev	rd_setup_event;
 		struct rdesc_return	rd_return;
 		struct rdesc_retbuf	rd_return_buf;
-		uint8_t			rd_data[112];
 	};
 };
 
@@ -323,32 +301,21 @@ struct rdesc {
 #define	FRAMEBUFFER_MAX_SIZE	(64*1024*1024)
 #define	RING_SIZE		16384
 
-#define	RING_MAX_CHAIN		16
-
 #define	RING_BUSYWAIT_ITERS	16384
 
-#define CDESC_FIRST_INLINE	(sizeof ( ((struct cdesc_call *)0)->cdc_ibuf ))
-#define CDESC_REST_INLINE	(sizeof ( ((struct cdesc *)0)->cd_data ))
-#define	CDESC_MAX_INLINE	\
-	(CDESC_FIRST_INLINE + (RING_MAX_CHAIN - 1) * CDESC_REST_INLINE)
-
-#define RDESC_FIRST_INLINE	(sizeof ( ((struct rdesc_retbuf *)0)->rdrb_data ))
-#define RDESC_REST_INLINE	(sizeof ( ((struct rdesc *)0)->rd_data ))
-#define	RDESC_MAX_INLINE	\
-	(RDESC_FIRST_INLINE + (RING_MAX_CHAIN - 1) * RDESC_REST_INLINE)
+#define	CDESC_MAX_INLINE	INT32_MAX
+#define RDESC_MAX_INLINE	INT32_MAX
 
 struct shmintf *alloc_shmintf(void);
 void free_shmintf(struct shmintf *);
 
 pid_t shm_fork(struct shmintf *);
 
-void shm_produce_cmd(struct shmintf *, const struct cdesc *, uint);
-uint shm_consume_cmd(struct shmintf *, struct cdesc **, uint);
-void shm_finish_cmd(struct cdesc *);
+void shm_produce_cmd(struct shmintf *, const struct cdesc *, const void *, size_t);
+int shm_consume_cmd(struct shmintf *, struct cdesc **, void **, size_t *);
 
-void shm_produce_rsp(struct shmintf *, const struct rdesc *, uint);
-uint shm_consume_rsp(struct shmintf *, struct rdesc **, uint);
-void shm_finish_rsp(struct rdesc *);
+void shm_produce_rsp(struct shmintf *, const struct rdesc *, const void *, size_t);
+int shm_consume_rsp(struct shmintf *, struct rdesc **, void **, size_t *);
 
 void shm_produce_evt(struct shmintf *, const struct edesc *);
 void shm_consume_evt(struct shmintf *, struct edesc **);
