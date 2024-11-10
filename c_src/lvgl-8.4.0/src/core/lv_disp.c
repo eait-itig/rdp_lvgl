@@ -228,6 +228,15 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
         return;
     }
 
+    /*
+     * If the old active screen got deleted, do an immediate load
+     * (there's nothing else to transition away from)
+     */
+    if (act_scr == NULL) {
+        scr_load_internal(new_scr);
+        return;
+    }
+
     /*If an other screen load animation is in progress
      *make target screen loaded immediately. */
     if(d->scr_to_load) {
