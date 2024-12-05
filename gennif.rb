@@ -721,14 +721,21 @@ class Func
     puts ""
     parse
     puts ""
+    puts "\tif (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {"
+    puts "\t\trv = make_errno(env, ENOTCONN);"
+    puts "\t\tgoto out;"
+    puts "\t}"
+    puts ""
     puts "\trc = make_ncd(env, &msgref, &ncd);"
     puts "\tif (rc != 0) {"
     puts "\t\trv = make_errno(env, rc);"
     puts "\t\tgoto out;"
     puts "\t}"
     puts ""
-    puts "\tncd->ncd_ret_secure = true;" if @rsecure
-    puts "" if @rsecure
+    if @rsecure
+      puts "\tncd->ncd_ret_secure = true;"
+      puts ""
+    end
     precall
     puts ""
     puts "\trc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,"
@@ -1013,7 +1020,7 @@ LvFunc.new('group_focus_freeze', Void, Group.new('group'), Bool8.new('freeze'))
 LvFunc.new('group_get_focused', Obj, Group.new('group'))
 
 Func.new('style_create', 'lv_style_alloc', Style, Inst.new('inst'))
-StyleFunc.new('set_flex_align', Void, FlexAlign.new('main'), FlexAlign.new('cross'), FlexAlign.new('tracks'))
+StyleFunc.new('set_flex_align', Void, FlexAlign.new('mainaxis'), FlexAlign.new('cross'), FlexAlign.new('tracks'))
 StyleFunc.new('set_flex_flow', Void, FlexFlow.new('flow'))
 StyleFunc.new('set_prop', Void, StylePropVal.new('sty'), Dummy.new('val'))
 

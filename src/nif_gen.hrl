@@ -347,7 +347,7 @@ group_get_focused(_Group) -> error(no_nif).
 -spec style_create(instance()) -> async_return(style()).
 style_create(_Inst) -> error(no_nif).
 -spec style_set_flex_align(style(), lv_style:flex_align(), lv_style:flex_align(), lv_style:flex_align()) -> async_return().
-style_set_flex_align(_Style, _Main, _Cross, _Tracks) -> error(no_nif).
+style_set_flex_align(_Style, _Mainaxis, _Cross, _Tracks) -> error(no_nif).
 -spec style_set_flex_flow(style(), lv_style:flex_flow()) -> async_return().
 style_set_flex_flow(_Style, _Flow) -> error(no_nif).
 -spec style_set_prop(style(), style_generic_prop(), style_generic_val()) -> async_return().

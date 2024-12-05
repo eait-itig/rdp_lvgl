@@ -23,6 +23,11 @@ rlvgl_bar_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -97,6 +102,11 @@ rlvgl_bar_set_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_bar_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -179,6 +189,11 @@ rlvgl_bar_set_start_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -249,6 +264,11 @@ rlvgl_bar_set_range3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -314,6 +334,11 @@ rlvgl_bar_set_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -373,6 +398,11 @@ rlvgl_bar_get_value1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -426,6 +456,11 @@ rlvgl_btn_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -476,6 +511,11 @@ rlvgl_checkbox_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -552,6 +592,11 @@ rlvgl_checkbox_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -611,6 +656,11 @@ rlvgl_checkbox_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -661,6 +711,11 @@ rlvgl_textarea_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -737,6 +792,11 @@ rlvgl_textarea_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -793,6 +853,11 @@ rlvgl_textarea_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -871,6 +936,11 @@ rlvgl_textarea_set_placeholder_text2(ErlNifEnv *env, int argc, const ERL_NIF_TER
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -941,6 +1011,11 @@ rlvgl_textarea_set_text_selection2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1017,6 +1092,11 @@ rlvgl_textarea_set_password_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1090,6 +1170,11 @@ rlvgl_textarea_set_one_line2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1152,6 +1237,11 @@ rlvgl_textarea_set_accepted_chars2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1219,6 +1309,11 @@ rlvgl_textarea_set_max_length2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1275,6 +1370,11 @@ rlvgl_textarea_get_label1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_textarea_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1341,6 +1441,11 @@ rlvgl_textarea_set_password_show_time2(ErlNifEnv *env, int argc, const ERL_NIF_T
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1392,6 +1497,11 @@ rlvgl_img_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1472,6 +1582,11 @@ rlvgl_img_set_offset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1540,6 +1655,11 @@ rlvgl_img_set_src2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1601,6 +1721,11 @@ rlvgl_img_set_angle2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_img_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1682,6 +1807,11 @@ rlvgl_img_set_pivot2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1744,6 +1874,11 @@ rlvgl_img_set_zoom2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_img_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1820,6 +1955,11 @@ rlvgl_img_set_antialias2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -1871,6 +2011,11 @@ rlvgl_label_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -1929,6 +2074,11 @@ rlvgl_label_get_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_label_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2005,6 +2155,11 @@ rlvgl_label_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2066,6 +2221,11 @@ rlvgl_label_set_text_sel_start2(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_label_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2133,6 +2293,11 @@ rlvgl_label_set_text_sel_end2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2184,6 +2349,11 @@ rlvgl_btnmatrix_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2263,6 +2433,11 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2329,6 +2504,11 @@ rlvgl_btnmatrix_set_btn_ctrl3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2402,6 +2582,11 @@ rlvgl_btnmatrix_clear_btn_ctrl3(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2467,6 +2652,11 @@ rlvgl_btnmatrix_set_btn_ctrl_all2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2528,6 +2718,11 @@ rlvgl_btnmatrix_clear_btn_ctrl_all2(ErlNifEnv *env, int argc, const ERL_NIF_TERM
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2597,6 +2792,11 @@ rlvgl_btnmatrix_set_btn_width3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2674,6 +2874,11 @@ rlvgl_btnmatrix_set_one_checked2(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2730,6 +2935,11 @@ rlvgl_btnmatrix_get_selected_btn1(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2796,6 +3006,11 @@ rlvgl_btnmatrix_set_selected_btn2(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2857,6 +3072,11 @@ rlvgl_btnmatrix_get_btn_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -2929,6 +3149,11 @@ rlvgl_btnmatrix_has_btn_ctrl3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -2981,6 +3206,11 @@ rlvgl_dropdown_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3054,6 +3284,11 @@ rlvgl_dropdown_set_options2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3136,6 +3371,11 @@ rlvgl_dropdown_add_option3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3193,6 +3433,11 @@ rlvgl_dropdown_get_selected1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3259,6 +3504,11 @@ rlvgl_dropdown_set_selected2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3315,6 +3565,11 @@ rlvgl_dropdown_clear_options1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_dropdown_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3376,6 +3631,11 @@ rlvgl_dropdown_get_selected_str1(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3429,6 +3689,11 @@ rlvgl_imgbtn_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3479,6 +3744,11 @@ rlvgl_led_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3542,6 +3812,11 @@ rlvgl_led_set_color2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3609,6 +3884,11 @@ rlvgl_led_set_brightness2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3665,6 +3945,11 @@ rlvgl_led_on1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3726,6 +4011,11 @@ rlvgl_led_off1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3781,6 +4071,11 @@ rlvgl_led_toggle1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_led_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3842,6 +4137,11 @@ rlvgl_led_get_brightness1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -3892,6 +4192,11 @@ rlvgl_list_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -3965,6 +4270,11 @@ rlvgl_list_add_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_list_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4061,6 +4371,11 @@ rlvgl_list_add_btn3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4137,6 +4452,11 @@ rlvgl_list_get_btn_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4188,6 +4508,11 @@ rlvgl_menu_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4264,6 +4589,11 @@ rlvgl_menu_page_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4315,6 +4645,11 @@ rlvgl_menu_cont_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4371,6 +4706,11 @@ rlvgl_menu_section_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4421,6 +4761,11 @@ rlvgl_menu_separator_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4495,6 +4840,11 @@ rlvgl_menu_set_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4573,6 +4923,11 @@ rlvgl_menu_set_sidebar_page2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4637,6 +4992,11 @@ rlvgl_menu_set_mode_root_back_btn2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4698,6 +5058,11 @@ rlvgl_menu_set_mode_header2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_menu_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4792,6 +5157,11 @@ rlvgl_menu_set_load_page_event3(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4844,6 +5214,11 @@ rlvgl_roller_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -4900,6 +5275,11 @@ rlvgl_slider_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -4953,6 +5333,11 @@ rlvgl_switch_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5003,6 +5388,11 @@ rlvgl_table_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5069,6 +5459,11 @@ rlvgl_table_set_row_cnt2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5130,6 +5525,11 @@ rlvgl_table_set_col_cnt2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_table_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5199,6 +5599,11 @@ rlvgl_table_set_col_width3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_table_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5287,6 +5692,11 @@ rlvgl_table_set_cell_value4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5360,6 +5770,11 @@ rlvgl_table_add_cell_ctrl4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_table_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5439,6 +5854,11 @@ rlvgl_table_clear_cell_ctrl4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5497,6 +5917,11 @@ rlvgl_table_get_selected_cell_pt1(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_table_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5605,6 +6030,11 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5667,6 +6097,11 @@ rlvgl_msgbox_get_active_btn1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5722,6 +6157,11 @@ rlvgl_msgbox_get_active_btn_text1(ErlNifEnv *env, int argc, const ERL_NIF_TERM a
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_msgbox_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5783,6 +6223,11 @@ rlvgl_msgbox_close1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5838,6 +6283,11 @@ rlvgl_msgbox_get_btns1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_msgbox_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -5904,6 +6354,11 @@ rlvgl_spinner_create3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -5956,6 +6411,11 @@ rlvgl_meter_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -6014,6 +6474,11 @@ rlvgl_meter_add_scale1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -6103,6 +6568,11 @@ rlvgl_meter_set_scale_ticks6(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -6205,6 +6675,11 @@ rlvgl_meter_set_scale_major_ticks7(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6300,6 +6775,11 @@ rlvgl_meter_set_scale_range6(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6386,6 +6866,11 @@ rlvgl_meter_add_needle_line5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -6477,6 +6962,11 @@ rlvgl_meter_add_arc5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6552,6 +7042,11 @@ rlvgl_meter_set_indicator_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_meter_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -6631,6 +7126,11 @@ rlvgl_meter_set_indicator_start_value3(ErlNifEnv *env, int argc, const ERL_NIF_T
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6707,6 +7207,11 @@ rlvgl_meter_set_indicator_end_value3(ErlNifEnv *env, int argc, const ERL_NIF_TER
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6759,6 +7264,11 @@ rlvgl_spangroup_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -6825,6 +7335,11 @@ rlvgl_spangroup_set_align2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6884,6 +7399,11 @@ rlvgl_spangroup_new_span1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -6939,6 +7459,11 @@ rlvgl_spangroup_get_child_cnt1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_spangroup_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7002,6 +7527,11 @@ rlvgl_spangroup_get_child2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_spangroup_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7075,6 +7605,11 @@ rlvgl_spangroup_del_span2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7136,6 +7671,11 @@ rlvgl_spangroup_set_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_spangroup_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7203,6 +7743,11 @@ rlvgl_spangroup_set_overflow2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7259,6 +7804,11 @@ rlvgl_spangroup_refr_mode1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_spangroup_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7330,6 +7880,11 @@ rlvgl_span_set_text2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7395,6 +7950,11 @@ rlvgl_span_set_style2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7446,6 +8006,11 @@ rlvgl_chart_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (parent->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7512,6 +8077,11 @@ rlvgl_chart_set_type2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7573,6 +8143,11 @@ rlvgl_chart_set_point_count2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7657,6 +8232,11 @@ rlvgl_chart_set_range4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7720,6 +8300,11 @@ rlvgl_chart_set_update_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -7792,6 +8377,11 @@ rlvgl_chart_set_div_line_count3(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7857,6 +8447,11 @@ rlvgl_chart_set_zoom_x2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -7918,6 +8513,11 @@ rlvgl_chart_set_zoom_y2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8024,6 +8624,11 @@ rlvgl_chart_set_axis_tick8(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8086,6 +8691,11 @@ rlvgl_chart_get_point_count1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8157,6 +8767,11 @@ rlvgl_chart_add_series3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8225,6 +8840,11 @@ rlvgl_chart_remove_series2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8312,6 +8932,11 @@ rlvgl_chart_hide_series3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8388,6 +9013,11 @@ rlvgl_chart_set_series_color3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8456,6 +9086,11 @@ rlvgl_chart_get_series_next2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8538,6 +9173,11 @@ rlvgl_chart_set_all_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8615,6 +9255,11 @@ rlvgl_chart_set_next_value3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 
 	if (!lv_obj_class_has_base(obj->lvko_class, &lv_chart_class)) {
 		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8706,6 +9351,11 @@ rlvgl_chart_set_next_value24(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8763,6 +9413,11 @@ rlvgl_obj_create2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8814,6 +9469,11 @@ rlvgl_obj_center1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8872,6 +9532,11 @@ rlvgl_obj_add_flag2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[1], obj_flags, true, &flags))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -8934,6 +9599,11 @@ rlvgl_obj_clear_flag2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -8990,6 +9660,11 @@ rlvgl_obj_has_flag2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[1], obj_flags, true, &flags))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9052,6 +9727,11 @@ rlvgl_obj_has_flag_any2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9108,6 +9788,11 @@ rlvgl_obj_add_state2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[1], obj_state_specs, true, &states))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9170,6 +9855,11 @@ rlvgl_obj_clear_state2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9221,6 +9911,11 @@ rlvgl_obj_get_state1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9292,6 +9987,11 @@ rlvgl_obj_add_style3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[2], style_selector_specs, true, &sel))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9374,6 +10074,11 @@ rlvgl_obj_align3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9432,6 +10137,11 @@ rlvgl_obj_align2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[1], align_specs, false, &align))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9529,6 +10239,11 @@ rlvgl_obj_align_to4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9586,6 +10301,11 @@ rlvgl_obj_get_pos1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9636,6 +10356,11 @@ rlvgl_obj_get_size1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9711,6 +10436,11 @@ rlvgl_obj_set_size2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9779,6 +10509,11 @@ rlvgl_obj_set_local_style_prop4(ErlNifEnv *env, int argc, const ERL_NIF_TERM arg
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9835,6 +10570,11 @@ rlvgl_obj_move_foreground1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -9885,6 +10625,11 @@ rlvgl_obj_move_background1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -9957,6 +10702,11 @@ rlvgl_obj_swap2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10014,6 +10764,11 @@ rlvgl_obj_set_parent2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_obj_hdl(env, argv[1], &nls, &parent, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10076,6 +10831,11 @@ rlvgl_obj_move_to_index2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10130,6 +10890,11 @@ rlvgl_obj_get_index1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10180,6 +10945,11 @@ rlvgl_obj_get_child_cnt1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10241,6 +11011,11 @@ rlvgl_obj_get_child2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10292,6 +11067,11 @@ rlvgl_obj_get_parent1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10348,6 +11128,11 @@ rlvgl_obj_get_screen1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10398,6 +11183,11 @@ rlvgl_obj_clean1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10454,6 +11244,11 @@ rlvgl_obj_del1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10504,6 +11299,11 @@ rlvgl_obj_refresh_ext_draw_size1(ErlNifEnv *env, int argc, const ERL_NIF_TERM ar
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10565,6 +11365,11 @@ rlvgl_obj_set_scrollbar_mode2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10621,6 +11426,11 @@ rlvgl_obj_set_scroll_dir2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[1], dir_specs, true, &dir))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10692,6 +11502,11 @@ rlvgl_obj_scroll_to_view2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10738,6 +11553,11 @@ rlvgl_group_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10809,6 +11629,11 @@ rlvgl_group_add_obj2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10860,6 +11685,11 @@ rlvgl_group_focus_obj1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (obj->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -10932,6 +11762,11 @@ rlvgl_group_remove_obj2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -10983,6 +11818,11 @@ rlvgl_group_remove_all_objs1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[]
 	if (group->lvkg_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11039,6 +11879,11 @@ rlvgl_group_focus_next1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11089,6 +11934,11 @@ rlvgl_group_focus_prev1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (group->lvkg_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11156,6 +12006,11 @@ rlvgl_group_set_wrap2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		wrap = 0;
 	} else {
 		rv = enif_make_badarg2(env, "wrap", argv[1]);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11227,6 +12082,11 @@ rlvgl_group_focus_freeze2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11281,6 +12141,11 @@ rlvgl_group_get_focused1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11326,6 +12191,11 @@ rlvgl_style_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11396,6 +12266,11 @@ rlvgl_style_set_flex_align4(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11454,6 +12329,11 @@ rlvgl_style_set_flex_flow2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if ((rc = parse_enum(env, argv[1], flex_flow, false, &flow))) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11519,6 +12399,11 @@ rlvgl_style_set_prop3(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11571,6 +12456,11 @@ rlvgl_disp_set_bg_color2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	}
 	if (!enif_get_color(env, argv[1], &color)) {
 		rv = enif_make_badarg2(env, "color", argv[1]);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11632,6 +12522,11 @@ rlvgl_disp_set_bg_image2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11686,6 +12581,11 @@ rlvgl_disp_set_bg_opa2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11732,6 +12632,11 @@ rlvgl_disp_get_inactive_time1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11783,6 +12688,11 @@ rlvgl_disp_trig_activity1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11828,6 +12738,11 @@ rlvgl_disp_get_layer_sys1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -11879,6 +12794,11 @@ rlvgl_disp_get_layer_top1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11927,6 +12847,11 @@ rlvgl_disp_get_scr_act1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -11972,6 +12897,11 @@ rlvgl_disp_get_scr_prev1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -12031,6 +12961,11 @@ rlvgl_set_kbd_group2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (group->lvkg_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -12096,6 +13031,11 @@ rlvgl_scr_load2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	if (screen->lvko_ptr == 0) {
 		rc = ENOENT;
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -12193,6 +13133,11 @@ rlvgl_scr_load_anim6(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -12262,6 +13207,11 @@ rlvgl_set_mouse_cursor2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -12308,6 +13258,11 @@ rlvgl_indev_get_focused1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -12359,6 +13314,11 @@ rlvgl_kbd_wait_release1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -12404,6 +13364,11 @@ rlvgl_mouse_wait_release1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
@@ -12461,6 +13426,11 @@ rlvgl_kbd_reset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		goto out;
 	}
 
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
 	rc = make_ncd(env, &msgref, &ncd);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
@@ -12513,6 +13483,11 @@ rlvgl_mouse_reset2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = enter_obj_hdl(env, argv[1], &nls, &obj, 0);
 	if (rc != 0) {
 		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
 		goto out;
 	}
 
