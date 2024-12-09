@@ -224,19 +224,22 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
     lv_disp_t * d = lv_obj_get_disp(new_scr);
     lv_obj_t * act_scr = lv_disp_get_scr_act(d);
 
-    if(act_scr == new_scr || d->scr_to_load == new_scr) {
+    if (act_scr == new_scr || d->scr_to_load == new_scr) {
         return;
     }
 
+    /*
+     * Don't try to load a screen that's being deleted.
+     */
     if (new_scr->being_deleted) {
         return;
     }
 
     /*
-     * If the old active screen got deleted, do an immediate load
+     * If the old active screen got/is being deleted, do an immediate load
      * (there's nothing else to transition away from)
      */
-    if (act_scr == NULL) {
+    if (act_scr == NULL || act_scr->being_deleted) {
         scr_load_internal(new_scr);
         return;
     }
