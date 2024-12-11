@@ -260,12 +260,21 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
         scr_load_internal(scr_to_load);
     }
 
-    d->scr_to_load = new_scr;
-
     if(d->prev_scr && d->del_prev) {
         lv_obj_del(d->prev_scr);
         d->prev_scr = NULL;
     }
+
+    /*
+     * Check this again: we might have changed act_scr above, and its
+     * deletion might have been triggered.
+     */
+    if (act_scr->being_deleted) {
+        scr_load_internal(new_scr);
+        return;
+    }
+
+    d->scr_to_load = new_scr;
 
     d->draw_prev_over_act = is_out_anim(anim_type);
     d->del_prev = auto_del;
