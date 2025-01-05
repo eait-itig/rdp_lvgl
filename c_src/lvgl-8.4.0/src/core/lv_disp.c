@@ -221,17 +221,20 @@ void lv_disp_set_bg_opa(lv_disp_t * disp, lv_opa_t opa)
 void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t time, uint32_t delay, bool auto_del)
 {
 
-    lv_disp_t * d = lv_obj_get_disp(new_scr);
-    lv_obj_t * act_scr = lv_disp_get_scr_act(d);
-
-    if (act_scr == new_scr || d->scr_to_load == new_scr) {
-        return;
-    }
+    lv_disp_t * d;
+    lv_obj_t * act_scr;
 
     /*
      * Don't try to load a screen that's being deleted.
      */
     if (new_scr->being_deleted) {
+        return;
+    }
+
+    d = lv_obj_get_disp(new_scr);
+    act_scr = lv_disp_get_scr_act(d);
+
+    if (act_scr == new_scr || d->scr_to_load == new_scr) {
         return;
     }
 
@@ -499,7 +502,11 @@ lv_timer_t * _lv_disp_get_refr_timer(lv_disp_t * disp)
 
 static void scr_load_internal(lv_obj_t * scr)
 {
-    lv_disp_t * d = lv_obj_get_disp(scr);
+    lv_disp_t * d;
+
+    if (scr->being_deleted) return; /*Shouldn't happen, just to be sure*/
+
+    d = lv_obj_get_disp(scr);
     if(!d) return;  /*Shouldn't happen, just to be sure*/
 
     lv_obj_t * old_scr = d->act_scr;
