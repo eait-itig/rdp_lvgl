@@ -17,9 +17,11 @@ typedef uint8_t (*lv_call_func1_cp_t)(void *);
 typedef void (*lv_call_func3_vppc_t)(void *, void *, uint8_t);
 typedef uint32_t (*lv_call_func1_lw_t)(uint16_t);
 typedef void (*lv_call_func3_vppw_t)(void *, void *, uint16_t);
+typedef uint8_t (*lv_call_func3_cpll_t)(void *, uint32_t, uint32_t);
 typedef uint16_t (*lv_call_func1_wp_t)(void *);
 typedef void (*lv_call_func3_vpww_t)(void *, uint16_t, uint16_t);
 typedef void (*lv_call_func5_vppcww_t)(void *, void *, uint8_t, uint16_t, uint16_t);
+typedef lv_point_t (*lv_call_func2_Ppp_t)(void *, void *);
 typedef void (*lv_call_func5_vpwwww_t)(void *, uint16_t, uint16_t, uint16_t, uint16_t);
 typedef void (*lv_call_func4_vppwp_t)(void *, void *, uint16_t, void *);
 typedef uint16_t (*lv_call_func2_wll_t)(uint32_t, uint32_t);
@@ -45,7 +47,6 @@ typedef void (*lv_call_func3_vpcC_t)(void *, uint8_t, lv_color_t);
 typedef void (*lv_call_func4_vpwwC_t)(void *, uint16_t, uint16_t, lv_color_t);
 typedef void (*lv_call_func4_vpwwc_t)(void *, uint16_t, uint16_t, uint8_t);
 typedef void * (*lv_call_func3_ppCc_t)(void *, lv_color_t, uint8_t);
-typedef lv_point_t (*lv_call_func2_Ppp_t)(void *, void *);
 typedef void * (*lv_call_func2_ppp_t)(void *, void *);
 typedef uint16_t (*lv_call_func2_wpp_t)(void *, void *);
 typedef void (*lv_call_func8_vpcwwwwcw_t)(void *, uint8_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, uint16_t);
@@ -59,14 +60,9 @@ typedef uint16_t (*lv_call_func4_wwwww_t)(uint16_t, uint16_t, uint16_t, uint16_t
 typedef lv_color_t (*lv_call_func0_C_t)(void);
 typedef uint8_t (*lv_call_func1_cC_t)(lv_color_t);
 typedef lv_color_t (*lv_call_func2_CCc_t)(lv_color_t, uint8_t);
-typedef void (*lv_call_func3_vpCl_t)(void *, lv_color_t, uint32_t);
 typedef lv_color_t (*lv_call_func1_Cl_t)(uint32_t);
 typedef lv_color_t (*lv_call_func3_Cwcc_t)(uint16_t, uint8_t, uint8_t);
 typedef lv_color_t (*lv_call_func3_Cccc_t)(uint8_t, uint8_t, uint8_t);
-typedef lv_color_t (*lv_call_func3_CCCc_t)(lv_color_t, lv_color_t, uint8_t);
-typedef lv_color_t (*lv_call_func3_CpCc_t)(void *, lv_color_t, uint8_t);
-typedef void (*lv_call_func6_vCcCcpp_t)(lv_color_t, uint8_t, lv_color_t, uint8_t, void *, void *);
-typedef void (*lv_call_func3_vCcp_t)(lv_color_t, uint8_t, void *);
 typedef uint16_t (*lv_call_func1_wC_t)(lv_color_t);
 typedef uint32_t (*lv_call_func1_lC_t)(lv_color_t);
 typedef void * (*lv_call_func2_ppc_t)(void *, uint8_t);
@@ -77,20 +73,14 @@ typedef uint16_t (*lv_call_func2_wpw_t)(void *, uint16_t);
 typedef void (*lv_call_func4_vpppl_t)(void *, void *, void *, uint32_t);
 typedef void (*lv_call_func6_vpplllc_t)(void *, void *, uint32_t, uint32_t, uint32_t, uint8_t);
 typedef void (*lv_call_func2_vpC_t)(void *, lv_color_t);
-typedef void (*lv_call_func4_vpwww_t)(void *, uint16_t, uint16_t, uint16_t);
+typedef void (*lv_call_func4_vpppq_t)(void *, void *, void *, uint64_t);
 typedef uint16_t (*lv_call_func1_ww_t)(uint16_t);
 typedef void (*lv_call_func6_vpppwww_t)(void *, void *, void *, uint16_t, uint16_t, uint16_t);
 typedef void (*lv_call_func8_vwwwwwwcp_t)(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint8_t, void *);
-typedef uint8_t (*lv_call_func5_cppCcp_t)(void *, void *, lv_color_t, uint8_t, void *);
-typedef void (*lv_call_func5_vppppc_t)(void *, void *, void *, void *, uint8_t);
-typedef uint8_t (*lv_call_func5_cpppcp_t)(void *, void *, void *, uint8_t, void *);
 typedef void (*lv_call_func4_vpppp_t)(void *, void *, void *, void *);
-typedef void (*lv_call_func5_vppppp_t)(void *, void *, void *, void *, void *);
+typedef void (*lv_call_func5_vppppc_t)(void *, void *, void *, void *, uint8_t);
 typedef void (*lv_call_func3_vppl_t)(void *, void *, uint32_t);
 typedef void * (*lv_call_func3_pppl_t)(void *, void *, uint32_t);
-typedef uint8_t (*lv_call_func5_cpwwwp_t)(void *, uint16_t, uint16_t, uint16_t, void *);
-typedef uint8_t (*lv_call_func4_cpwww_t)(void *, uint16_t, uint16_t, uint16_t);
-typedef uint8_t (*lv_call_func6_cpwwwpw_t)(void *, uint16_t, uint16_t, uint16_t, void *, uint16_t);
 typedef void (*lv_call_func6_vppcwcw_t)(void *, void *, uint8_t, uint16_t, uint8_t, uint16_t);
 typedef uint8_t (*lv_call_func0_c_t)(void);
 typedef void (*lv_call_func5_vpwwwc_t)(void *, uint16_t, uint16_t, uint16_t, uint8_t);
@@ -98,20 +88,25 @@ typedef void (*lv_call_func6_vpwwwwc_t)(void *, uint16_t, uint16_t, uint16_t, ui
 typedef void (*lv_call_func4_vppwc_t)(void *, void *, uint16_t, uint8_t);
 typedef void * (*lv_call_func1_pw_t)(uint16_t);
 typedef void (*lv_call_func4_vppPw_t)(void *, void *, lv_point_t, uint16_t);
+typedef void (*lv_call_func7_vppwppwp_t)(void *, void *, uint16_t, void *, void *, uint16_t, void *);
 typedef uint8_t (*lv_call_func8_cppppcppp_t)(void *, void *, void *, void *, uint8_t, void *, void *, void *);
 typedef void * (*lv_call_func3_ppww_t)(void *, uint16_t, uint16_t);
+typedef void (*lv_call_func5_vppppp_t)(void *, void *, void *, void *, void *);
 typedef uint8_t (*lv_call_func4_cpppp_t)(void *, void *, void *, void *);
 typedef void * (*lv_call_func3_pppw_t)(void *, void *, uint16_t);
 typedef void * (*lv_call_func4_ppppw_t)(void *, void *, void *, uint16_t);
 typedef void (*lv_call_func6_vppwppc_t)(void *, void *, uint16_t, void *, void *, uint8_t);
+typedef void * (*lv_call_func3_ppwp_t)(void *, uint16_t, void *);
+typedef void * (*lv_call_func6_pppwwwp_t)(void *, void *, uint16_t, uint16_t, uint16_t, void *);
+typedef void * (*lv_call_func3_pppp_t)(void *, void *, void *);
 typedef void * (*lv_call_func4_pppqp_t)(void *, void *, uint64_t, void *);
-typedef void (*lv_call_func4_vppqp_t)(void *, void *, uint64_t, void *);
+typedef uint8_t (*lv_call_func4_cppqp_t)(void *, void *, uint64_t, void *);
 typedef void * (*lv_call_func3_pplp_t)(void *, uint32_t, void *);
 typedef void (*lv_call_func5_vpcppp_t)(void *, uint8_t, void *, void *, void *);
 typedef void (*lv_call_func4_vpwpC_t)(void *, uint16_t, void *, lv_color_t);
 typedef void (*lv_call_func6_vppwpwc_t)(void *, void *, uint16_t, void *, uint16_t, uint8_t);
-typedef void (*lv_call_func7_vppwppwp_t)(void *, void *, uint16_t, void *, void *, uint16_t, void *);
 typedef void (*lv_call_func3_vppP_t)(void *, void *, lv_point_t);
+typedef uint8_t (*lv_call_func3_cppp_t)(void *, void *, void *);
 typedef uint32_t (*lv_call_func2_lpp_t)(void *, void *);
 typedef uint32_t (*lv_call_func0_l_t)(void);
 typedef uint8_t (*lv_call_func3_cplp_t)(void *, uint32_t, void *);
@@ -122,15 +117,20 @@ typedef uint64_t (*lv_call_func1_qp_t)(void *);
 typedef uint8_t (*lv_call_func3_cwwl_t)(uint16_t, uint16_t, uint32_t);
 typedef void * (*lv_call_func1_pc_t)(uint8_t);
 typedef uint8_t (*lv_call_func1_cc_t)(uint8_t);
+typedef void * (*lv_call_func2_pcp_t)(uint8_t, void *);
 typedef uint8_t (*lv_call_func3_cppc_t)(void *, void *, uint8_t);
 typedef uint8_t (*lv_call_func4_cpplp_t)(void *, void *, uint32_t, void *);
-typedef uint8_t (*lv_call_func3_cpll_t)(void *, uint32_t, uint32_t);
-typedef uint8_t (*lv_call_func7_cppwppcl_t)(void *, void *, uint16_t, void *, void *, uint8_t, uint32_t);
-typedef uint8_t (*lv_call_func7_cppwpppc_t)(void *, void *, uint16_t, void *, void *, void *, uint8_t);
-typedef uint8_t (*lv_call_func5_cpwpCc_t)(void *, uint16_t, void *, lv_color_t, uint8_t);
-typedef uint8_t (*lv_call_func6_cppplll_t)(void *, void *, void *, uint32_t, uint32_t, uint32_t);
-typedef uint8_t (*lv_call_func3_cppp_t)(void *, void *, void *);
-typedef uint8_t (*lv_call_func6_cpwwpCc_t)(void *, uint16_t, uint16_t, void *, lv_color_t, uint8_t);
+typedef void (*lv_call_func8_vppwppwcl_t)(void *, void *, uint16_t, void *, void *, uint16_t, uint8_t, uint32_t);
+typedef void (*lv_call_func8_vppwppwpc_t)(void *, void *, uint16_t, void *, void *, uint16_t, void *, uint8_t);
+typedef void (*lv_call_func6_vppwppw_t)(void *, void *, uint16_t, void *, void *, uint16_t);
+typedef void (*lv_call_func5_vppwCc_t)(void *, void *, uint16_t, lv_color_t, uint8_t);
+typedef uint8_t (*lv_call_func5_cpppwc_t)(void *, void *, void *, uint16_t, uint8_t);
+typedef uint8_t (*lv_call_func7_cppwppwc_t)(void *, void *, uint16_t, void *, void *, uint16_t, uint8_t);
+typedef uint8_t (*lv_call_func6_cppppwp_t)(void *, void *, void *, void *, uint16_t, void *);
+typedef uint8_t (*lv_call_func6_cppwppw_t)(void *, void *, uint16_t, void *, void *, uint16_t);
+typedef uint8_t (*lv_call_func6_cplllpp_t)(void *, uint32_t, uint32_t, uint32_t, void *, void *);
+typedef uint8_t (*lv_call_func4_cpppc_t)(void *, void *, void *, uint8_t);
+typedef uint8_t (*lv_call_func3_cpCc_t)(void *, lv_color_t, uint8_t);
 typedef void (*lv_call_func1_vq_t)(uint64_t);
 typedef uint16_t (*lv_call_func1_wc_t)(uint8_t);
 typedef uint8_t (*lv_call_func2_cpl_t)(void *, uint32_t);
@@ -139,6 +139,7 @@ typedef void * (*lv_call_func3_pwwc_t)(uint16_t, uint16_t, uint8_t);
 typedef uint32_t (*lv_call_func3_lwwc_t)(uint16_t, uint16_t, uint8_t);
 typedef lv_color_t (*lv_call_func4_CpwwC_t)(void *, uint16_t, uint16_t, lv_color_t);
 typedef void (*lv_call_func1_vw_t)(uint16_t);
+typedef uint8_t (*lv_call_func5_cpwwwp_t)(void *, uint16_t, uint16_t, uint16_t, void *);
 typedef uint8_t (*lv_call_func6_cppwwwp_t)(void *, void *, uint16_t, uint16_t, uint16_t, void *);
 typedef uint8_t (*lv_call_func4_cppCl_t)(void *, void *, lv_color_t, uint32_t);
 typedef lv_point_t (*lv_call_func1_Pp_t)(void *);
@@ -148,7 +149,6 @@ typedef uint16_t (*lv_call_func2_wpc_t)(void *, uint8_t);
 typedef void (*lv_call_func4_vpcpw_t)(void *, uint8_t, void *, uint16_t);
 typedef uint8_t (*lv_call_func3_cppl_t)(void *, void *, uint32_t);
 typedef void (*lv_call_func3_vpPw_t)(void *, lv_point_t, uint16_t);
-typedef void * (*lv_call_func3_pppp_t)(void *, void *, void *);
 typedef uint32_t (*lv_call_func3_lppl_t)(void *, void *, uint32_t);
 typedef void * (*lv_call_func4_pqqpp_t)(uint64_t, uint64_t, void *, void *);
 typedef uint32_t (*lv_call_func3_lppq_t)(void *, void *, uint64_t);
@@ -169,6 +169,7 @@ typedef void (*lv_call_func6_vppwwwC_t)(void *, void *, uint16_t, uint16_t, uint
 typedef uint32_t (*lv_call_func2_lll_t)(uint32_t, uint32_t);
 typedef void (*lv_call_func2_vlp_t)(uint32_t, void *);
 typedef void * (*lv_call_func3_plpp_t)(uint32_t, void *, void *);
+typedef uint32_t (*lv_call_func2_llp_t)(uint32_t, void *);
 typedef void * (*lv_call_func5_pppppc_t)(void *, void *, void *, void *, uint8_t);
 typedef uint16_t (*lv_call_func2_wpl_t)(void *, uint32_t);
 typedef uint8_t (*lv_call_func4_cplpl_t)(void *, uint32_t, void *, uint32_t);
@@ -183,10 +184,13 @@ typedef void (*lv_call_func7_vplcclcc_t)(void *, uint32_t, uint8_t, uint8_t, uin
 typedef void (*lv_call_func4_vplSl_t)(void *, uint32_t, lv_style_value_t, uint32_t);
 typedef void (*lv_call_func4_vplwl_t)(void *, uint32_t, uint16_t, uint32_t);
 typedef void (*lv_call_func3_vpcl_t)(void *, uint8_t, uint32_t);
+typedef void (*lv_call_func3_vpCl_t)(void *, lv_color_t, uint32_t);
 typedef uint32_t (*lv_call_func1_ll_t)(uint32_t);
 typedef uint16_t (*lv_call_func1_wl_t)(uint32_t);
 typedef lv_color_t (*lv_call_func2_Clc_t)(uint32_t, uint8_t);
 typedef void (*lv_call_func4_vpllp_t)(void *, uint32_t, uint32_t, void *);
+typedef void (*lv_call_func4_vllpp_t)(uint32_t, uint32_t, void *, void *);
+typedef uint8_t (*lv_call_func7_cpcccccc_t)(void *, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 typedef uint64_t (*lv_call_func2_qqc_t)(uint64_t, uint8_t);
 typedef void * (*lv_call_func4_ppwCC_t)(void *, uint16_t, lv_color_t, lv_color_t);
 typedef void * (*lv_call_func4_ppwwp_t)(void *, uint16_t, uint16_t, void *);
@@ -197,7 +201,8 @@ typedef uint32_t (*lv_call_func2_lpc_t)(void *, uint8_t);
 typedef uint8_t (*lv_call_func5_cpcppl_t)(void *, uint8_t, void *, void *, uint32_t);
 typedef lv_color_t (*lv_call_func2_Cpp_t)(void *, void *);
 typedef void * (*lv_call_func3_ppll_t)(void *, uint32_t, uint32_t);
-typedef void (*lv_call_func3_vlpl_t)(uint32_t, void *, uint32_t);
+typedef void (*lv_call_func4_vpwww_t)(void *, uint16_t, uint16_t, uint16_t);
+typedef uint32_t (*lv_call_func3_llSp_t)(uint32_t, lv_style_value_t, void *);
 typedef lv_style_value_t (*lv_call_func1_Sl_t)(uint32_t);
 typedef uint8_t (*lv_call_func2_clc_t)(uint32_t, uint8_t);
 typedef uint32_t (*lv_call_func1_lc_t)(uint8_t);
@@ -212,6 +217,10 @@ typedef void (*lv_call_func2_vww_t)(uint16_t, uint16_t);
 typedef void * (*lv_call_func5_ppCCcp_t)(void *, lv_color_t, lv_color_t, uint8_t, void *);
 typedef void * (*lv_call_func3_ppcp_t)(void *, uint8_t, void *);
 typedef void * (*lv_call_func4_ppccc_t)(void *, uint8_t, uint8_t, uint8_t);
+typedef void * (*lv_call_func5_pppqwq_t)(void *, void *, uint64_t, uint16_t, uint64_t);
+typedef void * (*lv_call_func3_ppqw_t)(void *, uint64_t, uint16_t);
+typedef void * (*lv_call_func4_ppqwq_t)(void *, uint64_t, uint16_t, uint64_t);
+typedef void * (*lv_call_func3_ppwq_t)(void *, uint16_t, uint64_t);
 typedef uint64_t (*lv_call_func0_q_t)(void);
 typedef uint64_t (*lv_call_func2_qpp_t)(void *, void *);
 typedef void * (*lv_call_func3_ppqq_t)(void *, uint64_t, uint64_t);
@@ -220,18 +229,17 @@ typedef void (*lv_call_func7_vpppwwwc_t)(void *, void *, void *, uint16_t, uint1
 typedef uint8_t (*lv_call_func7_cppwwcpp_t)(void *, void *, uint16_t, uint16_t, uint8_t, void *, void *);
 typedef uint16_t (*lv_call_func5_wplpwc_t)(void *, uint32_t, void *, uint16_t, uint8_t);
 typedef uint8_t (*lv_call_func1_cw_t)(uint16_t);
-typedef void (*lv_call_func5_vpwwpC_t)(void *, uint16_t, uint16_t, void *, lv_color_t);
-typedef uint8_t (*lv_call_func6_cplllpc_t)(void *, uint32_t, uint32_t, uint32_t, void *, uint8_t);
+typedef uint8_t (*lv_call_func2_cpc_t)(void *, uint8_t);
 typedef void (*lv_call_func4_vppll_t)(void *, void *, uint32_t, uint32_t);
 uint64_t
 lv_do_real_call(const struct cdesc_call *cdc)
 {
 	void *retp, *a0p, *a1p, *a2p, *a3p, *a4p, *a5p, *a6p, *a7p;
-	uint64_t retq, a0q, a1q, a2q, a4q;
-	uint32_t retl, a0l, a1l, a2l, a3l, a4l, a5l, a6l;
+	uint64_t retq, a0q, a1q, a2q, a3q, a4q;
+	uint32_t retl, a0l, a1l, a2l, a3l, a4l, a5l, a7l;
 	uint16_t retw, a0w, a1w, a2w, a3w, a4w, a5w, a6w, a7w;
 	uint8_t retc, a0c, a1c, a2c, a3c, a4c, a5c, a6c, a7c;
-	lv_color_t retC, a0C, a1C, a2C, a3C, a4C, a5C;
+	lv_color_t retC, a0C, a1C, a2C, a3C, a5C;
 	lv_style_value_t retS, a1S, a2S;
 	lv_point_t retP, a1P, a2P;
 	switch (cdc->cdc_argtype[0]) {
@@ -391,18 +399,18 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1l,
 						    a2l);
 						return (0);
-					case ARG_UINT16:
-						retw = (*(lv_call_func3_wpll_t)cdc->cdc_func)(
-						    a0p,
-						    a1l,
-						    a2l);
-						return ((uint64_t)retw);
 					case ARG_UINT8:
 						retc = (*(lv_call_func3_cpll_t)cdc->cdc_func)(
 						    a0p,
 						    a1l,
 						    a2l);
 						return ((uint64_t)retc);
+					case ARG_UINT16:
+						retw = (*(lv_call_func3_wpll_t)cdc->cdc_func)(
+						    a0p,
+						    a1l,
+						    a2l);
+						return ((uint64_t)retw);
 					case ARG_STYLEVAL:
 						retS = (*(lv_call_func3_Spll_t)cdc->cdc_func)(
 						    a0p,
@@ -441,6 +449,47 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							return (0);
 						}
 						break;
+					case ARG_PTR:
+					case ARG_PTR_BUFFER:
+					case ARG_PTR_OBJ:
+					case ARG_PTR_STYLE:
+					case ARG_PTR_GROUP:
+					case ARG_PTR_CHART_SER:
+					case ARG_PTR_CHART_CUR:
+					case ARG_PTR_METER_IND:
+					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
+						a4p = (void *)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_PTR:
+						case ARG_PTR_BUFFER:
+						case ARG_PTR_OBJ:
+						case ARG_PTR_STYLE:
+						case ARG_PTR_GROUP:
+						case ARG_PTR_CHART_SER:
+						case ARG_PTR_CHART_CUR:
+						case ARG_PTR_METER_IND:
+						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
+							a5p = (void *)cdc->cdc_arg[5];
+							switch (cdc->cdc_argtype[6]) {
+							case ARG_NONE:
+								switch (cdc->cdc_rettype) {
+								case ARG_UINT8:
+									retc = (*(lv_call_func6_cplllpp_t)cdc->cdc_func)(
+									    a0p,
+									    a1l,
+									    a2l,
+									    a3l,
+									    a4p,
+									    a5p);
+									return ((uint64_t)retc);
+								}
+								break;
+							}
+							break;
+						}
+						break;
 					case ARG_UINT8:
 						a4c = (uint8_t)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
@@ -454,38 +503,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								    a3l,
 								    a4c);
 								return (0);
-							}
-							break;
-						}
-						break;
-					case ARG_PTR:
-					case ARG_PTR_BUFFER:
-					case ARG_PTR_OBJ:
-					case ARG_PTR_STYLE:
-					case ARG_PTR_GROUP:
-					case ARG_PTR_CHART_SER:
-					case ARG_PTR_CHART_CUR:
-					case ARG_PTR_METER_IND:
-					case ARG_PTR_METER_SCL:
-					case ARG_PTR_SPAN:
-						a4p = (void *)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_UINT8:
-							a5c = (uint8_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_UINT8:
-									retc = (*(lv_call_func6_cplllpc_t)cdc->cdc_func)(
-									    a0p,
-									    a1l,
-									    a2l,
-									    a3l,
-									    a4p,
-									    a5c);
-									return ((uint64_t)retc);
-								}
-								break;
 							}
 							break;
 						}
@@ -811,6 +828,11 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					    a0p,
 					    a1c);
 					return ((uint64_t)retl);
+				case ARG_UINT8:
+					retc = (*(lv_call_func2_cpc_t)cdc->cdc_func)(
+					    a0p,
+					    a1c);
+					return ((uint64_t)retc);
 				}
 				break;
 			case ARG_COLOR:
@@ -915,6 +937,35 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_UINT8:
 					a3c = (uint8_t)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
+					case ARG_UINT8:
+						a4c = (uint8_t)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_UINT8:
+							a5c = (uint8_t)cdc->cdc_arg[5];
+							switch (cdc->cdc_argtype[6]) {
+							case ARG_UINT8:
+								a6c = (uint8_t)cdc->cdc_arg[6];
+								switch (cdc->cdc_argtype[7]) {
+								case ARG_NONE:
+									switch (cdc->cdc_rettype) {
+									case ARG_UINT8:
+										retc = (*(lv_call_func7_cpcccccc_t)cdc->cdc_func)(
+										    a0p,
+										    a1c,
+										    a2c,
+										    a3c,
+										    a4c,
+										    a5c,
+										    a6c);
+										return ((uint64_t)retc);
+									}
+									break;
+								}
+								break;
+							}
+							break;
+						}
+						break;
 					case ARG_NONE:
 						switch (cdc->cdc_rettype) {
 						case ARG_PTR:
@@ -1307,58 +1358,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								return ((uint64_t)retc);
 							}
 							break;
-						case ARG_UINT16:
-							a5w = (uint16_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_UINT8:
-									retc = (*(lv_call_func6_cpwwwpw_t)cdc->cdc_func)(
-									    a0p,
-									    a1w,
-									    a2w,
-									    a3w,
-									    a4p,
-									    a5w);
-									return ((uint64_t)retc);
-								}
-								break;
-							}
-							break;
-						}
-						break;
-					case ARG_NONE:
-						switch (cdc->cdc_rettype) {
-						case ARG_NONE:
-							(*(lv_call_func4_vpwww_t)cdc->cdc_func)(
-							    a0p,
-							    a1w,
-							    a2w,
-							    a3w);
-							return (0);
-						case ARG_UINT8:
-							retc = (*(lv_call_func4_cpwww_t)cdc->cdc_func)(
-							    a0p,
-							    a1w,
-							    a2w,
-							    a3w);
-							return ((uint64_t)retc);
-						case ARG_PTR:
-						case ARG_PTR_BUFFER:
-						case ARG_PTR_OBJ:
-						case ARG_PTR_STYLE:
-						case ARG_PTR_GROUP:
-						case ARG_PTR_CHART_SER:
-						case ARG_PTR_CHART_CUR:
-						case ARG_PTR_METER_IND:
-						case ARG_PTR_METER_SCL:
-						case ARG_PTR_SPAN:
-							retp = (*(lv_call_func4_ppwww_t)cdc->cdc_func)(
-							    a0p,
-							    a1w,
-							    a2w,
-							    a3w);
-							return ((uint64_t)retp);
 						}
 						break;
 					case ARG_UINT8:
@@ -1376,6 +1375,33 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								return (0);
 							}
 							break;
+						}
+						break;
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_PTR:
+						case ARG_PTR_BUFFER:
+						case ARG_PTR_OBJ:
+						case ARG_PTR_STYLE:
+						case ARG_PTR_GROUP:
+						case ARG_PTR_CHART_SER:
+						case ARG_PTR_CHART_CUR:
+						case ARG_PTR_METER_IND:
+						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
+							retp = (*(lv_call_func4_ppwww_t)cdc->cdc_func)(
+							    a0p,
+							    a1w,
+							    a2w,
+							    a3w);
+							return ((uint64_t)retp);
+						case ARG_NONE:
+							(*(lv_call_func4_vpwww_t)cdc->cdc_func)(
+							    a0p,
+							    a1w,
+							    a2w,
+							    a3w);
+							return (0);
 						}
 						break;
 					}
@@ -1413,41 +1439,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 								    a2w,
 								    a3p,
 								    a4p);
-								return (0);
-							}
-							break;
-						}
-						break;
-					case ARG_COLOR:
-						a4C.full = cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_UINT8:
-							a5c = (uint8_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_UINT8:
-									retc = (*(lv_call_func6_cpwwpCc_t)cdc->cdc_func)(
-									    a0p,
-									    a1w,
-									    a2w,
-									    a3p,
-									    a4C,
-									    a5c);
-									return ((uint64_t)retc);
-								}
-								break;
-							}
-							break;
-						case ARG_NONE:
-							switch (cdc->cdc_rettype) {
-							case ARG_NONE:
-								(*(lv_call_func5_vpwwpC_t)cdc->cdc_func)(
-								    a0p,
-								    a1w,
-								    a2w,
-								    a3p,
-								    a4C);
 								return (0);
 							}
 							break;
@@ -1573,6 +1564,25 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
+				case ARG_NONE:
+					switch (cdc->cdc_rettype) {
+					case ARG_PTR:
+					case ARG_PTR_BUFFER:
+					case ARG_PTR_OBJ:
+					case ARG_PTR_STYLE:
+					case ARG_PTR_GROUP:
+					case ARG_PTR_CHART_SER:
+					case ARG_PTR_CHART_CUR:
+					case ARG_PTR_METER_IND:
+					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
+						retp = (*(lv_call_func3_ppwp_t)cdc->cdc_func)(
+						    a0p,
+						    a1w,
+						    a2p);
+						return ((uint64_t)retp);
+					}
+					break;
 				case ARG_COLOR:
 					a3C.full = cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
@@ -1585,23 +1595,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							    a2p,
 							    a3C);
 							return (0);
-						}
-						break;
-					case ARG_UINT8:
-						a4c = (uint8_t)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_NONE:
-							switch (cdc->cdc_rettype) {
-							case ARG_UINT8:
-								retc = (*(lv_call_func5_cpwpCc_t)cdc->cdc_func)(
-								    a0p,
-								    a1w,
-								    a2p,
-								    a3C,
-								    a4c);
-								return ((uint64_t)retc);
-							}
-							break;
 						}
 						break;
 					}
@@ -1653,6 +1646,30 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					break;
 				}
 				break;
+			case ARG_UINT64:
+				a2q = (uint64_t)cdc->cdc_arg[2];
+				switch (cdc->cdc_argtype[3]) {
+				case ARG_NONE:
+					switch (cdc->cdc_rettype) {
+					case ARG_PTR:
+					case ARG_PTR_BUFFER:
+					case ARG_PTR_OBJ:
+					case ARG_PTR_STYLE:
+					case ARG_PTR_GROUP:
+					case ARG_PTR_CHART_SER:
+					case ARG_PTR_CHART_CUR:
+					case ARG_PTR_METER_IND:
+					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
+						retp = (*(lv_call_func3_ppwq_t)cdc->cdc_func)(
+						    a0p,
+						    a1w,
+						    a2q);
+						return ((uint64_t)retp);
+					}
+					break;
+				}
+				break;
 			}
 			break;
 		case ARG_PTR:
@@ -1674,17 +1691,17 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					    a0p,
 					    a1p);
 					return (0);
-				case ARG_UINT8:
-					retc = (*(lv_call_func2_cpp_t)cdc->cdc_func)(
-					    a0p,
-					    a1p);
-					return ((uint64_t)retc);
 				case ARG_POINT:
 					retP = (*(lv_call_func2_Ppp_t)cdc->cdc_func)(
 					    a0p,
 					    a1p);
 					bcopy(&retP, &retq, sizeof (retP));
 					return (retq);
+				case ARG_UINT8:
+					retc = (*(lv_call_func2_cpp_t)cdc->cdc_func)(
+					    a0p,
+					    a1p);
+					return ((uint64_t)retc);
 				case ARG_PTR:
 				case ARG_PTR_BUFFER:
 				case ARG_PTR_OBJ:
@@ -1866,43 +1883,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					case ARG_PTR_SPAN:
 						a4p = (void *)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
-						case ARG_UINT8:
-							a5c = (uint8_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_NONE:
-									(*(lv_call_func6_vppwppc_t)cdc->cdc_func)(
-									    a0p,
-									    a1p,
-									    a2w,
-									    a3p,
-									    a4p,
-									    a5c);
-									return (0);
-								}
-								break;
-							case ARG_UINT32:
-								a6l = (uint32_t)cdc->cdc_arg[6];
-								switch (cdc->cdc_argtype[7]) {
-								case ARG_NONE:
-									switch (cdc->cdc_rettype) {
-									case ARG_UINT8:
-										retc = (*(lv_call_func7_cppwppcl_t)cdc->cdc_func)(
-										    a0p,
-										    a1p,
-										    a2w,
-										    a3p,
-										    a4p,
-										    a5c,
-										    a6l);
-										return ((uint64_t)retc);
-									}
-									break;
-								}
-								break;
-							}
-							break;
 						case ARG_UINT16:
 							a5w = (uint16_t)cdc->cdc_arg[5];
 							switch (cdc->cdc_argtype[6]) {
@@ -1932,39 +1912,97 @@ lv_do_real_call(const struct cdesc_call *cdc)
 										return (0);
 									}
 									break;
-								}
-								break;
-							}
-							break;
-						case ARG_PTR:
-						case ARG_PTR_BUFFER:
-						case ARG_PTR_OBJ:
-						case ARG_PTR_STYLE:
-						case ARG_PTR_GROUP:
-						case ARG_PTR_CHART_SER:
-						case ARG_PTR_CHART_CUR:
-						case ARG_PTR_METER_IND:
-						case ARG_PTR_METER_SCL:
-						case ARG_PTR_SPAN:
-							a5p = (void *)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_UINT8:
-								a6c = (uint8_t)cdc->cdc_arg[6];
-								switch (cdc->cdc_argtype[7]) {
-								case ARG_NONE:
+								case ARG_UINT8:
+									a7c = (uint8_t)cdc->cdc_arg[7];
 									switch (cdc->cdc_rettype) {
-									case ARG_UINT8:
-										retc = (*(lv_call_func7_cppwpppc_t)cdc->cdc_func)(
+									case ARG_NONE:
+										(*(lv_call_func8_vppwppwpc_t)cdc->cdc_func)(
 										    a0p,
 										    a1p,
 										    a2w,
 										    a3p,
 										    a4p,
-										    a5p,
+										    a5w,
+										    a6p,
+										    a7c);
+										return (0);
+									}
+									break;
+								}
+								break;
+							case ARG_UINT8:
+								a6c = (uint8_t)cdc->cdc_arg[6];
+								switch (cdc->cdc_argtype[7]) {
+								case ARG_UINT32:
+									a7l = (uint32_t)cdc->cdc_arg[7];
+									switch (cdc->cdc_rettype) {
+									case ARG_NONE:
+										(*(lv_call_func8_vppwppwcl_t)cdc->cdc_func)(
+										    a0p,
+										    a1p,
+										    a2w,
+										    a3p,
+										    a4p,
+										    a5w,
+										    a6c,
+										    a7l);
+										return (0);
+									}
+									break;
+								case ARG_NONE:
+									switch (cdc->cdc_rettype) {
+									case ARG_UINT8:
+										retc = (*(lv_call_func7_cppwppwc_t)cdc->cdc_func)(
+										    a0p,
+										    a1p,
+										    a2w,
+										    a3p,
+										    a4p,
+										    a5w,
 										    a6c);
 										return ((uint64_t)retc);
 									}
 									break;
+								}
+								break;
+							case ARG_NONE:
+								switch (cdc->cdc_rettype) {
+								case ARG_NONE:
+									(*(lv_call_func6_vppwppw_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2w,
+									    a3p,
+									    a4p,
+									    a5w);
+									return (0);
+								case ARG_UINT8:
+									retc = (*(lv_call_func6_cppwppw_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2w,
+									    a3p,
+									    a4p,
+									    a5w);
+									return ((uint64_t)retc);
+								}
+								break;
+							}
+							break;
+						case ARG_UINT8:
+							a5c = (uint8_t)cdc->cdc_arg[5];
+							switch (cdc->cdc_argtype[6]) {
+							case ARG_NONE:
+								switch (cdc->cdc_rettype) {
+								case ARG_NONE:
+									(*(lv_call_func6_vppwppc_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2w,
+									    a3p,
+									    a4p,
+									    a5c);
+									return (0);
 								}
 								break;
 							}
@@ -2063,6 +2101,24 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							switch (cdc->cdc_argtype[6]) {
 							case ARG_NONE:
 								switch (cdc->cdc_rettype) {
+								case ARG_PTR:
+								case ARG_PTR_BUFFER:
+								case ARG_PTR_OBJ:
+								case ARG_PTR_STYLE:
+								case ARG_PTR_GROUP:
+								case ARG_PTR_CHART_SER:
+								case ARG_PTR_CHART_CUR:
+								case ARG_PTR_METER_IND:
+								case ARG_PTR_METER_SCL:
+								case ARG_PTR_SPAN:
+									retp = (*(lv_call_func6_pppwwwp_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2w,
+									    a3w,
+									    a4w,
+									    a5p);
+									return ((uint64_t)retp);
 								case ARG_UINT8:
 									retc = (*(lv_call_func6_cppwwwp_t)cdc->cdc_func)(
 									    a0p,
@@ -2222,6 +2278,23 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_COLOR:
 					a3C.full = cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
+					case ARG_UINT8:
+						a4c = (uint8_t)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_NONE:
+							switch (cdc->cdc_rettype) {
+							case ARG_NONE:
+								(*(lv_call_func5_vppwCc_t)cdc->cdc_func)(
+								    a0p,
+								    a1p,
+								    a2w,
+								    a3C,
+								    a4c);
+								return (0);
+							}
+							break;
+						}
+						break;
 					case ARG_UINT16:
 						a4w = (uint16_t)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
@@ -2272,12 +2345,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1p,
 						    a2p);
 						return (0);
-					case ARG_UINT8:
-						retc = (*(lv_call_func3_cppp_t)cdc->cdc_func)(
-						    a0p,
-						    a1p,
-						    a2p);
-						return ((uint64_t)retc);
 					case ARG_PTR:
 					case ARG_PTR_BUFFER:
 					case ARG_PTR_OBJ:
@@ -2293,6 +2360,12 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1p,
 						    a2p);
 						return ((uint64_t)retp);
+					case ARG_UINT8:
+						retc = (*(lv_call_func3_cppp_t)cdc->cdc_func)(
+						    a0p,
+						    a1p,
+						    a2p);
+						return ((uint64_t)retc);
 					}
 					break;
 				case ARG_UINT16:
@@ -2388,6 +2461,23 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							break;
 						}
 						break;
+					case ARG_UINT8:
+						a4c = (uint8_t)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_NONE:
+							switch (cdc->cdc_rettype) {
+							case ARG_UINT8:
+								retc = (*(lv_call_func5_cpppwc_t)cdc->cdc_func)(
+								    a0p,
+								    a1p,
+								    a2p,
+								    a3w,
+								    a4c);
+								return ((uint64_t)retc);
+							}
+							break;
+						}
+						break;
 					}
 					break;
 				case ARG_UINT32:
@@ -2404,27 +2494,20 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							return (0);
 						}
 						break;
-					case ARG_UINT32:
-						a4l = (uint32_t)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_UINT32:
-							a5l = (uint32_t)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_UINT8:
-									retc = (*(lv_call_func6_cppplll_t)cdc->cdc_func)(
-									    a0p,
-									    a1p,
-									    a2p,
-									    a3l,
-									    a4l,
-									    a5l);
-									return ((uint64_t)retc);
-								}
-								break;
-							}
-							break;
+					}
+					break;
+				case ARG_UINT64:
+					a3q = (uint64_t)cdc->cdc_arg[3];
+					switch (cdc->cdc_argtype[4]) {
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_NONE:
+							(*(lv_call_func4_vpppq_t)cdc->cdc_func)(
+							    a0p,
+							    a1p,
+							    a2p,
+							    a3q);
+							return (0);
 						}
 						break;
 					}
@@ -2441,6 +2524,24 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				case ARG_PTR_SPAN:
 					a3p = (void *)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_NONE:
+							(*(lv_call_func4_vpppp_t)cdc->cdc_func)(
+							    a0p,
+							    a1p,
+							    a2p,
+							    a3p);
+							return (0);
+						case ARG_UINT8:
+							retc = (*(lv_call_func4_cpppp_t)cdc->cdc_func)(
+							    a0p,
+							    a1p,
+							    a2p,
+							    a3p);
+							return ((uint64_t)retc);
+						}
+						break;
 					case ARG_UINT8:
 						a4c = (uint8_t)cdc->cdc_arg[4];
 						switch (cdc->cdc_argtype[5]) {
@@ -2528,24 +2629,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							break;
 						}
 						break;
-					case ARG_NONE:
-						switch (cdc->cdc_rettype) {
-						case ARG_NONE:
-							(*(lv_call_func4_vpppp_t)cdc->cdc_func)(
-							    a0p,
-							    a1p,
-							    a2p,
-							    a3p);
-							return (0);
-						case ARG_UINT8:
-							retc = (*(lv_call_func4_cpppp_t)cdc->cdc_func)(
-							    a0p,
-							    a1p,
-							    a2p,
-							    a3p);
-							return ((uint64_t)retc);
-						}
-						break;
 					case ARG_PTR:
 					case ARG_PTR_BUFFER:
 					case ARG_PTR_OBJ:
@@ -2572,35 +2655,52 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							break;
 						}
 						break;
+					case ARG_UINT16:
+						a4w = (uint16_t)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_PTR:
+						case ARG_PTR_BUFFER:
+						case ARG_PTR_OBJ:
+						case ARG_PTR_STYLE:
+						case ARG_PTR_GROUP:
+						case ARG_PTR_CHART_SER:
+						case ARG_PTR_CHART_CUR:
+						case ARG_PTR_METER_IND:
+						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
+							a5p = (void *)cdc->cdc_arg[5];
+							switch (cdc->cdc_argtype[6]) {
+							case ARG_NONE:
+								switch (cdc->cdc_rettype) {
+								case ARG_UINT8:
+									retc = (*(lv_call_func6_cppppwp_t)cdc->cdc_func)(
+									    a0p,
+									    a1p,
+									    a2p,
+									    a3p,
+									    a4w,
+									    a5p);
+									return ((uint64_t)retc);
+								}
+								break;
+							}
+							break;
+						}
+						break;
 					}
 					break;
 				case ARG_UINT8:
 					a3c = (uint8_t)cdc->cdc_arg[3];
 					switch (cdc->cdc_argtype[4]) {
-					case ARG_PTR:
-					case ARG_PTR_BUFFER:
-					case ARG_PTR_OBJ:
-					case ARG_PTR_STYLE:
-					case ARG_PTR_GROUP:
-					case ARG_PTR_CHART_SER:
-					case ARG_PTR_CHART_CUR:
-					case ARG_PTR_METER_IND:
-					case ARG_PTR_METER_SCL:
-					case ARG_PTR_SPAN:
-						a4p = (void *)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_NONE:
-							switch (cdc->cdc_rettype) {
-							case ARG_UINT8:
-								retc = (*(lv_call_func5_cpppcp_t)cdc->cdc_func)(
-								    a0p,
-								    a1p,
-								    a2p,
-								    a3c,
-								    a4p);
-								return ((uint64_t)retc);
-							}
-							break;
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_UINT8:
+							retc = (*(lv_call_func4_cpppc_t)cdc->cdc_func)(
+							    a0p,
+							    a1p,
+							    a2p,
+							    a3c);
+							return ((uint64_t)retc);
 						}
 						break;
 					}
@@ -2618,37 +2718,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1p,
 						    a2C);
 						return (0);
-					}
-					break;
-				case ARG_UINT8:
-					a3c = (uint8_t)cdc->cdc_arg[3];
-					switch (cdc->cdc_argtype[4]) {
-					case ARG_PTR:
-					case ARG_PTR_BUFFER:
-					case ARG_PTR_OBJ:
-					case ARG_PTR_STYLE:
-					case ARG_PTR_GROUP:
-					case ARG_PTR_CHART_SER:
-					case ARG_PTR_CHART_CUR:
-					case ARG_PTR_METER_IND:
-					case ARG_PTR_METER_SCL:
-					case ARG_PTR_SPAN:
-						a4p = (void *)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_NONE:
-							switch (cdc->cdc_rettype) {
-							case ARG_UINT8:
-								retc = (*(lv_call_func5_cppCcp_t)cdc->cdc_func)(
-								    a0p,
-								    a1p,
-								    a2C,
-								    a3c,
-								    a4p);
-								return ((uint64_t)retc);
-							}
-							break;
-						}
-						break;
 					}
 					break;
 				case ARG_UINT32:
@@ -2901,13 +2970,13 @@ lv_do_real_call(const struct cdesc_call *cdc)
 							    a2q,
 							    a3p);
 							return ((uint64_t)retp);
-						case ARG_NONE:
-							(*(lv_call_func4_vppqp_t)cdc->cdc_func)(
+						case ARG_UINT8:
+							retc = (*(lv_call_func4_cppqp_t)cdc->cdc_func)(
 							    a0p,
 							    a1p,
 							    a2q,
 							    a3p);
-							return (0);
+							return ((uint64_t)retc);
 						}
 						break;
 					case ARG_UINT64:
@@ -2952,6 +3021,37 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1p,
 						    a2q);
 						return ((uint64_t)retp);
+					}
+					break;
+				case ARG_UINT16:
+					a3w = (uint16_t)cdc->cdc_arg[3];
+					switch (cdc->cdc_argtype[4]) {
+					case ARG_UINT64:
+						a4q = (uint64_t)cdc->cdc_arg[4];
+						switch (cdc->cdc_argtype[5]) {
+						case ARG_NONE:
+							switch (cdc->cdc_rettype) {
+							case ARG_PTR:
+							case ARG_PTR_BUFFER:
+							case ARG_PTR_OBJ:
+							case ARG_PTR_STYLE:
+							case ARG_PTR_GROUP:
+							case ARG_PTR_CHART_SER:
+							case ARG_PTR_CHART_CUR:
+							case ARG_PTR_METER_IND:
+							case ARG_PTR_METER_SCL:
+							case ARG_PTR_SPAN:
+								retp = (*(lv_call_func5_pppqwq_t)cdc->cdc_func)(
+								    a0p,
+								    a1p,
+								    a2q,
+								    a3w,
+								    a4q);
+								return ((uint64_t)retp);
+							}
+							break;
+						}
+						break;
 					}
 					break;
 				}
@@ -3046,27 +3146,12 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1C,
 						    a2c);
 						return ((uint64_t)retp);
-					case ARG_COLOR:
-						retC = (*(lv_call_func3_CpCc_t)cdc->cdc_func)(
+					case ARG_UINT8:
+						retc = (*(lv_call_func3_cpCc_t)cdc->cdc_func)(
 						    a0p,
 						    a1C,
 						    a2c);
-						return ((uint64_t)retC.full);
-					}
-					break;
-				}
-				break;
-			case ARG_UINT32:
-				a2l = (uint32_t)cdc->cdc_arg[2];
-				switch (cdc->cdc_argtype[3]) {
-				case ARG_NONE:
-					switch (cdc->cdc_rettype) {
-					case ARG_NONE:
-						(*(lv_call_func3_vpCl_t)cdc->cdc_func)(
-						    a0p,
-						    a1C,
-						    a2l);
-						return (0);
+						return ((uint64_t)retc);
 					}
 					break;
 				}
@@ -3083,6 +3168,21 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					    a0p,
 					    a1C);
 					return (0);
+				}
+				break;
+			case ARG_UINT32:
+				a2l = (uint32_t)cdc->cdc_arg[2];
+				switch (cdc->cdc_argtype[3]) {
+				case ARG_NONE:
+					switch (cdc->cdc_rettype) {
+					case ARG_NONE:
+						(*(lv_call_func3_vpCl_t)cdc->cdc_func)(
+						    a0p,
+						    a1C,
+						    a2l);
+						return (0);
+					}
+					break;
 				}
 				break;
 			case ARG_COLOR:
@@ -3188,6 +3288,55 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					break;
 				}
 				break;
+			case ARG_UINT16:
+				a2w = (uint16_t)cdc->cdc_arg[2];
+				switch (cdc->cdc_argtype[3]) {
+				case ARG_NONE:
+					switch (cdc->cdc_rettype) {
+					case ARG_PTR:
+					case ARG_PTR_BUFFER:
+					case ARG_PTR_OBJ:
+					case ARG_PTR_STYLE:
+					case ARG_PTR_GROUP:
+					case ARG_PTR_CHART_SER:
+					case ARG_PTR_CHART_CUR:
+					case ARG_PTR_METER_IND:
+					case ARG_PTR_METER_SCL:
+					case ARG_PTR_SPAN:
+						retp = (*(lv_call_func3_ppqw_t)cdc->cdc_func)(
+						    a0p,
+						    a1q,
+						    a2w);
+						return ((uint64_t)retp);
+					}
+					break;
+				case ARG_UINT64:
+					a3q = (uint64_t)cdc->cdc_arg[3];
+					switch (cdc->cdc_argtype[4]) {
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_PTR:
+						case ARG_PTR_BUFFER:
+						case ARG_PTR_OBJ:
+						case ARG_PTR_STYLE:
+						case ARG_PTR_GROUP:
+						case ARG_PTR_CHART_SER:
+						case ARG_PTR_CHART_CUR:
+						case ARG_PTR_METER_IND:
+						case ARG_PTR_METER_SCL:
+						case ARG_PTR_SPAN:
+							retp = (*(lv_call_func4_ppqwq_t)cdc->cdc_func)(
+							    a0p,
+							    a1q,
+							    a2w,
+							    a3q);
+							return ((uint64_t)retp);
+						}
+						break;
+					}
+					break;
+				}
+				break;
 			case ARG_UINT64:
 				a2q = (uint64_t)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
@@ -3273,6 +3422,45 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					return ((uint64_t)retl);
 				}
 				break;
+			case ARG_PTR:
+			case ARG_PTR_BUFFER:
+			case ARG_PTR_OBJ:
+			case ARG_PTR_STYLE:
+			case ARG_PTR_GROUP:
+			case ARG_PTR_CHART_SER:
+			case ARG_PTR_CHART_CUR:
+			case ARG_PTR_METER_IND:
+			case ARG_PTR_METER_SCL:
+			case ARG_PTR_SPAN:
+				a2p = (void *)cdc->cdc_arg[2];
+				switch (cdc->cdc_argtype[3]) {
+				case ARG_PTR:
+				case ARG_PTR_BUFFER:
+				case ARG_PTR_OBJ:
+				case ARG_PTR_STYLE:
+				case ARG_PTR_GROUP:
+				case ARG_PTR_CHART_SER:
+				case ARG_PTR_CHART_CUR:
+				case ARG_PTR_METER_IND:
+				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
+					a3p = (void *)cdc->cdc_arg[3];
+					switch (cdc->cdc_argtype[4]) {
+					case ARG_NONE:
+						switch (cdc->cdc_rettype) {
+						case ARG_NONE:
+							(*(lv_call_func4_vllpp_t)cdc->cdc_func)(
+							    a0l,
+							    a1l,
+							    a2p,
+							    a3p);
+							return (0);
+						}
+						break;
+					}
+					break;
+				}
+				break;
 			}
 			break;
 		case ARG_NONE:
@@ -3336,6 +3524,11 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					    a0l,
 					    a1p);
 					return (0);
+				case ARG_UINT32:
+					retl = (*(lv_call_func2_llp_t)cdc->cdc_func)(
+					    a0l,
+					    a1p);
+					return ((uint64_t)retl);
 				}
 				break;
 			case ARG_PTR:
@@ -3367,21 +3560,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 						    a1p,
 						    a2p);
 						return ((uint64_t)retp);
-					}
-					break;
-				}
-				break;
-			case ARG_UINT32:
-				a2l = (uint32_t)cdc->cdc_arg[2];
-				switch (cdc->cdc_argtype[3]) {
-				case ARG_NONE:
-					switch (cdc->cdc_rettype) {
-					case ARG_NONE:
-						(*(lv_call_func3_vlpl_t)cdc->cdc_func)(
-						    a0l,
-						    a1p,
-						    a2l);
-						return (0);
 					}
 					break;
 				}
@@ -3422,6 +3600,16 @@ lv_do_real_call(const struct cdesc_call *cdc)
 			case ARG_PTR_SPAN:
 				a2p = (void *)cdc->cdc_arg[2];
 				switch (cdc->cdc_argtype[3]) {
+				case ARG_NONE:
+					switch (cdc->cdc_rettype) {
+					case ARG_UINT32:
+						retl = (*(lv_call_func3_llSp_t)cdc->cdc_func)(
+						    a0l,
+						    a1S,
+						    a2p);
+						return ((uint64_t)retl);
+					}
+					break;
 				case ARG_PTR:
 				case ARG_PTR_BUFFER:
 				case ARG_PTR_OBJ:
@@ -3662,101 +3850,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					return ((uint64_t)retC.full);
 				}
 				break;
-			case ARG_COLOR:
-				a2C.full = cdc->cdc_arg[2];
-				switch (cdc->cdc_argtype[3]) {
-				case ARG_UINT8:
-					a3c = (uint8_t)cdc->cdc_arg[3];
-					switch (cdc->cdc_argtype[4]) {
-					case ARG_PTR:
-					case ARG_PTR_BUFFER:
-					case ARG_PTR_OBJ:
-					case ARG_PTR_STYLE:
-					case ARG_PTR_GROUP:
-					case ARG_PTR_CHART_SER:
-					case ARG_PTR_CHART_CUR:
-					case ARG_PTR_METER_IND:
-					case ARG_PTR_METER_SCL:
-					case ARG_PTR_SPAN:
-						a4p = (void *)cdc->cdc_arg[4];
-						switch (cdc->cdc_argtype[5]) {
-						case ARG_PTR:
-						case ARG_PTR_BUFFER:
-						case ARG_PTR_OBJ:
-						case ARG_PTR_STYLE:
-						case ARG_PTR_GROUP:
-						case ARG_PTR_CHART_SER:
-						case ARG_PTR_CHART_CUR:
-						case ARG_PTR_METER_IND:
-						case ARG_PTR_METER_SCL:
-						case ARG_PTR_SPAN:
-							a5p = (void *)cdc->cdc_arg[5];
-							switch (cdc->cdc_argtype[6]) {
-							case ARG_NONE:
-								switch (cdc->cdc_rettype) {
-								case ARG_NONE:
-									(*(lv_call_func6_vCcCcpp_t)cdc->cdc_func)(
-									    a0C,
-									    a1c,
-									    a2C,
-									    a3c,
-									    a4p,
-									    a5p);
-									return (0);
-								}
-								break;
-							}
-							break;
-						}
-						break;
-					}
-					break;
-				}
-				break;
-			case ARG_PTR:
-			case ARG_PTR_BUFFER:
-			case ARG_PTR_OBJ:
-			case ARG_PTR_STYLE:
-			case ARG_PTR_GROUP:
-			case ARG_PTR_CHART_SER:
-			case ARG_PTR_CHART_CUR:
-			case ARG_PTR_METER_IND:
-			case ARG_PTR_METER_SCL:
-			case ARG_PTR_SPAN:
-				a2p = (void *)cdc->cdc_arg[2];
-				switch (cdc->cdc_argtype[3]) {
-				case ARG_NONE:
-					switch (cdc->cdc_rettype) {
-					case ARG_NONE:
-						(*(lv_call_func3_vCcp_t)cdc->cdc_func)(
-						    a0C,
-						    a1c,
-						    a2p);
-						return (0);
-					}
-					break;
-				}
-				break;
-			}
-			break;
-		case ARG_COLOR:
-			a1C.full = cdc->cdc_arg[1];
-			switch (cdc->cdc_argtype[2]) {
-			case ARG_UINT8:
-				a2c = (uint8_t)cdc->cdc_arg[2];
-				switch (cdc->cdc_argtype[3]) {
-				case ARG_NONE:
-					switch (cdc->cdc_rettype) {
-					case ARG_COLOR:
-						retC = (*(lv_call_func3_CCCc_t)cdc->cdc_func)(
-						    a0C,
-						    a1C,
-						    a2c);
-						return ((uint64_t)retC.full);
-					}
-					break;
-				}
-				break;
 			}
 			break;
 		}
@@ -3815,6 +3908,38 @@ lv_do_real_call(const struct cdesc_call *cdc)
 				retl = (*(lv_call_func1_lc_t)cdc->cdc_func)(
 				    a0c);
 				return ((uint64_t)retl);
+			}
+			break;
+		case ARG_PTR:
+		case ARG_PTR_BUFFER:
+		case ARG_PTR_OBJ:
+		case ARG_PTR_STYLE:
+		case ARG_PTR_GROUP:
+		case ARG_PTR_CHART_SER:
+		case ARG_PTR_CHART_CUR:
+		case ARG_PTR_METER_IND:
+		case ARG_PTR_METER_SCL:
+		case ARG_PTR_SPAN:
+			a1p = (void *)cdc->cdc_arg[1];
+			switch (cdc->cdc_argtype[2]) {
+			case ARG_NONE:
+				switch (cdc->cdc_rettype) {
+				case ARG_PTR:
+				case ARG_PTR_BUFFER:
+				case ARG_PTR_OBJ:
+				case ARG_PTR_STYLE:
+				case ARG_PTR_GROUP:
+				case ARG_PTR_CHART_SER:
+				case ARG_PTR_CHART_CUR:
+				case ARG_PTR_METER_IND:
+				case ARG_PTR_METER_SCL:
+				case ARG_PTR_SPAN:
+					retp = (*(lv_call_func2_pcp_t)cdc->cdc_func)(
+					    a0c,
+					    a1p);
+					return ((uint64_t)retp);
+				}
+				break;
 			}
 			break;
 		}

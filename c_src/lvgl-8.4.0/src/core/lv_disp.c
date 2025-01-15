@@ -251,6 +251,8 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
      *make target screen loaded immediately. */
     if (d->scr_to_load) {
         lv_obj_t *scr_to_load = d->scr_to_load;
+        d->scr_to_load = NULL;
+
         lv_anim_del(scr_to_load, NULL);
         lv_obj_set_pos(scr_to_load, 0, 0);
         lv_obj_remove_local_style_prop(scr_to_load, LV_STYLE_OPA, 0);
@@ -258,9 +260,10 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
         if (d->del_prev) {
             lv_obj_del(act_scr);
         }
-        act_scr = scr_to_load;
 
         scr_load_internal(scr_to_load);
+
+        act_scr = d->act_scr;
     }
 
     if(d->prev_scr && d->del_prev) {
@@ -272,7 +275,7 @@ void lv_scr_load_anim(lv_obj_t * new_scr, lv_scr_load_anim_t anim_type, uint32_t
      * Check this again: we might have changed act_scr above, and its
      * deletion might have been triggered.
      */
-    if (act_scr->being_deleted) {
+    if (act_scr == NULL || act_scr->being_deleted || lv_obj_get_disp(act_scr) != d) {
         scr_load_internal(new_scr);
         return;
     }
