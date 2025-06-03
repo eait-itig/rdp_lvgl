@@ -93,6 +93,8 @@ struct lvkhdl {
 	ErlNifMonitor		 lvkh_mon;
 };
 
+#define	LVK_DEFER_TPOOL_SIZE	8
+
 struct lvkid {
 	struct shmintf		*lvk_shm;
 	pthread_rwlock_t	 lvk_lock;
@@ -110,6 +112,10 @@ struct lvkid {
 	pthread_t		 lvk_rsp_th;
 	pthread_t		 lvk_evt_th;
 	pthread_t		 lvk_flush_th;
+
+	pthread_t		 lvk_defer_ths[LVK_DEFER_TPOOL_SIZE];
+	pthread_cond_t		 lvk_defer_nonempty;
+	struct lvkcmd_list	 lvk_defer_cmds;
 };
 
 typedef void (*lvkcmd_cb_t)(const struct rdesc *rd, const void *data,

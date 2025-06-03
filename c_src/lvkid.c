@@ -2488,18 +2488,35 @@ next:
 }
 
 static void *
-lvkcmd_deferred(void *arg)
+lvkid_defer_worker(void *arg)
 {
-	struct lvkcmd *cmd = arg;
+	struct lvkid *lvk = arg;
+	struct lvkcmd *cmd;
 
-	(*cmd->lvkc_cb)(&cmd->lvkc_rd, cmd->lvkc_data, cmd->lvkc_dlen,
-	    cmd->lvkc_priv);
+	pthread_mutex_lock(&lvk->lvk_cmdlk);
 
-	if (cmd->lvkc_dlen > 0) {
-		explicit_bzero(cmd->lvkc_data, cmd->lvkc_dlen);
-		free(cmd->lvkc_data);
+	while (true) {
+		while (LIST_EMPTY(&lvk->lvk_defer_cmds)) {
+			pthread_cond_wait(&lvk->lvk_defer_nonempty,
+			    &lvk->lvk_cmdlk);
+		}
+
+		cmd = LIST_FIRST(&lvk->lvk_defer_cmds);
+		LIST_REMOVE(cmd, lvkc_entry);
+
+		pthread_mutex_unlock(&lvk->lvk_cmdlk);
+
+		(*cmd->lvkc_cb)(&cmd->lvkc_rd, cmd->lvkc_data, cmd->lvkc_dlen,
+		    cmd->lvkc_priv);
+
+		if (cmd->lvkc_dlen > 0) {
+			explicit_bzero(cmd->lvkc_data, cmd->lvkc_dlen);
+			free(cmd->lvkc_data);
+		}
+		free(cmd);
+
+		pthread_mutex_lock(&lvk->lvk_cmdlk);
 	}
-	free(cmd);
 
 	return (NULL);
 }
@@ -2554,14 +2571,17 @@ lvkid_erl_rsp_ring(void *arg)
 				bcopy(rd, &cmd->lvkc_rd, sizeof (*rd));
 				cmd->lvkc_data = data;
 				cmd->lvkc_dlen = dlen;
-				pthread_create(&cmd->lvkc_cbth, NULL,
-				    lvkcmd_deferred, cmd);
-				pthread_setname_np(cmd->lvkc_cbth,
-				    "lvkcmd_def_cb");
+
+				pthread_mutex_lock(&kid->lvk_cmdlk);
+				LIST_INSERT_HEAD(&kid->lvk_defer_cmds,
+				    cmd, lvkc_entry);
+				pthread_mutex_unlock(&kid->lvk_cmdlk);
+				pthread_cond_signal(&kid->lvk_defer_nonempty);
+
 				/* don't free the data buffer */
 				dlen = 0;
 				data = NULL;
-				/* don't free cmd (lvkcmd_deferred will) */
+				/* don't free cmd (lvkkid_defer_worker will) */
 			} else {
 				(*cmd->lvkc_cb)(rd, data, dlen, cmd->lvkc_priv);
 				free(cmd);
@@ -2587,11 +2607,13 @@ static void
 lvkid_new(void)
 {
 	struct lvkid *kid;
+	size_t n;
 
 	kid = calloc(1, sizeof(struct lvkid));
 	assert(kid != NULL);
 	pthread_rwlock_init(&kid->lvk_lock, NULL);
 	pthread_mutex_init(&kid->lvk_cmdlk, NULL);
+	pthread_cond_init(&kid->lvk_defer_nonempty, NULL);
 	LIST_INIT(&kid->lvk_insts);
 	LIST_INIT(&kid->lvk_cmds);
 	LIST_INIT(&kid->lvk_evts);
@@ -2618,6 +2640,15 @@ lvkid_new(void)
 	pthread_setname_np(kid->lvk_evt_th, "lvkid_evt_ring");
 	pthread_create(&kid->lvk_flush_th, NULL, lvkid_erl_flush_ring, kid);
 	pthread_setname_np(kid->lvk_flush_th, "lvkid_fl_ring");
+
+	for (n = 0; n < LVK_DEFER_TPOOL_SIZE; ++n) {
+		char nbuf[16];
+		nbuf[0] = '\0';
+		snprintf(nbuf, sizeof (nbuf), "lvkid_defer_%zu", n);
+		pthread_create(&kid->lvk_defer_ths[n], NULL,
+		    lvkid_defer_worker, kid);
+		pthread_setname_np(kid->lvk_defer_ths[n], nbuf);
+	}
 }
 
 void
