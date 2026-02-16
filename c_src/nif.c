@@ -594,7 +594,6 @@ unpack_buf_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 	if (hdl->lvkh_type != LVK_BUF) {
 		enif_raise_exception(env, enif_make_tuple2(env,
 		    enif_make_atom(env, "not_lv_buf"), term));
-		pthread_rwlock_unlock(&kid->lvk_lock);
 		return (EBADF);
 	}
 

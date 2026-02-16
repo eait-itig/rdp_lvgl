@@ -2608,10 +2608,17 @@ lvkid_new(void)
 {
 	struct lvkid *kid;
 	size_t n;
+	pthread_rwlockattr_t rwattr;
 
 	kid = calloc(1, sizeof(struct lvkid));
 	assert(kid != NULL);
-	pthread_rwlock_init(&kid->lvk_lock, NULL);
+
+	pthread_rwlockattr_init(&rwattr);
+#if defined(PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)
+	pthread_rwlockattr_setkind_np(&rwattr,
+	    PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+	pthread_rwlock_init(&kid->lvk_lock, &rwattr);
 	pthread_mutex_init(&kid->lvk_cmdlk, NULL);
 	pthread_cond_init(&kid->lvk_defer_nonempty, NULL);
 	LIST_INIT(&kid->lvk_insts);
@@ -2769,7 +2776,13 @@ lvkid_setup_inst(ErlNifPid owner, ERL_NIF_TERM msgref, uint width, uint height)
 	assert(inst != NULL);
 	inst->lvki_kid = nkid;
 
-	pthread_rwlock_init(&inst->lvki_lock, NULL);
+	pthread_rwlockattr_t rwattr;
+	pthread_rwlockattr_init(&rwattr);
+#if defined(PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP)
+	pthread_rwlockattr_setkind_np(&rwattr,
+	    PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
+#endif
+	pthread_rwlock_init(&inst->lvki_lock, &rwattr);
 	pthread_rwlock_wrlock(&inst->lvki_lock);
 
 	inst->lvki_fbuf = fb;
