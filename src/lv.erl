@@ -30,6 +30,8 @@
 
 -export([
     make_buffer/2,
+    make_buffer_array/2,
+    make_string_array/2,
     setup/1,
     flush_done/1,
     read_framebuffer/2,
@@ -38,7 +40,7 @@
 
 -export_type([
     object/0, instance/0, event/0, style/0, error/0, rect/0, point/0, size/0,
-    color/0, buffer/0,
+    color/0, buffer/0, buffer_array/0,
     btn/0, label/0, scr/0, img/0, spinner/0, textarea/0, tabview/0, btnmatrix/0,
     checkbox/0, dropdown/0, imgbtn/0, led/0, listview/0, menu/0, msgbox/0,
     roller/0, slider/0, switch/0, table/0, bar/0,
@@ -82,6 +84,13 @@
 %% calling certain functions.
 %%
 %% <b>See also:</b> {@link lv:make_buffer/2}
+
+-opaque buffer_array() :: rdp_lvgl_nif:buffer().
+%% A handle to an array of pointers to byte-buffers with a lifetime equal to
+%% the lifetime of the entire LVGL instance. Used in place of
+%% <code>static</code> data in C when calling certain functions.
+%%
+%% <b>See also:</b> {@link lv:make_buffer_array/2}
 
 -type error() :: {error, integer(), string()} | {error, term()}.
 %% The type of an error returned from LVGL.
@@ -259,6 +268,57 @@ make_buffer(Inst, Data) ->
                 {MsgRef, error, Num, Str} -> {error, Num, Str}
             end;
         Err -> Err
+    end.
+
+%% @doc Creates a (NULL-terminated) array of C strings whose liftime is tied to an LVGL instance.
+%%
+%% This is useful to replace the use of <code>static</code> or global data in
+%% C when calling LVGL functions which require an array of pointers to
+%% static/global zero-terminated strings.
+%%
+%% @see instance()
+%% @see buffer_array()
+-spec make_string_array(instance(), [string()]) -> {ok, buffer_array()} | error().
+make_string_array(Inst, Strings) ->
+    Datas = [[X, <<0>>] || X <- Strings],
+    make_buffer_array(Inst, Datas).
+
+%% @doc Creates a (NULL-terminated) array of buffers whose liftime is tied to an LVGL instance.
+%%
+%% This is useful to replace the use of <code>static</code> or global data in
+%% C when calling LVGL functions which require an array of pointers to
+%% static/global buffers.
+%%
+%% @see instance()
+%% @see buffer_array()
+-spec make_buffer_array(instance(), [iolist()]) -> {ok, buffer_array()} | error().
+make_buffer_array(Inst, Datas) ->
+    Asyncs = [rdp_lvgl_nif:make_buffer(Inst, Data) || Data <- Datas],
+    Results = lists:map(fun
+        ({async, Buf, MsgRef}) ->
+            receive
+                {MsgRef, ok} -> {ok, Buf};
+                {MsgRef, error, Why} -> {error, Why};
+                {MsgRef, error, Num, Str} -> {error, Num, Str}
+            end;
+        (Err) -> Err
+    end, Asyncs),
+    Bufs = [B || {ok, B} <- Results],
+    Errs = [E || E = {error, _} <- Results] ++
+           [E || E = {error, _, _} <- Results],
+    case Errs of
+        [] ->
+            case rdp_lvgl_nif:make_buffer_array(Inst, Bufs) of
+                {async, Buf, MsgRef} ->
+                    receive
+                        {MsgRef, ok} -> {ok, Buf};
+                        {MsgRef, error, Why} -> {error, Why};
+                        {MsgRef, error, Num, Str} -> {error, Num, Str}
+                    end;
+                Err -> Err
+            end;
+        [FirstErr | _] ->
+            FirstErr
     end.
 
 -type tile() :: {rect(), iolist()}.

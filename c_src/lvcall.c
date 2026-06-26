@@ -35,7 +35,7 @@
 
 struct ibuf {
 	void	*ib_buf;
-	void	*ib_ptrs[4];
+	void	*ib_ptrs[8];
 	size_t	 ib_len;
 	uint	 ib_idx;
 };
@@ -477,7 +477,7 @@ lv_do_call(struct shmintf *shm, struct cdesc *cd, void *databuf, size_t dlen)
 			free(ibuf[ib].ib_buf);
 			ibuf[ib].ib_buf = NULL;
 		}
-		for (i = 0; i < 4; ++i) {
+		for (i = 0; i < 8; ++i) {
 			if (ibuf[ib].ib_ptrs[i] != NULL) {
 				free(ibuf[ib].ib_ptrs[i]);
 				ibuf[ib].ib_ptrs[i] = NULL;

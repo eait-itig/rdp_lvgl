@@ -570,39 +570,6 @@ enter_inst_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 }
 
 static int
-unpack_buf_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
-    struct lvkbuf **pbuf)
-{
-	struct lvkhdl *hdl;
-	struct lvkid *kid;
-
-	assert(nls->nls_first_hdl != NULL);
-
-	if (!enif_get_resource(env, term, lvkid_hdl_rsrc, (void **)&hdl)) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "bad_lvgl_handle"), term));
-		return (EINVAL);
-	}
-
-	kid = hdl->lvkh_kid;
-	if (nls->nls_kid != kid) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "buf_hdl_wrong_lvkid"), term));
-		return (EINVAL);
-	}
-
-	if (hdl->lvkh_type != LVK_BUF) {
-		enif_raise_exception(env, enif_make_tuple2(env,
-		    enif_make_atom(env, "not_lv_buf"), term));
-		return (EBADF);
-	}
-
-	*pbuf = hdl->lvkh_ptr;
-
-	return (0);
-}
-
-static int
 enter_obj_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
     struct lvkobj **pobj, uint wrlock)
 {
@@ -749,6 +716,25 @@ enter_style_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
 	assert(sty->lvks_inst == nls->nls_inst);
 
 	*psty = sty;
+
+	return (0);
+}
+
+static int
+enter_buf_hdl(ErlNifEnv *env, ERL_NIF_TERM term, struct nif_lock_state *nls,
+    struct lvkbuf **pbuf, uint wrlock)
+{
+	int rc;
+	struct lvkbuf *buf;
+
+	rc = enter_hdl(env, term, LVK_BUF, nls, (void **)&buf, wrlock);
+	if (rc != 0)
+		return (rc);
+
+	assert(buf->lvkb_kid == nls->nls_kid);
+	assert(buf->lvkb_inst == nls->nls_inst);
+
+	*pbuf = buf;
 
 	return (0);
 }
@@ -1571,6 +1557,99 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_make_buffer_array(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct lvkbuf *buf = NULL, *abuf;
+	struct lvkinst *inst = NULL;
+	struct lvkhdl *bhdl;
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	struct cdesc cd;
+	struct lvkid *kid;
+	ERL_NIF_TERM rv, msgref, list, tbuf;
+	uint listlen, i = 0;
+	uint do_release;
+	int rc;
+	ErlNifBinary bin = {0};
+	lvaddr_t *aptr;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	list = argv[1];
+	if (!enif_get_list_length(env, list, &listlen))
+		return (enif_make_badarg(env));
+
+	bin.size = sizeof (lvaddr_t) * (listlen + 1);
+	bin.data = malloc(bin.size);
+	aptr = (lvaddr_t *)bin.data;
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	rc = enter_inst_hdl(env, argv[0], &nls, &inst, 1);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	kid = inst->lvki_kid;
+
+	while (enif_get_list_cell(env, list, &tbuf, &list)) {
+		rc = enter_buf_hdl(env, tbuf, &nls, &abuf, 1);
+		if (rc != 0) {
+			rv = make_errno(env, rc);
+			goto out;
+		}
+		assert(i < listlen);
+		aptr[i++] = abuf->lvkb_ptr;
+	}
+	assert(i <= listlen);
+	aptr[i] = 0;
+
+	buf = calloc(1, sizeof (struct lvkbuf));
+	assert(buf != NULL);
+	buf->lvkb_kid = kid;
+	buf->lvkb_inst = inst;
+	buf->lvkb_len = bin.size;
+
+	ncd->ncd_priv = buf;
+
+	LIST_INSERT_HEAD(&inst->lvki_bufs, buf, lvkb_entry);
+
+	bhdl = lvkid_make_hdl(LVK_BUF, buf, &do_release);
+
+	cd = (struct cdesc){
+		.cd_op = CMD_COPY_BUF,
+		.cd_copy_buf = (struct cdesc_copybuf){
+			.cdcs_len = bin.size,
+		}
+	};
+	lvk_cmd(kid, &cd, bin.data, bin.size, rlvgl_setup_buf_cb, ncd);
+
+	ncd = NULL;
+	buf = NULL;
+	rv = enif_make_tuple3(env,
+	    enif_make_atom(env, "async"),
+	    enif_make_resource(env, bhdl),
+	    msgref);
+
+	if (do_release)
+		enif_release_resource(bhdl);
+
+out:
+	free(bin.data);
+	leave_nif(&nls);
+	free_ncd(ncd);
+	free(buf);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_send_pointer_event(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	const ERL_NIF_TERM *ptup;
@@ -2074,6 +2153,7 @@ static ErlNifFunc nif_funcs[] = {
 	{ "prefork",		1, rlvgl_prefork },
 	{ "read_framebuffer",	2, rlvgl_read_framebuffer },
 	{ "make_buffer",	2, rlvgl_make_buffer },
+	{ "make_buffer_array",  2, rlvgl_make_buffer_array },
 	{ "take_log_ownership",	0, rlvgl_take_log_ownership },
 
 	/* lvgl APIs */

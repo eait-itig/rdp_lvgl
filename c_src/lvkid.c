@@ -2028,6 +2028,7 @@ lvk_vcall(struct lvkid *kid, struct lvkinst *inst, lvk_call_cb_t cb,
 		case ARG_INL_BUF_ARR:
 			bin = va_arg(ap, ErlNifBinary *);
 			sz = va_arg(ap, size_t);
+			assert(sz <= 8);
 			for (ai = 0; ai < sz; ++ai) {
 				alen[ai] = bin[ai].size;
 				dbuf_put(d, bin[ai].data, alen[ai]);

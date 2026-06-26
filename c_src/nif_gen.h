@@ -1229,8 +1229,13 @@ rlvgl_textarea_set_accepted_chars2(ErlNifEnv *env, int argc, const ERL_NIF_TERM 
 		rv = make_errno(env, rc);
 		goto out;
 	}
-	rc = unpack_buf_hdl(env, argv[1], &nls, &buf);
+	rc = enter_buf_hdl(env, argv[1], &nls, &buf, 0);
 	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (buf->lvkb_ptr == 0) {
+		rc = ENOENT;
 		rv = make_errno(env, rc);
 		goto out;
 	}
@@ -2393,10 +2398,7 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	ERL_NIF_TERM msgref, rv;
 	int rc;
 	struct lvkobj *obj;
-	ErlNifBinary map[16];
-	size_t map_n = 0;
-	ERL_NIF_TERM map_list, map_hd;
-	size_t total_inline = 0;
+	struct lvkbuf *map;
 
 	bzero(&nls, sizeof (nls));
 
@@ -2413,18 +2415,14 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 		rv = make_errno(env, rc);
 		goto out;
 	}
-	map_list = argv[1];
-	while (enif_get_list_cell(env, map_list, &map_hd, &map_list)) {
-		assert(map_n < 16);
-		if (!enif_inspect_iolist_as_binary(env, map_hd, &map[map_n])) {
-			rv = enif_make_badarg2(env, "map", argv[1]);
+	rc = enter_buf_hdl(env, argv[1], &nls, &map, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
 		goto out;
-		}
-		total_inline += map[map_n].size;
-		++map_n;
 	}
-	if (total_inline > CDESC_MAX_INLINE) {
-		rv = make_errno(env, ENOSPC);
+	if (map->lvkb_ptr == 0) {
+		rc = ENOENT;
+		rv = make_errno(env, rc);
 		goto out;
 	}
 
@@ -2448,7 +2446,7 @@ rlvgl_btnmatrix_set_map2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
 	    ARG_NONE, lv_btnmatrix_set_map,
 	    ARG_PTR_OBJ, obj,
-	    ARG_INL_BUF_ARR, map, map_n,
+	    ARG_PTR_BUFFER, map,
 	    ARG_NONE);
 
 	if (rc != 0) {
@@ -5964,7 +5962,7 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	ErlNifBinary title;
 	size_t total_inline = 0;
 	ErlNifBinary text;
-	ErlNifBinary btns[16];
+	ErlNifBinary btns[MAX_INL_BUF_ARR_LEN - 1];
 	size_t btns_n = 0;
 	ERL_NIF_TERM btns_list, btns_hd;
 	char atom[32];
@@ -6005,10 +6003,17 @@ rlvgl_msgbox_create5(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 	total_inline += text.size;
 	btns_list = argv[3];
 	while (enif_get_list_cell(env, btns_list, &btns_hd, &btns_list)) {
-		assert(btns_n < 16);
+		if (btns_n >= MAX_INL_BUF_ARR_LEN - 1) {
+			rv = make_errno(env, ENOSPC);
+			goto out;
+		}
 		if (!enif_inspect_iolist_as_binary(env, btns_hd, &btns[btns_n])) {
-			rv = enif_make_badarg2(env, "btns", argv[3]);
+				rv = enif_make_badarg2(env, "btns", argv[3]);
 		goto out;
+		}
+		if (btns[btns_n].size > UINT8_MAX) {
+			rv = make_errno(env, ENOSPC);
+			goto out;
 		}
 		total_inline += btns[btns_n].size;
 		++btns_n;

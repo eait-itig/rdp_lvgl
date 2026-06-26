@@ -38,7 +38,7 @@
 create(Parent) ->
     ?async_wrapper(btnmatrix_create, Parent).
 
--spec set_map(lv:btnmatrix(), [string()]) -> ok | lv:error().
+-spec set_map(lv:btnmatrix(), lv:buffer_array()) -> ok | lv:error().
 set_map(Widget, Map) ->
     ?async_void_wrapper(btnmatrix_set_map, Widget, Map).
 

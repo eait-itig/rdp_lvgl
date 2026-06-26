@@ -240,6 +240,41 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
         {ready_login_pin, "chemlabs", PinText}),
 
+    {ok, MatrixStyle} = lv_style:create(Inst),
+    ok = lv_style:set_pad_row(MatrixStyle, 6),
+    ok = lv_style:set_pad_column(MatrixStyle, 6),
+    ok = lv_style:set_pad_top(MatrixStyle, 6),
+    ok = lv_style:set_pad_bottom(MatrixStyle, 6),
+    ok = lv_style:set_pad_left(MatrixStyle, 6),
+    ok = lv_style:set_pad_right(MatrixStyle, 6),
+
+    {ok, MatrixItemStyle} = lv_style:create(Inst),
+    ok = lv_style:set_bg_opa(MatrixItemStyle, 1.0),
+    ok = lv_style:set_bg_color(MatrixItemStyle, lv_color:make(16#f3f4f6)),
+    ok = lv_style:set_radius(MatrixItemStyle, 8),
+    ok = lv_style:set_border_color(MatrixItemStyle, lv_color:make(16#d1d5db)),
+    ok = lv_style:set_border_width(MatrixItemStyle, 1),
+    ok = lv_style:set_text_color(MatrixItemStyle, lv_color:make(16#111827)),
+
+    {ok, MatrixChItemStyle} = lv_style:create(Inst),
+    ok = lv_style:set_bg_color(MatrixChItemStyle, lv_color:make(16#6366f1)),
+    ok = lv_style:set_text_color(MatrixChItemStyle, lv_color:palette(white)),
+    ok = lv_style:set_outline_color(MatrixChItemStyle, lv_color:make(16#6366f1)),
+    ok = lv_style:set_outline_width(MatrixChItemStyle, 3),
+    ok = lv_style:set_outline_pad(MatrixChItemStyle, 2),
+    ok = lv_style:set_outline_opa(MatrixChItemStyle, 0.8),
+
+    {ok, Matrix} = lv_btnmatrix:create(Flex),
+    {ok, Map} = lv:make_string_array(Inst, [<<"test">>, <<"some">>, <<"options">>]),
+    ok = lv_btnmatrix:set_map(Matrix, Map),
+    ok = lv_btnmatrix:set_one_checked(Matrix, true),
+    ok = lv_btnmatrix:set_btn_ctrl_all(Matrix, checkable),
+    ok = lv_obj:set_size(Matrix, {{percent, 100}, 50}),
+
+    ok = lv_obj:add_style(Matrix, MatrixStyle),
+    ok = lv_obj:add_style(Matrix, MatrixItemStyle, [items]),
+    ok = lv_obj:add_style(Matrix, MatrixChItemStyle, [items, checked]),
+
     {ok, List} = lv_list:create(Flex),
     ok = lv_obj:set_size(List, {{percent, 100}, {percent, 20}}),
 

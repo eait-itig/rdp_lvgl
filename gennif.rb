@@ -165,17 +165,9 @@ class Span < Handle
   def erl_type; 'lv_span:span()'; end
 end
 
-class Buffer < Arg
-  def arg_type; 'ARG_PTR_BUFFER'; end
-  def declare
-    write "struct lvkbuf *#{@name};"
-  end
-  def parse
-    write "rc = unpack_buf_hdl(env, argv[#{@idx}], &nls, &#{@name});"
-    write "if (rc != 0) {"
-    write parse_error_rc
-    write "}"
-  end
+class Buffer < Handle
+  def stem; 'buffer'; end
+  def struct; 'buf'; end
   def erl_type; 'buffer()'; end
 end
 
@@ -285,7 +277,7 @@ end
 class InlineStrArray < Arg
   def arg_type; 'ARG_INL_BUF_ARR'; end
   def declare
-    write "ErlNifBinary #{@name}[16];"
+    write "ErlNifBinary #{@name}[MAX_INL_BUF_ARR_LEN - 1];"
     write "size_t #{@name}_n = 0;"
     write "ERL_NIF_TERM #{@name}_list, #{@name}_hd;"
     @func.if_not_flag('inline_len_check_decl') do
@@ -295,9 +287,16 @@ class InlineStrArray < Arg
   def parse
     write "#{@name}_list = argv[#{@idx}];"
     write "while (enif_get_list_cell(env, #{@name}_list, &#{@name}_hd, &#{@name}_list)) {"
-    write "\tassert(#{@name}_n < 16);"
+    write "\tif (#{@name}_n >= MAX_INL_BUF_ARR_LEN - 1) {"
+    write "\t\trv = make_errno(env, ENOSPC);"
+    write "\t\tgoto out;"
+    write "\t}"
     write "\tif (!enif_inspect_iolist_as_binary(env, #{@name}_hd, &#{@name}[#{@name}_n])) {"
-    write "\t" + parse_error
+    write "\t\t" + parse_error
+    write "\t}"
+    write "\tif (#{@name}[#{@name}_n].size > UINT8_MAX) {"
+    write "\t\trv = make_errno(env, ENOSPC);"
+    write "\t\tgoto out;"
     write "\t}"
     write "\ttotal_inline += #{@name}[#{@name}_n].size;"
     write "\t++#{@name}_n;"
@@ -863,7 +862,7 @@ WidgetFunc.new('label', 'set_text_sel_start', Void, UInt32.new('index'))
 WidgetFunc.new('label', 'set_text_sel_end', Void, UInt32.new('index'))
 
 WidgetCreateFunc.new('btnmatrix')
-WidgetFunc.new('btnmatrix', 'set_map', Void, InlineStrArray.new('map'))
+WidgetFunc.new('btnmatrix', 'set_map', Void, Buffer.new('map'))
 WidgetFunc.new('btnmatrix', 'set_btn_ctrl', Void, UInt16.new('idx'), BtnMatrixControl.new('ctrl'))
 WidgetFunc.new('btnmatrix', 'clear_btn_ctrl', Void, UInt16.new('idx'), BtnMatrixControl.new('ctrl'))
 WidgetFunc.new('btnmatrix', 'set_btn_ctrl_all', Void, BtnMatrixControl.new('ctrl'))

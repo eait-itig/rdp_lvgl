@@ -144,6 +144,9 @@ flush_state(_Inst) -> error(no_nif).
 -spec make_buffer(instance(), binary()) -> async_return(buffer()).
 make_buffer(_Inst, _Data) -> error(no_nif).
 
+-spec make_buffer_array(instance(), [buffer()]) -> async_return(buffer()).
+make_buffer_array(_Inst, _Buffers) -> error(no_nif).
+
 -type tile() :: {lv:rect(), pixeldata()}.
 
 -spec read_framebuffer(instance(), lv:rect()) -> {ok, [tile()]}.

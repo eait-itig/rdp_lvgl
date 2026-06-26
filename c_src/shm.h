@@ -147,6 +147,7 @@ struct cdesc_teardown {
 };
 
 #define MAX_ARGS		8
+#define	MAX_INL_BUF_ARR_LEN	8
 
 enum arg_type {
 	ARG_NONE		= 0,

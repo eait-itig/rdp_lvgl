@@ -66,7 +66,7 @@ label_set_text_sel_start(_Obj, _Index) -> error(no_nif).
 label_set_text_sel_end(_Obj, _Index) -> error(no_nif).
 -spec btnmatrix_create(object()) -> async_return(object()).
 btnmatrix_create(_Parent) -> error(no_nif).
--spec btnmatrix_set_map(object(), [iolist()]) -> async_return().
+-spec btnmatrix_set_map(object(), buffer()) -> async_return().
 btnmatrix_set_map(_Obj, _Map) -> error(no_nif).
 -spec btnmatrix_set_btn_ctrl(object(), integer(), lv:flags(lv_btnmatrix:ctrl())) -> async_return().
 btnmatrix_set_btn_ctrl(_Obj, _Idx, _Ctrl) -> error(no_nif).
