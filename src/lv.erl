@@ -30,8 +30,9 @@
 
 -export([
     make_buffer/2,
+    make_cstring/2,
     make_buffer_array/2,
-    make_string_array/2,
+    make_cstring_array/2,
     setup/1,
     flush_done/1,
     read_framebuffer/2,
@@ -270,18 +271,16 @@ make_buffer(Inst, Data) ->
         Err -> Err
     end.
 
-%% @doc Creates a (NULL-terminated) array of C strings whose liftime is tied to an LVGL instance.
+%% @doc Creates a C string (nul-terminated) whose lifetime is tied to an LVGL instance
 %%
 %% This is useful to replace the use of <code>static</code> or global data in
-%% C when calling LVGL functions which require an array of pointers to
-%% static/global zero-terminated strings.
+%% C when calling LVGL functions which require such.
 %%
 %% @see instance()
-%% @see buffer_array()
--spec make_string_array(instance(), [string()]) -> {ok, buffer_array()} | error().
-make_string_array(Inst, Strings) ->
-    Datas = [[X, <<0>>] || X <- Strings],
-    make_buffer_array(Inst, Datas).
+%% @see buffer()
+-spec make_cstring(instance(), iolist()) -> {ok, buffer()} | error().
+make_cstring(Inst, Data) ->
+    make_buffer(Inst, [Data, <<0>>]).
 
 %% @doc Creates a (NULL-terminated) array of buffers whose liftime is tied to an LVGL instance.
 %%
@@ -320,6 +319,19 @@ make_buffer_array(Inst, Datas) ->
         [FirstErr | _] ->
             FirstErr
     end.
+
+%% @doc Creates a (NULL-terminated) array of C strings whose liftime is tied to an LVGL instance.
+%%
+%% This is useful to replace the use of <code>static</code> or global data in
+%% C when calling LVGL functions which require an array of pointers to
+%% static/global zero-terminated strings.
+%%
+%% @see instance()
+%% @see buffer_array()
+-spec make_cstring_array(instance(), [string()]) -> {ok, buffer_array()} | error().
+make_cstring_array(Inst, Strings) ->
+    Datas = [[X, <<0>>] || X <- Strings],
+    make_buffer_array(Inst, Datas).
 
 -type tile() :: {rect(), iolist()}.
 %% One tile of pixel data returned in the result of {@link read_framebuffer/2}.

@@ -102,7 +102,7 @@ init([Srv, Inst, {W, H}]) ->
         {radius, 0}
     ]),
 
-    {ok, Chars} = lv:make_buffer(Inst, <<"0123456789", 0>>),
+    {ok, Chars} = lv:make_cstring(Inst, <<"0123456789">>),
 
     S0 = #?MODULE{srv = Srv, mref = MRef, inst = Inst, ssty = ScreenStyle,
                   flowsty = FlowStyle, apsty = APStyle, res = {W, H},
@@ -128,7 +128,6 @@ make_flex(#?MODULE{inst = Inst, flowsty = FlowStyle, ssty = ScreenStyle, res = {
     {ok, Logo} = lv_img:create(Screen),
     ok = lv_img:set_src(Logo,
         rdp_lvgl_server:find_image_path("uq-logo.png")),
-    {ok, {LogoW, _LogoH}} = lv_obj:get_size(Logo),
     {ok, Flex} = lv_obj:create(Inst, Screen),
     ok = lv_obj:add_style(Flex, FlowStyle),
 
@@ -268,7 +267,7 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     ]),
 
     {ok, Matrix} = lv_btnmatrix:create(Flex),
-    {ok, Map} = lv:make_string_array(Inst, [<<"test">>, <<"some">>, <<"options">>]),
+    {ok, Map} = lv:make_cstring_array(Inst, [<<"test">>, <<"some">>, <<"options">>]),
     ok = lv_btnmatrix:set_map(Matrix, Map),
     ok = lv_btnmatrix:set_one_checked(Matrix, true),
     ok = lv_btnmatrix:set_btn_ctrl_all(Matrix, checkable),
