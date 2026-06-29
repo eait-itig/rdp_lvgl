@@ -75,31 +75,32 @@ init([Srv, Inst, {W, H}]) ->
     {Pid, _} = Srv,
     MRef = monitor(process, Pid),
 
-    {ok, ScreenStyle} = lv_style:create(Inst),
-    ok = lv_style:set_flex_flow(ScreenStyle,
-        if (W > H) -> row; true -> column end),
-    ok = lv_style:set_flex_align(ScreenStyle, center, center, center),
-    ok = lv_style:set_bg_color(ScreenStyle, lv_color:make(16#48206c)),
+    {ok, ScreenStyle} = lv_style:create(Inst, [
+        {flex_flow, if (W > H) -> row; true -> column end},
+        {flex_align, center, center, center},
+        {bg_color, lv_color:make(16#48206c)}
+    ]),
 
-    {ok, FlowStyle} = lv_style:create(Inst),
-    ok = lv_style:set_flex_flow(FlowStyle, column),
-    ok = lv_style:set_flex_align(FlowStyle, center, start,
-        if (W > H) -> start; true -> center end),
-    ok = lv_style:set_bg_opa(FlowStyle, 0),
-    ok = lv_style:set_border_opa(FlowStyle, 0),
+    {ok, FlowStyle} = lv_style:create(Inst, [
+        {flex_flow, column},
+        {flex_align, center, start, if (W > H) -> start; true -> center end},
+        {bg_opa, 0},
+        {border_opa, 0}
+    ]),
 
-    {ok, APStyle} = lv_style:create(Inst),
-    ok = lv_style:set_bg_opa(APStyle, 0.7),
-    ok = lv_style:set_border_opa(APStyle, 0),
+    {ok, APStyle} = lv_style:create(Inst, [
+        {bg_opa, 0.7},
+        {border_opa, 0}
+    ]),
 
-    {ok, RLStyle} = lv_style:create(Inst),
-    ok = lv_style:set_border_side(RLStyle, [left]),
-    ok = lv_style:set_border_color(RLStyle, lv_color:palette(black)),
-    ok = lv_style:set_border_opa(RLStyle, 0.5),
-    ok = lv_style:set_pad_left(RLStyle, 10),
-    ok = lv_style:set_pad_top(RLStyle, 0),
-    ok = lv_style:set_pad_bottom(RLStyle, 0),
-    ok = lv_style:set_radius(RLStyle, 0),
+    {ok, RLStyle} = lv_style:create(Inst, [
+        {border_side, [left]},
+        {border_color, lv_color:palette(black)},
+        {border_opa, 0.5},
+        {pad_all, 0},
+        {pad_left, 10},
+        {radius, 0}
+    ]),
 
     {ok, Chars} = lv:make_buffer(Inst, <<"0123456789", 0>>),
 
@@ -182,11 +183,13 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     ok = lv_obj:set_size(SG, {{percent, 100}, content}),
     ok = lv_span:set_mode(SG, break),
 
-    {ok, TitleSty} = lv_style:create(Inst),
-    ok = lv_style:set_text_color(TitleSty, lv_color:palette(white)),
-    ok = lv_style:set_text_font(TitleSty, {"roboto", bold, 24}),
-    {ok, SubtitleSty} = lv_style:create(Inst),
-    ok = lv_style:set_text_color(SubtitleSty, lv_color:palette(white)),
+    {ok, TitleSty} = lv_style:create(Inst, [
+        {text_color, lv_color:palette(white)},
+        {text_font, {"roboto", bold, 24}}
+    ]),
+
+    {ok, SubtitleSty} = lv_style:create(Inst, [
+        {text_color, lv_color:palette(white)}]),
 
     {ok, Title} = lv_span:new_span(SG),
     ok = lv_span:set_text(Title, "Faculty of EAIT"),
@@ -240,35 +243,38 @@ login(enter, _PrevState, S0 = #?MODULE{inst = Inst, chars = Chars}) ->
     {ok, YkAcEvent, _} = lv_event:setup(PinText, ready,
         {ready_login_pin, "chemlabs", PinText}),
 
-    {ok, MatrixStyle} = lv_style:create(Inst),
-    ok = lv_style:set_pad_row(MatrixStyle, 6),
-    ok = lv_style:set_pad_column(MatrixStyle, 6),
-    ok = lv_style:set_pad_top(MatrixStyle, 6),
-    ok = lv_style:set_pad_bottom(MatrixStyle, 6),
-    ok = lv_style:set_pad_left(MatrixStyle, 6),
-    ok = lv_style:set_pad_right(MatrixStyle, 6),
+    {ok, MatrixStyle} = lv_style:create(Inst, [
+        {pad_all, 6},
+        {pad_row, 6},
+        {pad_column, 6}
+    ]),
 
-    {ok, MatrixItemStyle} = lv_style:create(Inst),
-    ok = lv_style:set_bg_opa(MatrixItemStyle, 1.0),
-    ok = lv_style:set_bg_color(MatrixItemStyle, lv_color:make(16#f3f4f6)),
-    ok = lv_style:set_radius(MatrixItemStyle, 8),
-    ok = lv_style:set_border_color(MatrixItemStyle, lv_color:make(16#d1d5db)),
-    ok = lv_style:set_border_width(MatrixItemStyle, 1),
-    ok = lv_style:set_text_color(MatrixItemStyle, lv_color:make(16#111827)),
+    {ok, MatrixItemStyle} = lv_style:create(Inst, [
+        {bg_opa, 1.0},
+        {bg_color, lv_color:make(16#f3f4f6)},
+        {radius, 8},
+        {border_color, lv_color:make(16#d1d5db)},
+        {border_width, 1},
+        {text_color, lv_color:make(16#111827)}
+    ]),
 
-    {ok, MatrixChItemStyle} = lv_style:create(Inst),
-    ok = lv_style:set_bg_color(MatrixChItemStyle, lv_color:make(16#6366f1)),
-    ok = lv_style:set_text_color(MatrixChItemStyle, lv_color:palette(white)),
-    ok = lv_style:set_outline_color(MatrixChItemStyle, lv_color:make(16#6366f1)),
-    ok = lv_style:set_outline_width(MatrixChItemStyle, 3),
-    ok = lv_style:set_outline_pad(MatrixChItemStyle, 2),
-    ok = lv_style:set_outline_opa(MatrixChItemStyle, 0.8),
+    {ok, MatrixChItemStyle} = lv_style:create(Inst, [
+        {bg_color, lv_color:make(16#6366f1)},
+        {text_color, lv_color:palette(white)},
+        {outline_color, lv_color:make(16#6366f1)},
+        {outline_width, 3},
+        {outline_pad, 2},
+        {outline_opa, 0.8}
+    ]),
 
     {ok, Matrix} = lv_btnmatrix:create(Flex),
     {ok, Map} = lv:make_string_array(Inst, [<<"test">>, <<"some">>, <<"options">>]),
     ok = lv_btnmatrix:set_map(Matrix, Map),
     ok = lv_btnmatrix:set_one_checked(Matrix, true),
     ok = lv_btnmatrix:set_btn_ctrl_all(Matrix, checkable),
+    {ok, none} = lv_btnmatrix:first_btn_with_ctrl(Matrix, checked),
+    ok = lv_btnmatrix:set_btn_ctrl(Matrix, 1, checked),
+    {ok, 1} = lv_btnmatrix:first_btn_with_ctrl(Matrix, checked),
     ok = lv_obj:set_size(Matrix, {{percent, 100}, 50}),
 
     ok = lv_obj:add_style(Matrix, MatrixStyle),

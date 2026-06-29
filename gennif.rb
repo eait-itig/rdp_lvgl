@@ -873,6 +873,7 @@ WidgetFunc.new('btnmatrix', 'get_selected_btn', UInt16)
 WidgetFunc.new('btnmatrix', 'set_selected_btn', Void, UInt16.new('idx'))
 WidgetFunc.new('btnmatrix', 'get_btn_text', InlineStr, UInt16.new('idx'))
 WidgetFunc.new('btnmatrix', 'has_btn_ctrl', Bool8, UInt16.new('idx'), BtnMatrixControl.new('ctrl'))
+WidgetFunc.new('btnmatrix', 'first_btn_with_ctrl', UInt16, BtnMatrixControl.new('ctrl'))
 
 WidgetCreateFunc.new('dropdown')
 WidgetFunc.new('dropdown', 'set_options', Void, InlineStr.new('opts'))

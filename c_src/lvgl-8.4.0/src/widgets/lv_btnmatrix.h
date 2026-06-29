@@ -207,6 +207,14 @@ const char * lv_btnmatrix_get_btn_text(const lv_obj_t * obj, uint16_t btn_id);
 bool lv_btnmatrix_has_btn_ctrl(lv_obj_t * obj, uint16_t btn_id, lv_btnmatrix_ctrl_t ctrl);
 
 /**
+ * Get the index of the first button which has the given attribute set.
+ * @param obj	    pointer to button matrix object
+ * @param ctrl      control attribute to check for
+ * @return          index of the first button (LV_BTNMATRIX_BTN_NONE: if none match)
+ */
+uint16_t lv_btnmatrix_first_btn_with_ctrl(lv_obj_t *obj, lv_btnmatrix_ctrl_t ctrl);
+
+/**
  * Tell whether "one check" mode is enabled or not.
  * @param obj       Button matrix object
  * @return          true: "one check" mode is enabled; false: disabled

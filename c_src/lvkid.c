@@ -1856,17 +1856,17 @@ lvk_call_cb(const struct rdesc *rd, const void *data, size_t dlen, void *priv)
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &u64, call->lvkc_priv);
 		break;
 	case ARG_UINT32:
-		assert(rdr->rdr_val < UINT32_MAX);
+		assert(rdr->rdr_val <= UINT32_MAX);
 		u32 = rdr->rdr_val;
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &u32, call->lvkc_priv);
 		break;
 	case ARG_UINT16:
-		assert(rdr->rdr_val < UINT16_MAX);
+		assert(rdr->rdr_val <= UINT16_MAX);
 		u16 = rdr->rdr_val;
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &u16, call->lvkc_priv);
 		break;
 	case ARG_UINT8:
-		assert(rdr->rdr_val < UINT8_MAX);
+		assert(rdr->rdr_val <= UINT8_MAX);
 		u8 = rdr->rdr_val;
 		(*call->lvkc_cb)(kid, 0, call->lvkc_rt, &u8, call->lvkc_priv);
 		break;

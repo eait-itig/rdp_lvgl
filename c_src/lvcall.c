@@ -203,6 +203,10 @@ lvptr_invalidate(void *pptr)
 	lvptr_ent_delete(pe);
 }
 
+#if LVCALL_DEBUG == 1
+#include <dlfcn.h>
+#endif
+
 void
 lv_do_call(struct shmintf *shm, struct cdesc *cd, void *databuf, size_t dlen)
 {
@@ -222,7 +226,18 @@ lv_do_call(struct shmintf *shm, struct cdesc *cd, void *databuf, size_t dlen)
 	enum arg_type rt = cdc->cdc_rettype;
 	struct dbuf *d;
 
-	debug("call to %p", (void *)cdc->cdc_func);
+#if LVCALL_DEBUG == 1
+	Dl_info info;
+	if (dladdr((void *)cdc->cdc_func, &info)) {
+		debug("call to %s (%p)",
+		    info.dli_sname ? info.dli_sname : "unknown",
+		    (void *)cdc->cdc_func);
+	} else {
+		const char *dle = dlerror();
+		debug("call to %p (dlerror: %s)", (void *)cdc->cdc_func,
+		    dle ? dle : "null");
+	}
+#endif
 	debug("rtype = %u", cdc->cdc_rettype);
 
 	d = dbuf_from(databuf, dlen);

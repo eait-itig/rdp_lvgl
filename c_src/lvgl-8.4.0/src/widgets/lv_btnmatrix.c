@@ -358,6 +358,20 @@ bool lv_btnmatrix_has_btn_ctrl(lv_obj_t * obj, uint16_t btn_id, lv_btnmatrix_ctr
     return ((btnm->ctrl_bits[btn_id] & ctrl) == ctrl) ? true : false;
 }
 
+uint16_t lv_btnmatrix_first_btn_with_ctrl(lv_obj_t *obj, lv_btnmatrix_ctrl_t ctrl)
+{
+    LV_ASSERT_OBJ(obj, MY_CLASS);
+
+    lv_btnmatrix_t * btnm = (lv_btnmatrix_t *)obj;
+    uint16_t btn_id;
+
+    for (btn_id = 0; btn_id < btnm->btn_cnt; ++btn_id) {
+        if ((btnm->ctrl_bits[btn_id] & ctrl) == ctrl)
+            return (btn_id);
+    }
+    return (LV_BTNMATRIX_BTN_NONE);
+}
+
 bool lv_btnmatrix_get_one_checked(const lv_obj_t * obj)
 {
     LV_ASSERT_OBJ(obj, MY_CLASS);

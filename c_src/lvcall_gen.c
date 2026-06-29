@@ -29,6 +29,7 @@ typedef void (*lv_call_func5_vplppl_t)(void *, uint32_t, void *, void *, uint32_
 typedef uint32_t (*lv_call_func5_llllll_t)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 typedef void (*lv_call_func3_vppp_t)(void *, void *, void *);
 typedef uint8_t (*lv_call_func1_cl_t)(uint32_t);
+typedef uint16_t (*lv_call_func2_wpw_t)(void *, uint16_t);
 typedef void * (*lv_call_func2_ppw_t)(void *, uint16_t);
 typedef uint8_t (*lv_call_func3_cpww_t)(void *, uint16_t, uint16_t);
 typedef void (*lv_call_func3_vpwc_t)(void *, uint16_t, uint8_t);
@@ -69,7 +70,6 @@ typedef void * (*lv_call_func2_ppc_t)(void *, uint8_t);
 typedef lv_color_t (*lv_call_func1_Cp_t)(void *);
 typedef uint8_t (*lv_call_func2_cpC_t)(void *, lv_color_t);
 typedef void (*lv_call_func1_vc_t)(uint8_t);
-typedef uint16_t (*lv_call_func2_wpw_t)(void *, uint16_t);
 typedef void (*lv_call_func4_vpppl_t)(void *, void *, void *, uint32_t);
 typedef void (*lv_call_func6_vpplllc_t)(void *, void *, uint32_t, uint32_t, uint32_t, uint8_t);
 typedef void (*lv_call_func2_vpC_t)(void *, lv_color_t);
@@ -1138,6 +1138,11 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					    a0p,
 					    a1w);
 					return (0);
+				case ARG_UINT16:
+					retw = (*(lv_call_func2_wpw_t)cdc->cdc_func)(
+					    a0p,
+					    a1w);
+					return ((uint64_t)retw);
 				case ARG_PTR:
 				case ARG_PTR_BUFFER:
 				case ARG_PTR_OBJ:
@@ -1152,11 +1157,6 @@ lv_do_real_call(const struct cdesc_call *cdc)
 					    a0p,
 					    a1w);
 					return ((uint64_t)retp);
-				case ARG_UINT16:
-					retw = (*(lv_call_func2_wpw_t)cdc->cdc_func)(
-					    a0p,
-					    a1w);
-					return ((uint64_t)retw);
 				case ARG_UINT8:
 					retc = (*(lv_call_func2_cpw_t)cdc->cdc_func)(
 					    a0p,

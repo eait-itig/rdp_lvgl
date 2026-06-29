@@ -3183,6 +3183,75 @@ out:
 }
 
 static ERL_NIF_TERM
+rlvgl_btnmatrix_first_btn_with_ctrl2(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
+{
+	struct nif_lock_state nls;
+	struct nif_call_data *ncd = NULL;
+	ERL_NIF_TERM msgref, rv;
+	int rc;
+	struct lvkobj *obj;
+	int ctrl;
+
+	bzero(&nls, sizeof (nls));
+
+	if (argc != 2)
+		return (enif_make_badarg(env));
+
+	rc = enter_obj_hdl(env, argv[0], &nls, &obj, 0);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if (obj->lvko_ptr == 0) {
+		rc = ENOENT;
+		rv = make_errno(env, rc);
+		goto out;
+	}
+	if ((rc = parse_enum(env, argv[1], btnmatrix_ctrls, true, &ctrl))) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	if (!lv_obj_class_has_base(obj->lvko_class, &lv_btnmatrix_class)) {
+		rv = make_errno(env, EINVAL);
+		goto out;
+	}
+
+	if (nls.nls_inst && nls.nls_inst->lvki_state == LVKINST_DRAIN) {
+		rv = make_errno(env, ENOTCONN);
+		goto out;
+	}
+
+	rc = make_ncd(env, &msgref, &ncd);
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+
+	rc = lvk_icall(nls.nls_inst, rlvgl_call_cb, ncd,
+	    ARG_UINT16, lv_btnmatrix_first_btn_with_ctrl,
+	    ARG_PTR_OBJ, obj,
+	    ARG_UINT16, ctrl,
+	    ARG_NONE);
+
+	if (rc != 0) {
+		rv = make_errno(env, rc);
+		goto out;
+	}
+
+	ncd = NULL;
+	rv = enif_make_tuple2(env,
+	    enif_make_atom(env, "async"),
+	    msgref);
+
+out:
+	leave_nif(&nls);
+	free_ncd(ncd);
+	return (rv);
+}
+
+static ERL_NIF_TERM
 rlvgl_dropdown_create1(ErlNifEnv *env, int argc, const ERL_NIF_TERM argv[])
 {
 	struct nif_lock_state nls;
@@ -13571,6 +13640,7 @@ out:
 { "btnmatrix_set_selected_btn",		2, rlvgl_btnmatrix_set_selected_btn2 }, \
 { "btnmatrix_get_btn_text",		2, rlvgl_btnmatrix_get_btn_text2 }, \
 { "btnmatrix_has_btn_ctrl",		3, rlvgl_btnmatrix_has_btn_ctrl3 }, \
+{ "btnmatrix_first_btn_with_ctrl",	2, rlvgl_btnmatrix_first_btn_with_ctrl2 }, \
 { "dropdown_create",			1, rlvgl_dropdown_create1 }, \
 { "dropdown_set_options",		2, rlvgl_dropdown_set_options2 }, \
 { "dropdown_add_option",		3, rlvgl_dropdown_add_option3 }, \

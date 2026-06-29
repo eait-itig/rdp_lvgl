@@ -88,6 +88,8 @@ btnmatrix_set_selected_btn(_Obj, _Idx) -> error(no_nif).
 btnmatrix_get_btn_text(_Obj, _Idx) -> error(no_nif).
 -spec btnmatrix_has_btn_ctrl(object(), integer(), lv:flags(lv_btnmatrix:ctrl())) -> async_return(boolean()).
 btnmatrix_has_btn_ctrl(_Obj, _Idx, _Ctrl) -> error(no_nif).
+-spec btnmatrix_first_btn_with_ctrl(object(), lv:flags(lv_btnmatrix:ctrl())) -> async_return(integer()).
+btnmatrix_first_btn_with_ctrl(_Obj, _Ctrl) -> error(no_nif).
 -spec dropdown_create(object()) -> async_return(object()).
 dropdown_create(_Parent) -> error(no_nif).
 -spec dropdown_set_options(object(), iolist()) -> async_return().

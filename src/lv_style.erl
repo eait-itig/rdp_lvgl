@@ -27,6 +27,7 @@
 
 -export([
     create/1,
+    create/2,
     set_layout/2,
     set_flex_flow/2,
     set_flex_grow/2,
@@ -47,6 +48,7 @@
     set_pad_right/2,
     set_pad_row/2,
     set_pad_column/2,
+    set_pad_all/2,
     set_base_dir/2,
     set_clip_corner/2,
     set_bg_color/2,
@@ -130,6 +132,147 @@
 create(Inst) ->
     ?async_wrapper(style_create, Inst).
 
+-type stylesheet_entry() ::
+    {width, lv:coord()} |
+    {min_width, lv:coord()} |
+    {max_width, lv:coord()} |
+    {height, lv:coord()} |
+    {min_height, lv:coord()} |
+    {max_height, lv:coord()} |
+    {x, lv:coord()} |
+    {y, lv:coord()} |
+    {align, lv_obj:align_spec()} |
+    {radius, lv:coord()} |
+    {pad_top, lv:coord()} |
+    {pad_bottom, lv:coord()} |
+    {pad_left, lv:coord()} |
+    {pad_right, lv:coord()} |
+    {pad_row, lv:coord()} |
+    {pad_column, lv:coord()} |
+    {base_dir, lv_obj:dir_spec()} |
+    {clip_corner, boolean()} |
+    {bg_color, lv:color()} |
+    {bg_opa, integer()} |
+    {bg_grad_color, lv:color()} |
+    {bg_grad_dir, lv_color:grad_dir()} |
+    {bg_main_stop, lv:coord()} |
+    {bg_grad_stop, lv:coord()} |
+    {bg_img_opa, integer()} |
+    {bg_img_recolor, lv:color()} |
+    {bg_img_recolor_opa, integer()} |
+    {bg_img_tiled, boolean()} |
+    {border_color, lv:color()} |
+    {border_opa, integer()} |
+    {border_width, lv:coord()} |
+    {border_side, lv:flags(lv_style:border_side())} |
+    {border_post, boolean()} |
+    {outline_width, lv:coord()} |
+    {outline_color, lv:color()} |
+    {outline_opa, integer()} |
+    {outline_pad, lv:coord()} |
+    {shadow_width, lv:coord()} |
+    {shadow_ofs_x, lv:coord()} |
+    {shadow_ofs_y, lv:coord()} |
+    {shadow_spread, lv:coord()} |
+    {shadow_color, lv:color()} |
+    {shadow_opa, integer()} |
+    {img_opa, integer()} |
+    {img_recolor, lv:color()} |
+    {img_recolor_opa, integer()} |
+    {line_width, lv:coord()} |
+    {line_dash_width, lv:coord()} |
+    {line_dash_gap, lv:coord()} |
+    {line_rounded, boolean()} |
+    {line_color, lv:color()} |
+    {line_opa, integer()} |
+    {arc_width, lv:coord()} |
+    {arc_rounded, boolean()} |
+    {arc_color, lv:color()} |
+    {arc_opa, integer()} |
+    {text_color, lv:color()} |
+    {text_opa, integer()} |
+    {text_letter_space, lv:coord()} |
+    {text_line_space, lv:coord()} |
+    {text_decor, lv:flags(lv_style:text_decor())} |
+    {text_align, lv_style:text_align()} |
+    {opa, integer()} |
+    {color_filter_opa, integer()} |
+    {anim_time, integer()} |
+    {anim_speed, integer()} |
+    {blend_mode, lv_style:blend_mode()} |
+    {transform_width, lv:coord()} |
+    {transform_height, lv:coord()} |
+    {translate_x, lv:coord()} |
+    {translate_y, lv:coord()} |
+    {transform_zoom, lv:coord()} |
+    {transform_angle, lv:coord()} |
+    {transform_pivot_x, lv:coord()} |
+    {transform_pivot_y, lv:coord()} |
+    {text_font, lv:font()} |
+    {pad_all, lv:coord()} |
+    {layout, layout()} |
+    {flex_flow, flex_flow()} |
+    {flex_grow, integer()} |
+    {flex_align, flex_align(), flex_align(), flex_align()}.
+
+-type stylesheet() :: [stylesheet_entry()].
+
+-spec create(lv:instance(), stylesheet()) -> {ok, lv:style()} | lv:error().
+create(Inst, Sheet) ->
+    case create(Inst) of
+        {ok, Sty} ->
+            case apply_stylesheet(Sty, Sheet) of
+                ok -> {ok, Sty};
+                Err -> Err
+            end;
+        Err -> Err
+    end.
+
+expand_prop_aliases([]) -> [];
+expand_prop_aliases([{pad_all, V} | Rest]) ->
+    [{pad_top, V}, {pad_bottom, V}, {pad_left, V}, {pad_right, V}
+        | expand_prop_aliases(Rest)];
+expand_prop_aliases([X | Rest]) ->
+    [X | expand_prop_aliases(Rest)].
+
+-spec apply_stylesheet(lv:style(), stylesheet()) -> ok | lv:error().
+apply_stylesheet(Sty, Sheet0) ->
+    Sheet1 = expand_prop_aliases(Sheet0),
+    Asyncs = lists:map(fun
+        ({layout, Arg}) ->
+            rdp_lvgl_nif:style_set_layout(Sty, Arg);
+        ({flex_flow, Arg}) ->
+            rdp_lvgl_nif:style_set_flex_flow(Sty, Arg);
+        ({flex_grow, Arg}) ->
+            rdp_lvgl_nif:style_set_flex_grow(Sty, Arg);
+        ({flex_align, Arg0, Arg1, Arg2}) ->
+            rdp_lvgl_nif:style_set_flex_align(Sty, Arg0, Arg1, Arg2);
+        ({Prop, Arg0}) ->
+            PropStr = atom_to_list(Prop),
+            Arg1 = case string:split(PropStr, "_", trailing) of
+                [_, "opa"] -> round(Arg0 * 255);
+                _ -> Arg0
+            end,
+            rdp_lvgl_nif:style_set_prop(Sty, Prop, Arg1);
+        (T) when is_tuple(T) and is_atom(element(1, T)) ->
+            erlang:apply(rdp_lvgl_nif, style_set_prop, [Sty | tuple_to_list(T)])
+    end, Sheet1),
+    Results = lists:map(fun
+        ({async, MsgRef}) ->
+            receive
+                {MsgRef, ok} -> ok;
+                {MsgRef, error, Why} -> {error, Why};
+                {MsgRef, error, Num, Str} -> {error, Num, Str}
+            end;
+        (Err) -> Err
+    end, Asyncs),
+    Errs = [E || E = {error, _} <- Results] ++
+           [E || E = {error, _, _} <- Results],
+    case Errs of
+        [] -> ok;
+        [FirstErr | _] -> FirstErr
+    end.
+
 -spec set_layout(lv:style(), layout()) -> ok | lv:error().
 set_layout(Style, Layout) ->
     ?async_void_wrapper(style_set_layout, Style, Layout).
@@ -192,6 +335,14 @@ set_align(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, align, Val
 %% @see lv:coord()
 -spec set_radius(lv:style(), lv:coord()) -> ok | lv:error().
 set_radius(Style, Value) -> ?async_void_wrapper(style_set_prop, Style, radius, Value).
+
+%% @doc Sets the 'pad_top', 'pad_bottom', 'pad_left', 'pad_right' style properties.
+%% @see lv:coord()
+-spec set_pad_all(lv:style(), lv:coord()) -> ok | lv:error().
+set_pad_all(Style, Value) ->
+    apply_stylesheet(Style, [{pad_top, Value}, {pad_bottom, Value},
+        {pad_left, Value}, {pad_right, Value}]).
+
 %% @doc Sets the 'pad_top' style property.
 %% @see lv:coord()
 -spec set_pad_top(lv:style(), lv:coord()) -> ok | lv:error().

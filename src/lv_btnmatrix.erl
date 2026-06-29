@@ -66,9 +66,21 @@ clear_btn_ctrl_all(Widget, Ctrl) ->
 set_selected_btn(Widget, Index) ->
     ?async_void_wrapper(btnmatrix_set_selected_btn, Widget, Index).
 
--spec get_selected_btn(lv:btnmatrix()) -> {ok, index()} | lv:error().
+-spec get_selected_btn(lv:btnmatrix()) -> {ok, none | index()} | lv:error().
 get_selected_btn(Widget) ->
-    ?async_wrapper(btnmatrix_get_selected_btn, Widget).
+    R = ?async_wrapper(btnmatrix_get_selected_btn, Widget),
+    case R of
+        {ok, 16#ffff} -> {ok, none};
+        Else -> Else
+    end.
+
+-spec first_btn_with_ctrl(lv:btnmatrix(), lv:flags(ctrl())) -> {ok, none | index()} | lv:error().
+first_btn_with_ctrl(Widget, Ctrl) ->
+    R = ?async_wrapper(btnmatrix_first_btn_with_ctrl, Widget, Ctrl),
+    case R of
+        {ok, 16#ffff} -> {ok, none};
+        Else -> Else
+    end.
 
 -spec get_btn_text(lv:btnmatrix(), index()) -> {ok, string()} | lv:error().
 get_btn_text(Widget, Index) ->
